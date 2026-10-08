@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0c0a09;
+  --color-surface: #1a1613;
+  --color-fg: #f3efe7;
+  --color-muted: #b7aa9a;
+  --color-ember: #e85d04;
+  --color-hp: #9b2335;
+  --color-sta: #d6c37a;
+  --color-steel: #9aa3b2;
+  --color-line: #3a322c;
+  --font-display: "Cinzel", "Songti TC", "PMingLiU", serif;
+  --font-sans: "Literata", "Songti TC", "PMingLiU", serif;
+  --radius: 0.25rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 2px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .touch-controls {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-overlay {
+    transition: none;
+  }
+}

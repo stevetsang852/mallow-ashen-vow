@@ -1,0 +1,289 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Flame, Shield, Swords, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createGame,
+  INITIAL_HUD,
+  type GameApi,
+  type HudSnap,
+} from "@/game/createGame";
+
+export const Route = createFileRoute("/")({ component: Home });
+
+function fmt(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function Home() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const api = useRef<GameApi | null>(null);
+  const [hud, setHud] = useState<HudSnap>(INITIAL_HUD);
+  const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
+  const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
+  const bossPct = Math.max(0, Math.min(100, ((hud.bossHp ?? 0) / Math.max(1, hud.bossMax)) * 100));
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const game = createGame(canvas, { onHud: setHud });
+    api.current = game;
+    return () => {
+      game.dispose();
+      api.current = null;
+    };
+  }, []);
+
+  return (
+    <main className="relative h-screen w-full overflow-hidden bg-bg text-fg select-none">
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full touch-none"
+        aria-label="粉誓庭院"
+      />
+
+      <div
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{ opacity: hud.hurt }}
+        aria-hidden="true"
+      >
+        <div className="h-full w-full bg-hp/50" />
+      </div>
+
+      {hud.phase !== "title" && (
+        <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-3 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-full max-w-xs">
+              <p className="font-display text-xs tracking-widest text-muted">粉誓庭院</p>
+              <div className="mt-1 h-3 border border-line bg-surface">
+                <div className="h-full bg-hp" style={{ width: `${hpPct}%` }} />
+              </div>
+              <div className="mt-1 h-1.5 border border-line bg-surface">
+                <div className="h-full bg-sta" style={{ width: `${staPct}%` }} />
+              </div>
+              <div className="mt-2 flex items-center gap-1">
+                {Array.from({ length: hud.flaskMax }, (_, i) => (
+                  <span
+                    key={i}
+                    className={i < hud.flasks ? "h-3 w-3 bg-ember" : "h-3 w-3 border border-line bg-surface"}
+                  />
+                ))}
+                <span className="ml-2 text-sm text-muted">灰 {hud.ash}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="pointer-events-auto grid h-11 w-11 place-items-center border border-line bg-surface text-fg"
+              onClick={() => api.current?.toggleMute()}
+              aria-label={hud.muted ? "開啟聲音" : "關閉聲音"}
+            >
+              {hud.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+            </button>
+          </div>
+          {hud.bossShown && (
+            <div className="mx-auto w-full max-w-xs text-center">
+              <p className="font-display text-xs tracking-widest text-ember">煤灰公爵</p>
+              <div className="mt-1 h-2 border border-line bg-surface">
+                <div className="h-full bg-ember" style={{ width: `${bossPct}%` }} />
+              </div>
+            </div>
+          )}
+          {hud.lockName && (
+            <p className="text-center font-display text-sm text-fg">鎖定 · {hud.lockName}</p>
+          )}
+          {hud.toast && <p className="text-center text-sm text-fg">{hud.toast}</p>}
+          {hud.nearFire && hud.phase === "play" && (
+            <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                className="min-h-11 border border-line bg-surface px-4 text-sm text-fg"
+                onClick={() => api.current?.rest()}
+              >
+                <Flame className="mr-2 inline size-4 text-ember" />
+                E 歇息
+              </button>
+              {hud.canTemper && (
+                <button
+                  type="button"
+                  className="min-h-11 bg-ember px-4 text-sm text-bg"
+                  onClick={() => api.current?.temper()}
+                >
+                  F 鍛誓 +12（200 灰）
+                </button>
+              )}
+            </div>
+          )}
+        </header>
+      )}
+
+      {hud.phase === "title" && (
+        <section className="absolute top-4 right-4 left-4 z-30 max-w-md border border-line bg-surface/95 p-5 sm:left-6 sm:max-w-sm">
+          <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
+          <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            戴粉紅蝴蝶結的騎士貓。庭院不寬恕猶豫。清掉拱門前的灰殼，再進去會會煤灰公爵。
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-steel">
+            WASD 移動 · 點擊或 J 揮劍 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯
+          </p>
+          {!hud.webgl && (
+            <p className="mt-3 text-sm text-hp">這台裝置開不了 WebGL，庭院沒有升起。</p>
+          )}
+          {hud.deaths > 0 && (
+            <p className="mt-2 text-sm text-muted">
+              倒下 {hud.deaths} 次
+              {hud.bestMs != null ? ` · 最快 ${fmt(hud.bestMs)}` : ""}
+              {hud.clears > 0 ? ` · 平靜 ${hud.clears}` : ""}
+            </p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              onClick={() => api.current?.begin()}
+            >
+              Start
+            </button>
+            <button
+              type="button"
+              className="min-h-11 border border-line px-4 text-sm text-fg"
+              onClick={() => api.current?.toggleMute()}
+            >
+              {hud.muted ? "開啟聲音" : "聲音已開"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {hud.phase === "dead" && (
+        <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg/80 p-6">
+          <div className="max-w-sm text-center">
+            <p className="font-display text-xs tracking-widest text-ember">FALLEN</p>
+            <h2 className="mt-2 font-display text-4xl text-fg">誓約斷了</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              灰留在你倒下的地方。火芯還在。這一次 {fmt(hud.runMs)}，累計倒下 {hud.deaths} 次。
+            </p>
+            <button
+              type="button"
+              className="mt-5 min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              onClick={() => api.current?.rise()}
+            >
+              從火芯再起
+            </button>
+          </div>
+        </section>
+      )}
+
+      {hud.phase === "win" && (
+        <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg/75 p-6">
+          <div className="max-w-sm text-center">
+            <p className="font-display text-xs tracking-widest text-ember">STILL</p>
+            <h2 className="mt-2 font-display text-4xl text-fg">庭院安靜了</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              粉紅的誓約還在。這一次 {fmt(hud.runMs)}
+              {hud.bestMs != null ? `，最快 ${fmt(hud.bestMs)}` : ""}。
+            </p>
+            <button
+              type="button"
+              className="mt-5 min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              onClick={() => api.current?.again()}
+            >
+              再走一次庭院
+            </button>
+          </div>
+        </section>
+      )}
+
+      <div className="touch-controls pointer-events-none absolute inset-0 z-20">
+        {hud.phase === "play" && (
+          <>
+            <Stick onChange={(x, y) => api.current?.setStick(x, y)} />
+            <div className="pointer-events-auto absolute right-3 bottom-3 grid grid-cols-2 gap-2">
+              <TouchBtn label="鎖" onPress={() => api.current?.lock()}>
+                <Shield className="size-5" />
+              </TouchBtn>
+              <TouchBtn label="瓶" onPress={() => api.current?.flask()}>
+                <Flame className="size-5" />
+              </TouchBtn>
+              <TouchBtn label="滾" onPress={() => api.current?.dodge()}>
+                <span className="font-display text-sm">滾</span>
+              </TouchBtn>
+              <TouchBtn label="斬" onPress={() => api.current?.attack()}>
+                <Swords className="size-5" />
+              </TouchBtn>
+            </div>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function TouchBtn({
+  label,
+  onPress,
+  children,
+}: {
+  label: string;
+  onPress: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="grid h-14 w-14 place-items-center border border-line bg-surface text-fg"
+      onPointerDown={(e) => {
+        e.preventDefault();
+        onPress();
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Stick({ onChange }: { onChange: (x: number, y: number) => void }) {
+  const base = useRef<HTMLDivElement>(null);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+
+  function update(clientX: number, clientY: number) {
+    const rect = base.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let x = (clientX - cx) / (rect.width / 2);
+    let y = -((clientY - cy) / (rect.height / 2));
+    const m = Math.hypot(x, y);
+    if (m > 1) {
+      x /= m;
+      y /= m;
+    }
+    setKnob({ x: x * 32, y: -y * 32 });
+    onChange(x, y);
+  }
+
+  return (
+    <div
+      ref={base}
+      className="pointer-events-auto absolute bottom-3 left-3 grid h-32 w-32 place-items-center rounded-full border border-line bg-surface/80"
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        update(e.clientX, e.clientY);
+      }}
+      onPointerMove={(e) => {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) update(e.clientX, e.clientY);
+      }}
+      onPointerUp={(e) => {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+        setKnob({ x: 0, y: 0 });
+        onChange(0, 0);
+      }}
+    >
+      <span
+        className="h-12 w-12 rounded-full bg-steel"
+        style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }}
+      />
+    </div>
+  );
+}
