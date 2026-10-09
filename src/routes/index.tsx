@@ -51,6 +51,7 @@ function Home() {
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
   const bossPct = Math.max(0, Math.min(100, ((hud.bossHp ?? 0) / Math.max(1, hud.bossMax)) * 100));
+  const demonPct = Math.max(0, Math.min(100, ((hud.demonHp ?? 0) / Math.max(1, hud.demonMax)) * 100));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -109,6 +110,14 @@ function Home() {
               {hud.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
             </button>
           </div>
+          {hud.demonShown && (
+            <div className="mx-auto w-full max-w-xs text-center">
+              <p className="font-display text-xs tracking-widest text-hp">線上惡魔 · {hud.demonName}</p>
+              <div className="mt-1 h-2 border border-line bg-surface">
+                <div className="h-full bg-hp" style={{ width: `${demonPct}%` }} />
+              </div>
+            </div>
+          )}
           {hud.bossShown && (
             <div className="mx-auto w-full max-w-xs text-center">
               <p className="font-display text-xs tracking-widest text-ember">
@@ -152,7 +161,7 @@ function Home() {
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
           <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            戴粉紅蝴蝶結的騎士貓。清掉拱門前的灰殼，再進去會會煤灰公爵。舉劍是重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
+            戴粉紅蝴蝶結的騎士貓。清掉拱門前的灰殼，再進去會會煤灰公爵。離開火芯一會兒，線上惡魔可能會侵入。舉劍是重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
           </p>
           <p className="mt-3 text-sm leading-relaxed text-steel">
             WASD 移動 · 點擊或 J 揮劍 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯
