@@ -2038,7 +2038,10 @@ export function createGame(
       }
       if (!e.repeat && e.key.length === 1) {
         codeBuf = (codeBuf + e.key.toLowerCase()).slice(-16);
-        if (codeBuf.endsWith(DEBUG_CODE)) unlockAuto();
+        if (codeBuf.endsWith(DEBUG_CODE)) {
+          codeBuf = "";
+          toggleAutoFromGesture();
+        }
       }
       if (e.repeat || phase !== "play" || autoOn) return;
       if (e.code === "Space") {
