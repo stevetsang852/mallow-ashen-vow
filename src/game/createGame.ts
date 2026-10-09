@@ -2041,7 +2041,11 @@ export function createGame(
         if (codeBuf.endsWith(DEBUG_CODE)) unlockAuto();
       }
       if (e.repeat || phase !== "play" || autoOn) return;
-      if (e.code === "Space") tryDodge();
+      if (e.code === "Space") {
+        noteGesture("R");
+        tryDodge();
+      }
+      if (e.code === "KeyQ") noteGesture("L");
       if (e.code === "KeyJ") tryAttack("light");
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
@@ -2054,7 +2058,10 @@ export function createGame(
   window.addEventListener("keyup", (e) => keys.delete(e.code), { signal });
 
   const DEBUG_CODE = "vowdebug";
+  const TOUCH_CODE = "LLLLLLRLLL";
   let codeBuf = "";
+  let gesture = "";
+  let gestureAt = 0;
   let autoOn = false;
   let autoCd = 0;
   let autoPanel: HTMLDivElement | null = null;
@@ -2112,6 +2119,25 @@ export function createGame(
     sessionStorage.setItem("mallow-qa", "1");
     paintAuto();
     say("測試通道開了");
+  }
+
+  function toggleAutoFromGesture() {
+    if (!autoPanel) unlockAuto();
+    autoOn = !autoOn;
+    if (autoOn && phase === "title") begin();
+    say(autoOn ? "自動測試開了" : "自動測試關了");
+    paintAuto();
+  }
+
+  function noteGesture(kind: "L" | "R") {
+    const now = performance.now();
+    if (now - gestureAt > 4000) gesture = "";
+    gestureAt = now;
+    gesture = (gesture + kind).slice(-12);
+    if (gesture.endsWith(TOUCH_CODE)) {
+      gesture = "";
+      toggleAutoFromGesture();
+    }
   }
 
   function autoThink(dt: number) {
@@ -2304,8 +2330,14 @@ export function createGame(
     temper,
     attack: () => tryAttack("light"),
     heavy: () => tryAttack("heavy"),
-    dodge: tryDodge,
-    lock: tryLock,
+    dodge: () => {
+      noteGesture("R");
+      tryDodge();
+    },
+    lock: () => {
+      noteGesture("L");
+      tryLock();
+    },
     flask: tryFlask,
     toggleMute,
     closeMenu: () => {
