@@ -29,6 +29,7 @@ export type HudSnap = {
   hurt: number;
   muted: boolean;
   gateOpen: boolean;
+  menuOpen: boolean;
   demonShown: boolean;
   demonName: string;
   demonHp: number | null;
@@ -42,10 +43,12 @@ export type GameApi = {
   rest: () => void;
   temper: () => void;
   attack: () => void;
+  heavy: () => void;
   dodge: () => void;
   lock: () => void;
   flask: () => void;
   toggleMute: () => void;
+  closeMenu: () => void;
   setStick: (x: number, y: number) => void;
   dispose: () => void;
 };
@@ -54,7 +57,8 @@ const SAVE_KEY = "mallow-ashen-vow-v1";
 const STEP = 1 / 60;
 const STA_MAX = 100;
 const FLASK_MAX = 4;
-const WALK = 3.75;
+const WALK = 3.05;
+const RUN = 5.35;
 const FIRE = { x: -3.1, z: 0.2 };
 const SPAWN = { x: 0.35, z: 3.55 };
 const GATE_Z = -8;
@@ -71,7 +75,7 @@ const PILLARS = [
   { x: 8.6, z: -13.2, r: 0.48 },
 ];
 
-type Act = "free" | "attack" | "dodge" | "drink" | "hurt";
+type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block";
 type FoeState = "idle" | "chase" | "roar" | "telegraph" | "swing" | "recover" | "hurt" | "dodge" | "drink" | "dead";
 type DukeMove = "cleave" | "overhead" | "shock" | "rush";
 
@@ -130,6 +134,7 @@ export const INITIAL_HUD: HudSnap = {
   hurt: 0,
   muted: true,
   gateOpen: false,
+  menuOpen: false,
   demonShown: false,
   demonName: "紅契",
   demonHp: null,
@@ -191,9 +196,9 @@ function template(): Foe[] {
     aimZ: 0,
   });
   return [
-    row(1, "灰殼侍從", "hollow", -4.8, -1.8, 58, 2.05, 18, 1.55, 0.7, 6.4, 0.42),
-    row(2, "灰殼侍從", "hollow", 4.4, -2.4, 58, 2.05, 18, 1.55, 0.66, 6.4, 0.42),
-    row(3, "灰殼侍從", "hollow", 0.1, -5.4, 72, 2.15, 20, 1.6, 0.6, 6.6, 0.44),
+    row(1, "灰殼侍從", "hollow", -5.8, -3.8, 58, 1.85, 16, 1.55, 0.78, 3.2, 0.42),
+    row(2, "灰殼侍從", "hollow", 5.6, -4.0, 58, 1.85, 16, 1.55, 0.78, 3.2, 0.42),
+    row(3, "灰殼侍從", "hollow", 0.15, -4.5, 70, 1.85, 16, 1.65, 0.74, 5.0, 0.44),
     row(4, "煤灰公爵", "duke", 0, -14.1, 280, 1.7, 30, 2.15, 0.84, 10, 0.78),
     row(5, "紅契", "demon", 42, 42, 150, 2.65, 16, 1.7, 0.4, 7, 0.4),
   ];
@@ -486,6 +491,8 @@ export function createGame(
     invuln: 0,
     dodgeX: 0,
     dodgeZ: -1,
+    atk: "light" as "light" | "heavy",
+    combo: 0,
   };
 
   let ash = 0;
@@ -493,6 +500,7 @@ export function createGame(
   let bestMs: number | null = null;
   let clears = 0;
   let phase: Phase = "title";
+  let menuOpen = false;
   let camYaw = 0.15;
   let camDist = 6.1;
   let camHeight = 2.2;
@@ -505,6 +513,8 @@ export function createGame(
   let shake = 0;
   let hitstop = 0;
   let winArm = 0;
+  let swingHits = new Set<number>();
+  let atkQueue: "light" | null = null;
   let invadeIn = 7;
   let runStart = 0;
   let frozenRun = 0;
@@ -574,6 +584,7 @@ export function createGame(
       hurt: hurtV,
       muted,
       gateOpen,
+      menuOpen,
       demonShown: demon.aggro && demon.state !== "dead" && phase === "play",
       demonName: demon.name,
       demonHp: demon.hp,
@@ -599,6 +610,7 @@ export function createGame(
       snap.toast,
       snap.muted ? 1 : 0,
       snap.gateOpen ? 1 : 0,
+      snap.menuOpen ? 1 : 0,
       snap.demonShown ? Math.round(snap.demonHp ?? 0) : "-",
       snap.clears,
       snap.bestMs ?? "",
@@ -737,11 +749,34 @@ export function createGame(
     warnedHollow = false;
     winArm = 0;
     invadeIn = 7;
+    swingHits = new Set();
   }
 
-  function hurtPlayer(amount: number) {
+  function hurtPlayer(amount: number, from?: { x: number; z: number }) {
     if (phase !== "play" || player.hp <= 0 || player.invuln > 0) return;
-    if (player.act === "dodge" && player.actT > 0.05 && player.actT < 0.3) return;
+    if (player.act === "dodge" && player.actT > 0.04 && player.actT < 0.34) return;
+    if (player.act === "block" && from) {
+      const fx = -Math.sin(player.yaw);
+      const fz = -Math.cos(player.yaw);
+      const dx = from.x - player.x;
+      const dz = from.z - player.z;
+      const nd = Math.hypot(dx, dz) || 0.0001;
+      if ((fx * dx + fz * dz) / nd > 0.1 && player.sta >= 14) {
+        player.sta = Math.max(0, player.sta - 16);
+        player.staDelay = 0.4;
+        player.hp = Math.max(0, player.hp - Math.max(1, Math.round(amount * 0.18)));
+        shake = Math.max(shake, 0.12);
+        tone(180, 0.08, "square", 0.04);
+        if (player.hp <= 0) die();
+        else if (player.sta <= 0) {
+          player.act = "hurt";
+          player.actT = 0;
+          say("架勢破了");
+        }
+        emit(true);
+        return;
+      }
+    }
     player.hp = Math.max(0, player.hp - amount);
     player.invuln = 0.62;
     hurtV = 1;
@@ -782,17 +817,58 @@ export function createGame(
     return true;
   }
 
-  function tryAttack() {
-    if (phase !== "play" || player.act !== "free") return;
-    if (!spendSta(22)) return;
+  function livingFoe(f: Foe) {
+    if (f.state === "dead" || f.hp <= 0) return false;
+    if (f.kind === "demon" && !f.aggro) return false;
+    if (f.kind === "duke" && !gateOpen) return false;
+    return true;
+  }
+
+  function nearestFoe(maxDist: number) {
+    let best: Foe | null = null;
+    let bestD = maxDist;
+    for (const f of foes) {
+      if (!livingFoe(f)) continue;
+      const d = Math.hypot(f.x - player.x, f.z - player.z);
+      if (d < bestD) {
+        bestD = d;
+        best = f;
+      }
+    }
+    return best;
+  }
+
+  function faceTarget() {
+    const target = lockFoe() ?? nearestFoe(3.6);
+    if (target) player.yaw = Math.atan2(-(target.x - player.x), -(target.z - player.z));
+    else player.yaw = camYaw;
+  }
+
+  function tryAttack(kind: "light" | "heavy" = "light") {
+    if (phase !== "play") return;
+    if (player.act === "attack" && player.atk === "light" && kind === "light" && player.combo < 1) {
+      atkQueue = "light";
+      return;
+    }
+    if (player.act !== "free" && player.act !== "block") return;
+    const cost = kind === "heavy" ? 34 : 16;
+    if (!spendSta(cost)) {
+      say("氣力不夠");
+      return;
+    }
+    faceTarget();
     player.act = "attack";
     player.actT = 0;
     player.hitDone = false;
-    tone(210, 0.12, "triangle", 0.06);
+    player.atk = kind;
+    player.combo = 0;
+    atkQueue = null;
+    swingHits = new Set();
+    tone(kind === "heavy" ? 140 : 210, 0.12, "triangle", 0.06);
   }
 
   function tryDodge() {
-    if (phase !== "play" || player.act !== "free") return;
+    if (phase !== "play" || (player.act !== "free" && player.act !== "block")) return;
     if (!spendSta(28)) return;
     const { ix, iz, mag } = wishDir();
     if (mag > 0.2) {
@@ -964,13 +1040,13 @@ export function createGame(
         f.z = c.z;
         if (!f.swung && f.t > 0.05 && Math.hypot(player.x - f.x, player.z - f.z) < f.r + 0.9) {
           f.swung = true;
-          hurtPlayer(28);
+          hurtPlayer(28, f);
         }
       } else if (f.move === "shock") {
         if (!f.swung && f.t > 0.4) {
           f.swung = true;
           if (Math.hypot(player.x - f.x, player.z - f.z) < 2.9) {
-            hurtPlayer(32);
+            hurtPlayer(32, f);
             shake = Math.max(shake, 0.48);
             hitstop = Math.max(hitstop, 0.08);
             tone(52, 0.3, "square", 0.06);
@@ -994,7 +1070,7 @@ export function createGame(
           const nd = Math.hypot(px, pz) || 0.0001;
           const dot = (fx * px + fz * pz) / nd;
           const reach = f.move === "overhead" ? 2.4 : 2.6;
-          if (nd < reach && dot > (f.move === "overhead" ? 0.28 : 0.12)) hurtPlayer(f.move === "overhead" ? 40 : 24);
+          if (nd < reach && dot > (f.move === "overhead" ? 0.28 : 0.12)) hurtPlayer(f.move === "overhead" ? 40 : 24, f);
         }
       }
       if (f.t >= f.span) {
@@ -1104,7 +1180,7 @@ export function createGame(
         f.z = c.z;
         if (!f.swung && f.t > 0.06 && Math.hypot(player.x - f.x, player.z - f.z) < f.r + 0.75) {
           f.swung = true;
-          hurtPlayer(22);
+          hurtPlayer(22, f);
         }
       } else if (!f.swung && f.t > 0.04) {
         f.swung = true;
@@ -1113,7 +1189,7 @@ export function createGame(
         const px = player.x - f.x;
         const pz = player.z - f.z;
         const nd = Math.hypot(px, pz) || 0.0001;
-        if (nd < 2.05 && (fx * px + fz * pz) / nd > 0.15) hurtPlayer(16);
+        if (nd < 2.05 && (fx * px + fz * pz) / nd > 0.15) hurtPlayer(16, f);
       }
       if (f.t >= f.span) {
         f.state = "recover";
@@ -1258,7 +1334,7 @@ export function createGame(
     }
 
     const face = Math.atan2(-dx, -dz);
-    f.yaw = dampAngle(f.yaw, face, 6.5, dt);
+    if (f.state !== "swing" && f.state !== "recover") f.yaw = dampAngle(f.yaw, face, 6.5, dt);
 
     if (f.state === "hurt") {
       f.t += dt;
@@ -1282,7 +1358,7 @@ export function createGame(
         const fx = -Math.sin(f.yaw);
         const fz = -Math.cos(f.yaw);
         const dot = (fx * dx + fz * dz) / dist;
-        if (dist < f.range + 0.2 && dot > 0.2) hurtPlayer(f.dmg);
+        if (dist < f.range + 0.2 && dot > 0.2) hurtPlayer(f.dmg, f);
       }
       if (f.t > 0.24) {
         f.state = "recover";
@@ -1293,9 +1369,9 @@ export function createGame(
     }
     if (f.state === "recover") {
       f.t += dt;
-      if (f.t > 0.42) {
+      if (f.t > 0.55) {
         f.state = "chase";
-        f.cd = 0.5;
+        f.cd = 0.62;
       }
       return;
     }
@@ -1335,47 +1411,80 @@ export function createGame(
       }
     }
 
-    if (player.act !== "free") {
+    if (player.act !== "free" && player.act !== "block") {
       player.actT += dt;
       if (player.act === "drink" && !player.healed && player.actT > 0.34) {
         player.hp = Math.min(player.hpMax, player.hp + 48);
         player.healed = true;
       }
-      if (player.act === "attack" && !player.hitDone && player.actT > 0.2 && player.actT < 0.38) {
-        player.hitDone = true;
-        const fx = -Math.sin(player.yaw);
-        const fz = -Math.cos(player.yaw);
-        let any = false;
-        for (const f of foes) {
-          if (f.state === "dead") continue;
-          const dx = f.x - player.x;
-          const dz = f.z - player.z;
-          const dist = Math.hypot(dx, dz) || 0.0001;
-          const reach = 2.15 + f.r * 0.35;
-          const dot = (fx * dx + fz * dz) / dist;
-          if (dist < reach && dot > 0.22) {
-            f.hp = Math.max(0, f.hp - 34);
-            f.flash = 0.12;
-            if (f.state !== "telegraph" && f.state !== "swing" && f.state !== "roar") {
-              f.state = "hurt";
-              f.t = 0;
-            }
-            burst(f.x, 0.9, f.z);
-            any = true;
-          }
+      if (player.act === "attack") {
+        if (atkQueue === "light" && player.atk === "light" && player.combo < 1 && player.actT > 0.3 && spendSta(14)) {
+          player.combo = 1;
+          player.actT = 0;
+          player.hitDone = false;
+          atkQueue = null;
+          swingHits = new Set();
+          faceTarget();
+          tone(240, 0.08, "triangle", 0.05);
         }
-        if (any) {
-          shake = Math.max(shake, 0.16);
-          hitstop = Math.max(hitstop, 0.045);
-          tone(160, 0.09, "square", 0.05);
+        const heavy = player.atk === "heavy";
+        const open = heavy ? 0.32 : 0.12;
+        const shut = heavy ? 0.5 : 0.3;
+        if (player.actT > open && player.actT < shut) {
+          const fx = -Math.sin(player.yaw);
+          const fz = -Math.cos(player.yaw);
+          const dmg = heavy ? 46 : player.combo === 1 ? 28 : 20;
+          let any = false;
+          for (const f of foes) {
+            if (!livingFoe(f) || swingHits.has(f.id)) continue;
+            const dx = f.x - player.x;
+            const dz = f.z - player.z;
+            const dist = Math.hypot(dx, dz) || 0.0001;
+            const reach = (heavy ? 2.15 : 1.8) + f.r * 0.45;
+            const dot = (fx * dx + fz * dz) / dist;
+            if (dist < reach && dot > (heavy ? 0.28 : 0.16)) {
+              swingHits.add(f.id);
+              f.hp = Math.max(0, f.hp - dmg);
+              f.flash = 0.12;
+              const armored = f.state === "swing" || f.state === "roar" || (f.state === "telegraph" && !(heavy && f.kind !== "duke"));
+              if (!armored) {
+                f.state = "hurt";
+                f.t = 0;
+              }
+              burst(f.x, 0.9, f.z);
+              any = true;
+            }
+          }
+          if (any && !player.hitDone) {
+            player.hitDone = true;
+            shake = Math.max(shake, heavy ? 0.26 : 0.14);
+            hitstop = Math.max(hitstop, heavy ? 0.07 : 0.04);
+            tone(heavy ? 110 : 160, 0.09, "square", 0.05);
+          }
         }
       }
       const end =
-        player.act === "attack" ? 0.52 : player.act === "dodge" ? 0.46 : player.act === "drink" ? 0.82 : 0.3;
+        player.act === "attack"
+          ? player.atk === "heavy"
+            ? 0.78
+            : player.combo === 1
+              ? 0.5
+              : 0.46
+          : player.act === "dodge"
+            ? 0.46
+            : player.act === "drink"
+              ? 0.82
+              : player.act === "hurt"
+                ? 0.34
+                : 0.3;
       if (player.actT >= end) {
         player.act = "free";
         player.actT = 0;
       }
+    } else if (player.act === "block") {
+      player.sta = Math.max(0, player.sta - 12 * dt);
+      player.staDelay = 0.2;
+      if (player.sta <= 0) player.act = "free";
     } else if (player.staDelay > 0) {
       player.staDelay -= dt;
     } else {
@@ -1384,7 +1493,7 @@ export function createGame(
 
     const locked = lockFoe();
     const { ix, iz, mag } = wishDir();
-    if (player.act === "free" && locked) {
+    if ((player.act === "free" || player.act === "block") && locked) {
       player.yaw = dampAngle(
         player.yaw,
         Math.atan2(-(locked.x - player.x), -(locked.z - player.z)),
@@ -1402,17 +1511,41 @@ export function createGame(
       );
     }
 
+    const wantBlock = held("KeyC") && player.sta > 6;
+    if (player.act === "free" && wantBlock) player.act = "block";
+    else if (player.act === "block" && !held("KeyC")) player.act = "free";
+
+    const running =
+      player.act === "free" &&
+      (held("ShiftLeft") || held("ShiftRight")) &&
+      mag > 0.18 &&
+      player.sta > 8;
     if (player.act === "free") {
       const scale = mag > 1 ? 1 / mag : 1;
-      player.vx = ix * scale * WALK;
-      player.vz = iz * scale * WALK;
+      const speed = running ? RUN : WALK;
+      player.vx = ix * scale * speed;
+      player.vz = iz * scale * speed;
+      if (running) {
+        player.sta = Math.max(0, player.sta - 20 * dt);
+        player.staDelay = 0.28;
+      }
+    } else if (player.act === "block") {
+      player.vx = ix * 0.35 * WALK;
+      player.vz = iz * 0.35 * WALK;
     } else if (player.act === "dodge") {
       const u = player.actT / 0.4;
       const curve = u < 1 ? Math.sin(Math.min(1, u) * Math.PI) : 0;
-      player.vx = player.dodgeX * 8.4 * curve;
-      player.vz = player.dodgeZ * 8.4 * curve;
+      player.vx = player.dodgeX * 11 * curve;
+      player.vz = player.dodgeZ * 11 * curve;
     } else if (player.act === "attack") {
-      const lung = player.actT > 0.16 && player.actT < 0.36 ? 4.2 : 0;
+      const heavy = player.atk === "heavy";
+      const lung = heavy
+        ? player.actT > 0.3 && player.actT < 0.48
+          ? 5.4
+          : 0
+        : player.actT > 0.12 && player.actT < 0.28
+          ? 3.4
+          : 0;
       player.vx = -Math.sin(player.yaw) * lung;
       player.vz = -Math.cos(player.yaw) * lung;
     } else {
@@ -1466,7 +1599,7 @@ export function createGame(
 
     if (locked) {
       const face = Math.atan2(-(locked.x - player.x), -(locked.z - player.z));
-      camYaw = dampAngle(camYaw, face, 7, dt);
+      camYaw = dampAngle(camYaw, face, 5, dt);
     }
 
     emitAcc += dt;
@@ -1486,14 +1619,15 @@ export function createGame(
     camera.position.set(player.x - fx * camDist + sh, camHeight + sv, player.z - fz * camDist);
     camera.lookAt(player.x, 1.05, player.z);
 
-    const moving =
-      player.act === "free" && Math.hypot(player.vx, player.vz) > 0.4 ? 1 : 0;
+    const speed = Math.hypot(player.vx, player.vz);
+    const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
     const blink = player.invuln > 0 && Math.sin(time * 28) > 0;
     playerRig.root.visible = !blink;
     playerRig.root.position.set(player.x, 0, player.z);
     playerRig.root.rotation.y = player.yaw + Math.PI;
     playerRig.root.rotation.x = 0;
-    poseKnight(playerRig, time, moving, player.act, player.actT);
+    const poseAct = player.act === "attack" && player.atk === "heavy" ? "heavy" : player.act;
+    poseKnight(playerRig, time, moving, poseAct, player.actT);
     const pf = player.act === "hurt" ? 0.45 : 0;
     if (playerRig.root.userData.mallow) flashMallow(playerRig.root, pf);
     else {
@@ -1685,9 +1819,18 @@ export function createGame(
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
         e.preventDefault();
       }
+      if (e.code === "Escape") {
+        e.preventDefault();
+        if (!e.repeat && phase !== "title") {
+          menuOpen = !menuOpen;
+          emit(true);
+        }
+        return;
+      }
       if (e.repeat || phase !== "play") return;
       if (e.code === "Space") tryDodge();
-      if (e.code === "KeyJ" || e.code === "KeyK") tryAttack();
+      if (e.code === "KeyJ") tryAttack("light");
+      if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
       if (e.code === "KeyR") tryFlask();
       if (e.code === "KeyE") rest();
@@ -1763,6 +1906,7 @@ export function createGame(
   function begin() {
     if (phase === "play") return;
     phase = "play";
+    menuOpen = false;
     camYaw = 0;
     player.yaw = 0;
     player.x = SPAWN.x;
@@ -1822,11 +1966,16 @@ export function createGame(
     again,
     rest,
     temper,
-    attack: tryAttack,
+    attack: () => tryAttack("light"),
+    heavy: () => tryAttack("heavy"),
     dodge: tryDodge,
     lock: tryLock,
     flask: tryFlask,
     toggleMute,
+    closeMenu: () => {
+      menuOpen = false;
+      emit(true);
+    },
     setStick: (x, y) => {
       stickX = x;
       stickY = y;
@@ -1886,10 +2035,12 @@ function noop(): GameApi {
     rest: () => {},
     temper: () => {},
     attack: () => {},
+    heavy: () => {},
     dodge: () => {},
     lock: () => {},
     flask: () => {},
     toggleMute: () => {},
+    closeMenu: () => {},
     setStick: () => {},
     dispose: () => {},
   };

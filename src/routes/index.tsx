@@ -8,7 +8,7 @@ import {
   type HudSnap,
 } from "@/game/createGame";
 
-const PAYME = "https://qr.payme.hsbc.com.hk/1/Mfv9c4puET3PhoMR6z7hcE";
+const PAYME = "https://payme.hsbc/d6d295dff7854566b4536a98f0b02ef8";
 
 function Credits() {
   return (
@@ -156,16 +156,19 @@ function Home() {
         </header>
       )}
 
-      {hud.phase === "title" && (
-        <section className="absolute top-4 right-4 left-4 z-30 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
+      {(hud.phase === "title" || hud.menuOpen) && (
+        <section className="absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
           <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            戴粉紅蝴蝶結的騎士貓。清掉拱門前的灰殼，再進去會會煤灰公爵。離開火芯一會兒，線上惡魔可能會侵入。舉劍是重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
+            戴粉紅蝴蝶結的騎士貓。先單挑路中的灰殼，兩側要走近才會醒。輕擊可再按一次連段，重擊能打掉前搖。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
           </p>
           <p className="mt-3 text-sm leading-relaxed text-steel">
-            WASD 移動 · 點擊或 J 揮劍 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯
+            WASD 走 · Shift 跑 · J 輕擊連段 · K 重擊 · 按住 C 格擋 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯 · Esc 選單
           </p>
+          {hud.menuOpen && hud.phase === "play" && (
+            <p className="mt-2 text-sm text-ember">選單開著，庭院沒有停下。</p>
+          )}
           {!hud.webgl && (
             <p className="mt-3 text-sm text-hp">這台裝置開不了 WebGL，庭院沒有升起。</p>
           )}
@@ -180,9 +183,9 @@ function Home() {
             <button
               type="button"
               className="min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
-              onClick={() => api.current?.begin()}
+              onClick={() => (hud.phase === "title" ? api.current?.begin() : api.current?.closeMenu())}
             >
-              Start
+              {hud.phase === "title" ? "Start" : "繼續"}
             </button>
             <button
               type="button"
@@ -256,6 +259,9 @@ function Home() {
               </TouchBtn>
               <TouchBtn label="斬" onPress={() => api.current?.attack()}>
                 <Swords className="size-5" />
+              </TouchBtn>
+              <TouchBtn label="重" onPress={() => api.current?.heavy()}>
+                <span className="font-display text-sm">重</span>
               </TouchBtn>
             </div>
           </>

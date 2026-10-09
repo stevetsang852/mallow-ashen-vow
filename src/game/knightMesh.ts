@@ -261,11 +261,27 @@ type Springs = {
   ty: number;
   bobY: number;
   prev: number;
+  vwx: number;
+  vwz: number;
+  vwy: number;
+  vbx: number;
+  vby: number;
+  vbz: number;
+  vhx: number;
+  vhy: number;
+  vhz: number;
+  vcapeX: number;
+  vcapeZ: number;
+  vlx: number;
+  vrx: number;
+  vtx: number;
+  vty: number;
+  vbob: number;
 };
 
 function springsOf(rig: KnightRig): Springs {
   const bag = rig.root.userData as { springs?: Springs };
-  if (!bag.springs) {
+  if (!bag.springs || bag.springs.vwx == null) {
     bag.springs = {
       wx: 0,
       wz: 0,
@@ -284,39 +300,71 @@ function springsOf(rig: KnightRig): Springs {
       ty: 0,
       bobY: 0,
       prev: -1,
+      vwx: 0,
+      vwz: 0,
+      vwy: 0,
+      vbx: 0,
+      vby: 0,
+      vbz: 0,
+      vhx: 0,
+      vhy: 0,
+      vhz: 0,
+      vcapeX: 0,
+      vcapeZ: 0,
+      vlx: 0,
+      vrx: 0,
+      vtx: 0,
+      vty: 0,
+      vbob: 0,
     };
   }
   return bag.springs;
 }
 
-function lag(cur: number, target: number, rate: number, dt: number) {
-  return cur + (target - cur) * (1 - Math.exp(-rate * dt));
+function spring(
+  pos: number,
+  vel: number,
+  target: number,
+  k: number,
+  damp: number,
+  dt: number,
+): [number, number] {
+  vel = (vel + (target - pos) * k * dt) * Math.exp(-damp * dt);
+  return [pos + vel * dt, vel];
+}
+
+function easeInCubic(t: number) {
+  return t * t * t;
+}
+
+function seg(actT: number, a: number, b: number) {
+  return Math.max(0, Math.min(1, (actT - a) / Math.max(0.0001, b - a)));
 }
 
 function combatPose(hint: PoseHint) {
-  const u = hint.u ?? 0;
-  const k = smooth01(Math.min(1, u));
-  const snap = Math.pow(k, hint.move === "overhead" ? 2.1 : 1.25);
+  const u = Math.max(0, Math.min(1, hint.u ?? 0));
   const move = hint.move ?? "cleave";
   if (hint.state === "roar") {
-    const s = Math.sin(Math.min(1, u) * Math.PI);
-    return { wx: -0.15 - s * 0.55, wz: 0, wy: 0, bx: -0.4 * s, by: 0, bz: 0, bobY: s * 0.06 };
+    const s = Math.sin(u * Math.PI);
+    return { wx: -0.2 - s * 0.7, wz: s * 0.35, wy: 0, bx: -0.55 * s, by: 0, bz: 0.08 * s, bobY: s * 0.08 };
   }
   if (hint.state === "telegraph") {
-    if (move === "overhead") return { wx: -0.15 + k * 1.25, wz: 0, wy: 0, bx: -0.5 * k, by: 0, bz: 0, bobY: 0.04 * k };
-    if (move === "shock") return { wx: 0.15 + k * 0.35, wz: 0, wy: 0, bx: 0.2 * k, by: 0, bz: 0, bobY: -0.16 * k };
-    if (move === "rush") return { wx: -0.1 - 0.75 * k, wz: 0.15 * k, wy: 0, bx: 0.48 * k, by: 0, bz: 0, bobY: -0.04 * k };
-    return { wx: -0.3, wz: -1.2 * k, wy: -0.35 * k, bx: -0.06 * k, by: -0.5 * k, bz: 0.14 * k, bobY: 0 };
+    const k = Math.pow(smooth01(u), 0.65);
+    if (move === "overhead") return { wx: -0.2 + k * 1.7, wz: 0.15 * k, wy: 0, bx: -0.7 * k, by: 0, bz: 0, bobY: 0.05 * k };
+    if (move === "shock") return { wx: 0.2 + k * 0.4, wz: 0, wy: 0, bx: 0.35 * k, by: 0, bz: 0, bobY: -0.2 * k };
+    if (move === "rush") return { wx: -0.15 - 0.9 * k, wz: 0.2 * k, wy: 0, bx: 0.7 * k, by: 0, bz: 0, bobY: -0.06 * k };
+    return { wx: 0.15 * k, wz: 1.35 * k, wy: 0.2 * k, bx: -0.28 * k, by: -0.65 * k, bz: 0.12 * k, bobY: -0.02 * k };
   }
   if (hint.state === "swing") {
-    if (move === "overhead") return { wx: 1.1 + (-2.15 - 1.1) * snap, wz: 0, wy: 0, bx: -0.5 + 0.85 * snap, by: 0, bz: 0, bobY: 0.04 * (1 - snap) };
-    if (move === "shock") return { wx: 0.5 - 1.55 * snap, wz: 0, wy: 0, bx: 0.2 + 0.4 * snap, by: 0, bz: 0, bobY: -0.16 * (1 - snap) };
-    if (move === "rush") return { wx: -0.9, wz: 0.1, wy: 0, bx: 0.5, by: 0, bz: 0, bobY: -0.02 };
-    return { wx: -1.75, wz: -1.2 + 2.25 * snap, wy: -0.35 + 0.85 * snap, bx: 0.08 * snap, by: -0.5 + 0.75 * snap, bz: 0.14 * (1 - snap), bobY: 0 };
+    const strike = Math.min(1, Math.pow(Math.min(1, u / 0.58), 0.42));
+    if (move === "overhead") return { wx: 1.5 + (-2.5 - 1.5) * strike, wz: 0.1, wy: 0, bx: -0.7 + 1.15 * strike, by: 0, bz: 0, bobY: 0.05 * (1 - strike) };
+    if (move === "shock") return { wx: 0.55 - 1.7 * strike, wz: 0, wy: 0, bx: 0.3 + 0.45 * strike, by: 0, bz: 0, bobY: -0.18 * (1 - strike) };
+    if (move === "rush") return { wx: -1.05, wz: 0.15, wy: 0, bx: 0.72, by: 0, bz: 0, bobY: -0.03 };
+    return { wx: 0.15 - 0.45 * strike, wz: 1.35 + (-2.55 - 1.35) * strike, wy: 0.2 - 0.55 * strike, bx: -0.28 + 0.55 * strike, by: -0.65 + 1.15 * strike, bz: 0.12 * (1 - strike), bobY: 0 };
   }
   if (hint.state === "recover") {
-    const hold = smooth01(Math.min(1, u));
-    return { wx: -1.15 * (1 - hold), wz: 0.15 * (1 - hold), wy: 0, bx: 0.22 * (1 - hold), by: 0, bz: 0, bobY: -0.05 * (1 - hold) };
+    const hold = Math.pow(smooth01(u), 0.8);
+    return { wx: -0.35 * (1 - hold), wz: -1.7 * (1 - hold), wy: -0.15 * (1 - hold), bx: 0.28 * (1 - hold), by: 0.4 * (1 - hold), bz: 0, bobY: -0.06 * (1 - hold) };
   }
   return null;
 }
@@ -335,33 +383,36 @@ export function poseKnight(
   if (!(dt > 0)) dt = 1 / 60;
   s.prev = t;
 
-  const ph = t * (7.2 + moving * 1.4);
-  const skew = Math.sin(ph + 0.35 * Math.sin(ph));
-  const breathe = Math.sin(t * 2.15);
+  const step = t * (5.2 + moving * 4.8);
+  const skew = Math.sin(step);
+  const pass = Math.cos(step);
+  const breathe = Math.sin(t * 1.7);
+  const stride = Math.min(1, moving * 1.35);
 
   if (rig.legL.userData.baseY == null) rig.legL.userData.baseY = rig.legL.position.y;
   if (rig.legR.userData.baseY == null) rig.legR.userData.baseY = rig.legR.position.y;
 
-  let wx = baked ? 0 : -0.18;
-  let wz = 0;
-  let wy = 0;
-  let bx = 0;
-  let by = 0;
-  let bz = skew * 0.07 * moving;
-  let bobY = Math.abs(skew) * 0.045 * moving + breathe * 0.014;
-  let hx = moving * 0.05 + breathe * 0.03;
-  let hy = Math.sin(t * 0.8) * 0.07 * (1 - moving * 0.4);
-  let hz = -skew * 0.06 * moving + Math.sin(t * 1.5) * 0.035;
-  let lx = skew * 0.95 * moving;
-  let rx = -skew * 0.95 * moving;
-  let tx = moving * 0.2 + Math.sin(t * 2.4) * 0.18;
-  let ty = Math.sin(t * 2.1 + 0.6) * 0.45;
+  let wx = (baked ? 0.05 : -0.12) - skew * 0.42 * stride;
+  let wz = skew * 0.28 * stride;
+  let wy = pass * 0.06 * stride;
+  let bx = Math.abs(pass) * 0.07 * stride + breathe * 0.02;
+  let by = -skew * 0.1 * stride;
+  let bz = skew * 0.14 * stride;
+  let bobY = Math.pow(Math.abs(pass), 1.15) * 0.055 * stride + breathe * 0.012;
+  let hx = -bx * 0.45 + breathe * 0.04;
+  let hy = Math.sin(t * 0.65) * 0.09 * (1 - stride * 0.5);
+  let hz = -bz * 0.35;
+  let lx = skew * 1.15 * stride;
+  let rx = -skew * 1.15 * stride;
+  let tx = -skew * 0.35 * stride + Math.sin(t * 2.2) * 0.22;
+  let ty = Math.sin(t * 1.8 + 0.6) * 0.7 + skew * 0.25 * stride;
   const capeBase = typeof rig.cape.userData.baseX === "number" ? rig.cape.userData.baseX : 0.3;
-  let capeX = capeBase + Math.sin(t * 1.5) * 0.05 + moving * (baked ? 0.16 : 0.3);
-  let capeZ = Math.sin(t * 1.15 + 0.4) * (0.05 + moving * 0.08);
+  let capeX = capeBase + Math.sin(t * 1.3) * 0.06 + stride * 0.34 - bx * 0.4;
+  let capeZ = Math.sin(t * 1.05 + 0.4) * 0.08 - bz * 0.5;
 
   const fight = hint ? combatPose(hint) : null;
-  let weaponRate = moving > 0 ? 14 : 10;
+  let weaponK = fight ? (hint?.state === "swing" ? 260 : 70) : 90;
+  let weaponDamp = fight && hint?.state === "telegraph" ? 11 : 7.5;
   if (fight) {
     wx = fight.wx;
     wz = fight.wz;
@@ -370,85 +421,134 @@ export function poseKnight(
     by = fight.by;
     bz = fight.bz;
     bobY += fight.bobY;
-    weaponRate = hint?.state === "swing" ? 26 : 9;
-    if (hint?.move === "overhead" && hint.state === "telegraph") weaponRate = 7;
+    lx *= 0.25;
+    rx *= 0.25;
+    if (hint?.move === "overhead" && hint.state === "telegraph") weaponK = 42;
   } else if (act === "attack") {
-    const wind = 0.16;
-    const hit = 0.3;
-    const end = 0.52;
-    if (actT < wind) {
-      const k = smooth01(actT / wind);
-      wx = (baked ? 0.5 : 0.35) * k;
-      bx = -0.22 * k;
-      wz = -0.22 * k;
-      by = -0.28 * k;
-    } else if (actT < hit) {
-      const k = Math.pow(smooth01((actT - wind) / (hit - wind)), 1.7);
-      wx = (baked ? 0.5 : 0.35) + ((baked ? -1.7 : -1.9) - (baked ? 0.5 : 0.35)) * k;
-      bx = -0.22 + 0.58 * k;
-      wz = -0.22 + 0.5 * k;
-      by = -0.28 + 0.45 * k;
-      weaponRate = 32;
+    const wind = seg(actT, 0, 0.14);
+    const hit = seg(actT, 0.14, 0.28);
+    const back = seg(actT, 0.28, 0.48);
+    if (actT < 0.14) {
+      const k = easeInCubic(wind);
+      wz = 1.25 * k;
+      wy = 0.25 * k;
+      bx = -0.32 * k;
+      by = -0.6 * k;
+      weaponK = 55;
+    } else if (actT < 0.28) {
+      const k = Math.pow(hit, 0.45);
+      wz = 1.25 + (-2.45 - 1.25) * k;
+      wy = 0.25 - 0.7 * k;
+      bx = -0.32 + 0.62 * k;
+      by = -0.6 + 1.15 * k;
+      wx = -0.35 * k;
+      weaponK = 320;
+      weaponDamp = 9;
     } else {
-      const k = smooth01((actT - hit) / (end - hit));
-      wx = (baked ? -1.7 : -1.9) * (1 - k) + (baked ? -0.15 : -0.18) * k;
-      bx = 0.36 * (1 - k);
-      wz = 0.28 * (1 - k);
-      by = 0.17 * (1 - k);
-      weaponRate = 12;
+      const k = smooth01(back);
+      wz = -2.45 * (1 - k) + -0.35 * k;
+      wy = -0.45 * (1 - k);
+      bx = 0.3 * (1 - k);
+      by = 0.55 * (1 - k);
+      wx = -0.35 * (1 - k);
+      weaponK = 70;
+      weaponDamp = 6;
     }
-    hx += 0.08;
+    lx *= 0.15;
+    rx *= 0.15;
+    hx += 0.1;
+    capeX += 0.25;
+  } else if (act === "heavy") {
+    const wind = seg(actT, 0, 0.3);
+    const hit = seg(actT, 0.3, 0.46);
+    const back = seg(actT, 0.46, 0.8);
+    if (actT < 0.3) {
+      const k = Math.pow(smooth01(wind), 0.7);
+      wx = 1.65 * k;
+      bx = -0.72 * k;
+      by = -0.15 * k;
+      wz = 0.2 * k;
+      weaponK = 40;
+      weaponDamp = 10;
+    } else if (actT < 0.46) {
+      const k = Math.pow(hit, 0.4);
+      wx = 1.65 + (-2.6 - 1.65) * k;
+      bx = -0.72 + 1.2 * k;
+      wz = 0.2 - 0.15 * k;
+      weaponK = 340;
+      weaponDamp = 8;
+    } else {
+      const k = smooth01(back);
+      wx = -2.6 * (1 - k);
+      bx = 0.48 * (1 - k);
+      weaponK = 64;
+      weaponDamp = 6;
+    }
+    lx = 0.15;
+    rx = 0.15;
+    capeX += 0.35;
+  } else if (act === "block") {
+    wx = baked ? 0.25 : 0.1;
+    wz = baked ? -0.95 : -1.2;
+    bx = -0.06 + breathe * 0.03;
+    by = -0.08;
+    lx *= 0.3;
+    rx *= 0.3;
+    weaponK = 140;
   } else if (act === "dodge") {
     const u = Math.min(1, actT / 0.46);
-    const roll = Math.sin(u * Math.PI);
-    const tuck = smooth01(Math.min(1, u / 0.35));
-    bx = 0.22 * roll;
-    bz = 1.05 * roll;
-    bobY += 0.12 * roll;
-    wx = (baked ? -0.55 : -0.8) * tuck;
-    hx = 0.25 * roll;
-    lx *= 0.2;
-    rx *= 0.2;
-    weaponRate = 16;
+    const roll = Math.sin(Math.min(1, u / 0.62) * Math.PI);
+    bx = 1.05 * roll;
+    bz = 0.18 * roll;
+    bobY = -0.07 * roll;
+    wx = -1.15 * roll;
+    wz = 0.45 * roll;
+    hx = 0.35 * roll;
+    lx = 0.55 * roll;
+    rx = -0.25 * roll;
+    capeX += 0.45 * roll;
+    weaponK = 160;
   } else if (act === "hurt") {
-    const k = 1 - Math.exp(-actT * 14);
-    bx = -0.32 * k;
-    hx = -0.4 * k;
-    wx = (baked ? -0.4 : -0.6) * k;
-    bz = 0.12 * k;
-    weaponRate = 18;
+    const k = 1 - Math.exp(-actT * 10);
+    bx = -0.48 * k;
+    hx = -0.55 * k;
+    wx = -0.7 * k;
+    wz = 0.4 * k;
+    bz = 0.16 * k;
+    capeX += 0.3 * k;
+    weaponK = 120;
   } else if (act === "drink") {
-    const k = smooth01(Math.min(1, actT / 0.28));
-    wx = (baked ? -0.25 : -0.45) * k;
-    wz = (baked ? 0.4 : 0.9) * k;
-    hx = 0.28 * k;
-    hy = -0.35 * k;
-  } else if (moving > 0) {
-    wx += -skew * (baked ? 0.38 : 0.22);
-    by += skew * 0.06;
+    const k = smooth01(Math.min(1, actT / 0.32));
+    wx = -0.55 * k;
+    wz = 0.85 * k;
+    hx = 0.32 * k;
+    hy = -0.4 * k;
+    weaponK = 80;
   }
 
-  s.wx = lag(s.wx, wx, weaponRate, dt);
-  s.wz = lag(s.wz, wz, weaponRate, dt);
-  s.wy = lag(s.wy, wy, weaponRate * 0.8, dt);
-  s.bx = lag(s.bx, bx, 12, dt);
-  s.by = lag(s.by, by, 12, dt);
-  s.bz = lag(s.bz, bz, 12, dt);
-  s.hx = lag(s.hx, hx, 10, dt);
-  s.hy = lag(s.hy, hy, 8, dt);
-  s.hz = lag(s.hz, hz, 8, dt);
-  s.lx = lag(s.lx, lx, 16, dt);
-  s.rx = lag(s.rx, rx, 16, dt);
-  s.tx = lag(s.tx, tx, 6, dt);
-  s.ty = lag(s.ty, ty, 5, dt);
-  s.capeX = lag(s.capeX, capeX, 4.5, dt);
-  s.capeZ = lag(s.capeZ, capeZ, 4.5, dt);
-  s.bobY = lag(s.bobY, bobY, 10, dt);
+  [s.wx, s.vwx] = spring(s.wx, s.vwx, wx, weaponK, weaponDamp, dt);
+  [s.wz, s.vwz] = spring(s.wz, s.vwz, wz, weaponK, weaponDamp, dt);
+  [s.wy, s.vwy] = spring(s.wy, s.vwy, wy, weaponK * 0.85, weaponDamp, dt);
+  [s.bx, s.vbx] = spring(s.bx, s.vbx, bx, 150, 12, dt);
+  [s.by, s.vby] = spring(s.by, s.vby, by, 140, 12, dt);
+  [s.bz, s.vbz] = spring(s.bz, s.vbz, bz, 140, 12, dt);
+  [s.hx, s.vhx] = spring(s.hx, s.vhx, hx, 90, 10, dt);
+  [s.hy, s.vhy] = spring(s.hy, s.vhy, hy, 70, 9, dt);
+  [s.hz, s.vhz] = spring(s.hz, s.vhz, hz, 70, 9, dt);
+  [s.lx, s.vlx] = spring(s.lx, s.vlx, lx, 200, 16, dt);
+  [s.rx, s.vrx] = spring(s.rx, s.vrx, rx, 200, 16, dt);
+  [s.tx, s.vtx] = spring(s.tx, s.vtx, tx, 36, 5.5, dt);
+  [s.ty, s.vty] = spring(s.ty, s.vty, ty, 28, 4.5, dt);
+  [s.capeX, s.vcapeX] = spring(s.capeX, s.vcapeX, capeX, 28, 4.2, dt);
+  [s.capeZ, s.vcapeZ] = spring(s.capeZ, s.vcapeZ, capeZ, 28, 4.2, dt);
+  [s.bobY, s.vbob] = spring(s.bobY, s.vbob, bobY, 120, 11, dt);
 
   rig.bob.rotation.x = s.bx;
   rig.bob.rotation.y = s.by;
   rig.bob.rotation.z = s.bz;
   rig.bob.position.y = s.bobY;
+  const squash = act === "dodge" ? 1 - Math.sin(Math.min(1, actT / 0.46) * Math.PI) * 0.16 : 1;
+  rig.bob.scale.set(1 + (1 - squash) * 0.35, squash, 1 + (1 - squash) * 0.2);
   rig.head.rotation.x = s.hx;
   rig.head.rotation.y = s.hy;
   rig.head.rotation.z = s.hz;
@@ -457,9 +557,10 @@ export function poseKnight(
   rig.weapon.rotation.y = s.wy;
   rig.legL.rotation.x = s.lx;
   rig.legR.rotation.x = s.rx;
-  const lift = Math.max(0, skew) * 0.05 * moving;
-  rig.legL.position.y = (rig.legL.userData.baseY as number) + (skew > 0 ? lift : 0);
-  rig.legR.position.y = (rig.legR.userData.baseY as number) + (skew < 0 ? lift : 0);
+  const lift = Math.pow(Math.max(0, skew), 1.15) * 0.07 * stride;
+  const liftR = Math.pow(Math.max(0, -skew), 1.15) * 0.07 * stride;
+  rig.legL.position.y = (rig.legL.userData.baseY as number) + lift;
+  rig.legR.position.y = (rig.legR.userData.baseY as number) + liftR;
   rig.tail.rotation.x = s.tx;
   rig.tail.rotation.y = s.ty;
   if (rig.cape) {
