@@ -555,7 +555,6 @@ export function createGame(
   let hitstop = 0;
   let winArm = 0;
   let swingHits = new Set<number>();
-  let atkQueue: "light" | null = null;
   let invadeIn = 16;
   let heardSteel = false;
   let runStart = 0;
@@ -998,10 +997,6 @@ export function createGame(
 
   function tryAttack(kind: "light" | "heavy" = "light") {
     if (phase !== "play") return;
-    if (player.act === "attack" && player.atk === "light" && kind === "light" && player.combo < 1) {
-      atkQueue = "light";
-      return;
-    }
     if (player.act !== "free" && player.act !== "block") return;
     const cost = kind === "heavy" ? 34 : 16;
     if (!spendSta(cost)) {
@@ -1014,7 +1009,6 @@ export function createGame(
     player.hitDone = false;
     player.atk = kind;
     player.combo = 0;
-    atkQueue = null;
     swingHits = new Set();
     tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
     noise(0.04, kind === "heavy" ? 0.06 : 0.035);
@@ -1581,22 +1575,13 @@ export function createGame(
         burst(player.x, 0.8, player.z, 1.1, 0, 0, "pink");
       }
       if (player.act === "attack") {
-        if (atkQueue === "light" && player.atk === "light" && player.combo < 1 && player.actT > 0.3 && spendSta(14)) {
-          player.combo = 1;
-          player.actT = 0;
-          player.hitDone = false;
-          atkQueue = null;
-          swingHits = new Set();
-          faceTarget();
-          tone(240, 0.08, "triangle", 0.05);
-        }
         const heavy = player.atk === "heavy";
         const open = heavy ? 0.32 : 0.12;
         const shut = heavy ? 0.5 : 0.3;
         if (player.actT > open && player.actT < shut) {
           const fx = -Math.sin(player.yaw);
           const fz = -Math.cos(player.yaw);
-          const dmg = heavy ? 46 : player.combo === 1 ? 28 : 20;
+          const dmg = heavy ? 46 : 20;
           let any = false;
           for (const f of foes) {
             if (!livingFoe(f) || swingHits.has(f.id)) continue;
@@ -1648,9 +1633,7 @@ export function createGame(
         player.act === "attack"
           ? player.atk === "heavy"
             ? 0.78
-            : player.combo === 1
-              ? 0.5
-              : 0.46
+            : 0.5
           : player.act === "dodge"
             ? 0.46
             : player.act === "drink"
