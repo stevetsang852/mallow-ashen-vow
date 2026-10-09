@@ -381,9 +381,10 @@ export function createGame(
   );
   scene.add(embers);
 
-  const sparkPos = new Float32Array(28 * 3);
-  const sparkVel = new Float32Array(28 * 3);
-  const sparkLife = new Float32Array(28);
+  const SPARKS = 48;
+  const sparkPos = new Float32Array(SPARKS * 3);
+  const sparkVel = new Float32Array(SPARKS * 3);
+  const sparkLife = new Float32Array(SPARKS);
   sparkPos.fill(-20);
   const sparkGeo = new THREE.BufferGeometry();
   sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
@@ -391,12 +392,29 @@ export function createGame(
     sparkGeo,
     new THREE.PointsMaterial({
       color: 0xf0d2a4,
-      size: 0.07,
+      size: 0.09,
       transparent: true,
       depthWrite: false,
     }),
   );
   scene.add(sparks);
+
+  const slashMat = new THREE.MeshBasicMaterial({
+    color: 0xffe7c2,
+    transparent: true,
+    opacity: 0.85,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const slashes = Array.from({ length: 4 }, () => {
+    const arc = new THREE.Mesh(new THREE.RingGeometry(0.35, 1.15, 18, 1, 0.2, 1.7), slashMat.clone());
+    arc.visible = false;
+    arc.userData.life = 0;
+    scene.add(arc);
+    return arc;
+  });
+  let slashCursor = 0;
+  let hitFlash = 0;
 
   let playerRig: KnightRig = makeKnight({
     fur: 0xc4a574,
@@ -663,18 +681,33 @@ export function createGame(
     }
   }
 
-  function burst(x: number, y: number, z: number) {
-    for (let i = 0; i < 8; i++) {
-      const k = sparkCursor % 28;
+  function burst(x: number, y: number, z: number, power = 1, dx = 0, dz = 0) {
+    const n = power > 1.3 ? 18 : 12;
+    for (let i = 0; i < n; i++) {
+      const k = sparkCursor % SPARKS;
       sparkCursor++;
       sparkPos[k * 3] = x;
       sparkPos[k * 3 + 1] = y;
       sparkPos[k * 3 + 2] = z;
-      sparkVel[k * 3] = (hash(k + sparkCursor) - 0.5) * 4;
-      sparkVel[k * 3 + 1] = 1.2 + hash(k + 5) * 2.4;
-      sparkVel[k * 3 + 2] = (hash(k + 9) - 0.5) * 4;
-      sparkLife[k] = 0.28 + hash(k) * 0.15;
+      const spread = (hash(k + sparkCursor) - 0.5) * 3.2;
+      sparkVel[k * 3] = dx * (2.4 + power) + spread;
+      sparkVel[k * 3 + 1] = 1.4 + hash(k + 5) * 3.2 * power;
+      sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2;
+      sparkLife[k] = 0.22 + hash(k) * 0.22;
     }
+  }
+
+  function slash(x: number, y: number, z: number, yaw: number, heavy: boolean) {
+    const arc = slashes[slashCursor % slashes.length]!;
+    slashCursor++;
+    arc.visible = true;
+    arc.userData.life = heavy ? 0.16 : 0.11;
+    arc.position.set(x, y, z);
+    arc.rotation.set(0.4, yaw, heavy ? -0.6 : 0.35);
+    arc.scale.setScalar(heavy ? 1.35 : 0.95);
+    const mat = arc.material as THREE.MeshBasicMaterial;
+    mat.color.setHex(heavy ? 0xfff1d2 : 0xffd7ea);
+    mat.opacity = 0.9;
   }
 
   function tone(freq: number, dur: number, type: OscillatorType, gain: number) {
@@ -690,6 +723,31 @@ export function createGame(
     o.connect(g).connect(audioCtx.destination);
     o.start(t0);
     o.stop(t0 + dur + 0.02);
+  }
+
+  function noise(dur: number, gain: number) {
+    if (muted || !audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    const n = Math.floor(audioCtx.sampleRate * dur);
+    const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = 900;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    src.connect(filter).connect(g).connect(audioCtx.destination);
+    src.start(t0);
+  }
+
+  function clang(heavy: boolean) {
+    noise(heavy ? 0.09 : 0.05, heavy ? 0.2 : 0.12);
+    tone(heavy ? 168 : 246, heavy ? 0.14 : 0.08, "square", heavy ? 0.07 : 0.05);
+    tone(heavy ? 92 : 140, 0.16, "triangle", 0.05);
   }
 
   function clampWorld(x: number, z: number, r: number, side: "north" | "south" | "any") {
@@ -768,8 +826,13 @@ export function createGame(
     f.stagger = 1.05;
     f.hp = Math.max(0, f.hp - 16);
     say("架勢崩了");
-    hitstop = Math.max(hitstop, 0.09);
-    tone(80, 0.16, "square", 0.06);
+    hitstop = Math.max(hitstop, 0.16);
+    shake = Math.max(shake, 0.55);
+    hitFlash = 1;
+    burst(f.x, 1.1, f.z, 1.8);
+    slash(f.x, 1.05, f.z, f.yaw, true);
+    clang(true);
+    tone(70, 0.22, "sawtooth", 0.06);
   }
 
   function hurtPlayer(amount: number, from?: Foe) {
@@ -787,8 +850,11 @@ export function createGame(
         player.hp = Math.max(0, player.hp - Math.max(1, Math.round(amount * 0.18)));
         from.poise += 22;
         breakPoise(from);
-        shake = Math.max(shake, 0.12);
-        tone(180, 0.08, "square", 0.04);
+        shake = Math.max(shake, 0.22);
+        hitstop = Math.max(hitstop, 0.05);
+        burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1);
+        noise(0.04, 0.1);
+        tone(210, 0.07, "square", 0.05);
         if (player.hp <= 0) die();
         else if (player.sta <= 0) {
           player.act = "hurt";
@@ -886,7 +952,8 @@ export function createGame(
     player.combo = 0;
     atkQueue = null;
     swingHits = new Set();
-    tone(kind === "heavy" ? 140 : 210, 0.12, "triangle", 0.06);
+    tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
+    noise(0.04, kind === "heavy" ? 0.06 : 0.035);
   }
 
   function tryDodge() {
@@ -904,7 +971,8 @@ export function createGame(
     player.actT = 0;
     const face = Math.atan2(-player.dodgeX, -player.dodgeZ);
     player.yaw = face;
-    tone(140, 0.08, "sine", 0.04);
+    noise(0.06, 0.05);
+    tone(180, 0.07, "sine", 0.03);
   }
 
   function tryFlask() {
@@ -1489,7 +1557,8 @@ export function createGame(
                   f.t = 0;
                 }
               }
-              burst(f.x, 0.9, f.z);
+              burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz);
+              slash(f.x, 1.05, f.z, player.yaw, heavy);
               any = true;
             }
           }
@@ -1500,9 +1569,10 @@ export function createGame(
               say("刀聲開了");
             }
             heardSteel = true;
-            shake = Math.max(shake, heavy ? 0.26 : 0.14);
-            hitstop = Math.max(hitstop, heavy ? 0.07 : 0.04);
-            tone(heavy ? 110 : 160, 0.09, "square", 0.05);
+            shake = Math.max(shake, heavy ? 0.48 : 0.28);
+            hitstop = Math.max(hitstop, heavy ? 0.12 : 0.07);
+            hitFlash = heavy ? 0.85 : 0.45;
+            clang(heavy);
           }
         }
       }
@@ -1658,8 +1728,9 @@ export function createGame(
     const yaw = camYaw + titleDrift;
     const fx = -Math.sin(yaw);
     const fz = -Math.cos(yaw);
-    const sh = shake > 0 ? Math.sin(time * 70) * shake * 0.18 : 0;
-    const sv = shake > 0 ? Math.cos(time * 53) * shake * 0.1 : 0;
+    const sh = shake > 0 ? Math.sin(time * 78) * shake * 0.28 : 0;
+    const sv = shake > 0 ? Math.cos(time * 61) * shake * 0.16 : 0;
+    renderer.toneMappingExposure = 1.28 + hitFlash * 0.55;
     const look = lockFoe();
     const lookX = look ? player.x * 0.62 + look.x * 0.38 : player.x;
     const lookZ = look ? player.z * 0.62 + look.z * 0.38 : player.z;
@@ -1787,7 +1858,19 @@ export function createGame(
     }
     emberGeo.attributes.position!.needsUpdate = true;
 
-    for (let i = 0; i < 28; i++) {
+    for (const arc of slashes) {
+      const life = Number(arc.userData.life ?? 0);
+      if (life <= 0) {
+        arc.visible = false;
+        continue;
+      }
+      arc.userData.life = life - 0.016;
+      arc.scale.multiplyScalar(1.04);
+      (arc.material as THREE.MeshBasicMaterial).opacity = Math.max(0, life * 5);
+    }
+    if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - 0.05);
+
+    for (let i = 0; i < SPARKS; i++) {
       if (sparkLife[i]! <= 0) {
         sparkPos[i * 3 + 1] = -30;
         continue;
