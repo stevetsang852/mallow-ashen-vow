@@ -1739,6 +1739,8 @@ export function createGame(
     player.z = moved.z;
 
     for (const f of foes) stepFoe(f, dt);
+    autoThink(dt);
+    if (autoPanel) paintAuto();
     const roadClear = foes[2]!.state === "dead";
     const away = Math.hypot(player.x - FIRE.x, player.z - FIRE.z) > 6.5;
     const dukeBusy = foes[3]!.aggro && foes[3]!.state !== "dead";
@@ -2034,7 +2036,11 @@ export function createGame(
         }
         return;
       }
-      if (e.repeat || phase !== "play") return;
+      if (!e.repeat && e.key.length === 1) {
+        codeBuf = (codeBuf + e.key.toLowerCase()).slice(-16);
+        if (codeBuf.endsWith(DEBUG_CODE)) unlockAuto();
+      }
+      if (e.repeat || phase !== "play" || autoOn) return;
       if (e.code === "Space") tryDodge();
       if (e.code === "KeyJ") tryAttack("light");
       if (e.code === "KeyK") tryAttack("heavy");
@@ -2046,6 +2052,127 @@ export function createGame(
     { signal },
   );
   window.addEventListener("keyup", (e) => keys.delete(e.code), { signal });
+
+  const DEBUG_CODE = "vowdebug";
+  let codeBuf = "";
+  let autoOn = false;
+  let autoCd = 0;
+  let autoPanel: HTMLDivElement | null = null;
+  const autoStatus = document.createElement("p");
+
+  function paintAuto() {
+    if (!autoPanel) return;
+    const foe = foes.find((f) => f.state !== "dead" && (f.kind !== "demon" || f.aggro));
+    autoStatus.textContent = autoOn
+      ? `自動中 · ${phase} · HP ${Math.round(player.hp)} · ${foe ? foe.name + " " + foe.state : "無目標"}`
+      : "已解鎖。自動戰鬥還沒開。";
+  }
+
+  function unlockAuto() {
+    if (autoPanel) return;
+    const host = canvas.parentElement ?? document.body;
+    const panel = document.createElement("div");
+    panel.dataset.qa = "mallow-auto";
+    panel.style.cssText = "position:absolute;left:8px;bottom:8px;z-index:60;max-width:220px;padding:8px;background:#1b1714ee;color:#f3efe7;border:1px solid #8a5a3a;font:12px/1.4 sans-serif;";
+    const title = document.createElement("p");
+    title.textContent = "QA · 騎士貓自動";
+    title.style.margin = "0 0 6px";
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.gap = "6px";
+    const mk = (label: string, fn: () => void) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.style.cssText = "min-height:32px;padding:0 8px;background:#e85d04;color:#1b1714;border:0;";
+      b.addEventListener("click", fn);
+      return b;
+    };
+    row.append(
+      mk("自動", () => {
+        autoOn = !autoOn;
+        if (autoOn && phase === "title") begin();
+        paintAuto();
+      }),
+      mk("再起", () => {
+        if (phase === "dead" || phase === "win") rise();
+        else if (phase === "title") begin();
+      }),
+      mk("關", () => {
+        autoOn = false;
+        panel.remove();
+        autoPanel = null;
+        sessionStorage.removeItem("mallow-qa");
+      }),
+    );
+    autoStatus.style.margin = "6px 0 0";
+    panel.append(title, row, autoStatus);
+    host.appendChild(panel);
+    autoPanel = panel;
+    sessionStorage.setItem("mallow-qa", "1");
+    paintAuto();
+    say("測試通道開了");
+  }
+
+  function autoThink(dt: number) {
+    if (!autoOn || menuOpen) return;
+    autoCd = Math.max(0, autoCd - dt);
+    if (phase === "title") {
+      begin();
+      return;
+    }
+    if (phase === "dead" || phase === "win") {
+      if (autoCd <= 0) {
+        if (phase === "dead") rise();
+        else again();
+        autoCd = 1.1;
+      }
+      return;
+    }
+    if (player.act === "hurt" || player.act === "drink" || player.act === "dodge") return;
+    const foe = nearestFoe(18) ?? foes.find((f) => f.kind === "hollow" && f.state !== "dead") ?? null;
+    if (!foe) return;
+    if (lockId !== foe.id) lockId = foe.id;
+    const dx = foe.x - player.x;
+    const dz = foe.z - player.z;
+    const dist = Math.hypot(dx, dz) || 0.0001;
+    const fx = -Math.sin(camYaw);
+    const fz = -Math.cos(camYaw);
+    const rx = Math.cos(camYaw);
+    const rz = -Math.sin(camYaw);
+    const forward = (dx * fx + dz * fz) / dist;
+    const right = (dx * rx + dz * rz) / dist;
+    keys.delete("KeyW");
+    keys.delete("KeyA");
+    keys.delete("KeyS");
+    keys.delete("KeyD");
+    keys.delete("ShiftLeft");
+    const danger = foe.state === "telegraph" || foe.state === "swing";
+    if (danger && dist < 3.4 && autoCd <= 0 && player.act === "free") {
+      keys.add(right > 0 ? "KeyD" : "KeyA");
+      tryDodge();
+      autoCd = foe.move === "shock" ? 0.7 : 0.42;
+      return;
+    }
+    if (player.hp < 42 && player.flasks > 0 && dist > 2.4 && player.act === "free" && autoCd <= 0) {
+      tryFlask();
+      autoCd = 0.9;
+      return;
+    }
+    if ((foe.state === "recover" || foe.state === "hurt" || foe.stagger > 0) && dist < 2.35 && autoCd <= 0) {
+      tryAttack(foe.state === "hurt" || foe.stagger > 0 ? "heavy" : "light");
+      autoCd = 0.38;
+      return;
+    }
+    if (dist > 1.65) {
+      if (forward > 0.15) keys.add("KeyW");
+      else if (forward < -0.15) keys.add("KeyS");
+      if (right > 0.15) keys.add("KeyD");
+      else if (right < -0.15) keys.add("KeyA");
+      if (dist > 3.2) keys.add("ShiftLeft");
+    }
+  }
+
   window.addEventListener("blur", () => keys.clear(), { signal });
 
   window.__controlsTest = {
@@ -2109,6 +2236,7 @@ export function createGame(
   });
 
   emit(true);
+  if (sessionStorage.getItem("mallow-qa") === "1") unlockAuto();
 
   function begin() {
     if (phase === "play") return;
@@ -2162,6 +2290,7 @@ export function createGame(
     ro.disconnect();
     renderer.setAnimationLoop(null);
     if (window.__controlsTest) delete window.__controlsTest;
+    autoPanel?.remove();
     disposeObject(scene);
     stoneTex?.dispose();
     renderer.dispose();
