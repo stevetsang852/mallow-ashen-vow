@@ -1,26 +1,58 @@
 # Mallow: Ashen Vow 粉誓
 
-A small browser souls-like. You play Sir Mallow, a kitten knight with a pink bow, silver plate, and a sword that is slightly too big.
+瀏覽器類魂垂直切片。玩家是 Sir Mallow，一隻戴粉紅蝴蝶結、穿銀甲、劍有點太大的騎士貓。
 
-This is a **Three.js** demo you can play in the browser. It is not a Unity project and it does not open in the Unity editor. The combat is the part worth testing: lock on, roll with a short invincible window, spend stamina, drink from the warm flask, rest at the wick.
+這是 **Three.js** 網頁遊戲，不是 Unity 專案。值得測的是戰鬥：鎖定、翻滾無敵、體力、格擋、架勢、暖瓶、火芯。
 
-## Play
+## 現在進度（2026-10-09）
 
-- **WASD** move (camera-relative). Drag the right mouse button to orbit.
-- **Click** or **J** to swing.
-- **Space** to roll.
-- **Q** to lock on. Press again to switch targets.
-- **R** warm flask.
-- **E** rest at the bonfire (heal and refill). **F** there spends 200 ash for +12 max health.
-- On a phone, use the stick and the buttons on the right.
+可玩的一場庭院已經在 `main`。
 
-Clear the three ash-shell attendants, step through the arch, and fell the Duke of Soot. If you fall, your ash stays where you died.
+- 路中灰殼教輕擊和翻滾。兩側灰殼前搖較長、傷害較高，教格擋。
+- 三隻灰殼倒下後拱門打開，煤灰公爵醒來。
+- 公爵四招：橫斬、舉劍重擊、震地、低頭衝鋒。半血進入第二階段。衝鋒收招在二階段較長，留給懲罰。
+- 重擊和成功格擋會累敵人架勢。架勢崩了會硬直約 1 秒，並多吃一段傷害。
+- 翻滾跟輸入方向；沒有輸入才朝角色背後滾。
+- 鎖定鏡頭繞玩家與目標之間，帶延遲，不會硬黏在貓身上。
+- 路中灰殼倒下、且離開火芯一段距離之後，線上惡魔紅契才可能侵入。公爵已醒來時不侵入。
+- 第一下打中會打開刀聲。PayMe 贊助文案在標題、Esc 選單和通關畫面。
+- 死亡掉灰，走回去撿。火芯回血、回瓶。200 灰可鍛誓 +12 生命，上限 180。
 
-## Run locally
+## 操作
+
+- **WASD** 相機相對移動。右鍵拖曳轉鏡頭。
+- **Shift** 跑步，吃體力。
+- **J** 或點擊：輕擊，可再按一次連段。**K**：重擊。
+- **按住 C** 格擋。體力空了會破防。
+- **Space** 翻滾。有方向就朝方向滾，約 0.04–0.34 秒無敵。
+- **Q** 鎖定，再按切下一個近處目標。
+- **R** 暖瓶。**E** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
+- **Esc** 選單。手機用左搖桿和右側按鈕。
+
+## 同事接手
+
+戰鬥數字和狀態機都在 `src/game/createGame.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts` 和 `src/game/mallowRig.ts`。
+
+先不要加地圖或第二個主角。粉紅蝴蝶結和太大的劍就是識別。
+
+建議下一刀只做這些：
+
+1. 把 `createGame.ts` 拆成玩家、敵人、鏡頭三塊。招式數字先留在同一個表。
+2. 自己連續打公爵五次。若有一次不知道死在哪招，就把那招的前搖再拉長，不要加新敵人。
+3. 架勢條還沒畫在 HUD 上。崩了才有字，之後可以加一條短條。
+4. 音效仍是 WebAudio 合成。第一刀會自動開聲，標題的靜音按鈕仍可用。
+
+## 本地跑
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open the printed local address.
+打開終端印出的本地位址。需要 WebGL。
+
+## Planning
+
+- 短期：架勢 HUD、公爵收招手感、README 與實機操作保持同步。
+- 不做：開放世界、武器樹、第二主角。
+- 線上惡魔保持稀有，不要在開場 7 秒就出現。

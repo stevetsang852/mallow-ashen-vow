@@ -164,7 +164,7 @@ function Home() {
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
           <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            戴粉紅蝴蝶結的騎士貓。先單挑路中的灰殼，兩側要走近才會醒。輕擊可再按一次連段，重擊能打掉前搖。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
+            戴粉紅蝴蝶結的騎士貓。先單挑路中灰殼，輕擊再滾。兩側灰殼很重，按住格擋。重擊和格擋會累架勢，崩了就能砍。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。衝鋒收招最長。第一刀會打開刀聲。
           </p>
           <p className="mt-3 text-sm leading-relaxed text-steel">
             WASD 走 · Shift 跑 · J 輕擊連段 · K 重擊 · 按住 C 格擋 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯 · Esc 選單

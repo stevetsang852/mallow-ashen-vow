@@ -107,6 +107,9 @@ type Foe = {
   span: number;
   aimX: number;
   aimZ: number;
+  poise: number;
+  poiseMax: number;
+  stagger: number;
 };
 
 export const INITIAL_HUD: HudSnap = {
@@ -194,12 +197,15 @@ function template(): Foe[] {
     span: 1,
     aimX: 0,
     aimZ: 0,
+    poise: 0,
+    poiseMax: kind === "duke" ? 86 : kind === "demon" ? 48 : id === 3 ? 36 : 52,
+    stagger: 0,
   });
   return [
-    row(1, "灰殼侍從", "hollow", -5.8, -3.8, 58, 1.85, 16, 1.55, 0.78, 3.2, 0.42),
-    row(2, "灰殼侍從", "hollow", 5.6, -4.0, 58, 1.85, 16, 1.55, 0.78, 3.2, 0.42),
-    row(3, "灰殼侍從", "hollow", 0.15, -4.5, 70, 1.85, 16, 1.65, 0.74, 5.0, 0.44),
-    row(4, "煤灰公爵", "duke", 0, -14.1, 280, 1.7, 30, 2.15, 0.84, 10, 0.78),
+    row(1, "側翼灰殼", "hollow", -5.8, -3.8, 58, 1.7, 22, 1.55, 1.08, 3.1, 0.42),
+    row(2, "側翼灰殼", "hollow", 5.6, -4.0, 58, 1.7, 22, 1.55, 1.08, 3.1, 0.42),
+    row(3, "路中灰殼", "hollow", 0.15, -4.5, 64, 1.75, 14, 1.55, 0.62, 5.2, 0.44),
+    row(4, "煤灰公爵", "duke", 0, -14.1, 280, 1.7, 30, 2.15, 0.96, 10, 0.78),
     row(5, "紅契", "demon", 42, 42, 150, 2.65, 16, 1.7, 0.4, 7, 0.4),
   ];
 }
@@ -515,7 +521,8 @@ export function createGame(
   let winArm = 0;
   let swingHits = new Set<number>();
   let atkQueue: "light" | null = null;
-  let invadeIn = 7;
+  let invadeIn = 16;
+  let heardSteel = false;
   let runStart = 0;
   let frozenRun = 0;
   let muted = true;
@@ -748,11 +755,24 @@ export function createGame(
     lockId = null;
     warnedHollow = false;
     winArm = 0;
-    invadeIn = 7;
+    invadeIn = 16;
     swingHits = new Set();
   }
 
-  function hurtPlayer(amount: number, from?: { x: number; z: number }) {
+  function breakPoise(f: Foe) {
+    f.poise += 0;
+    if (f.poise < f.poiseMax || f.state === "dead") return;
+    f.poise = 0;
+    f.state = "hurt";
+    f.t = 0;
+    f.stagger = 1.05;
+    f.hp = Math.max(0, f.hp - 16);
+    say("架勢崩了");
+    hitstop = Math.max(hitstop, 0.09);
+    tone(80, 0.16, "square", 0.06);
+  }
+
+  function hurtPlayer(amount: number, from?: Foe) {
     if (phase !== "play" || player.hp <= 0 || player.invuln > 0) return;
     if (player.act === "dodge" && player.actT > 0.04 && player.actT < 0.34) return;
     if (player.act === "block" && from) {
@@ -765,6 +785,8 @@ export function createGame(
         player.sta = Math.max(0, player.sta - 16);
         player.staDelay = 0.4;
         player.hp = Math.max(0, player.hp - Math.max(1, Math.round(amount * 0.18)));
+        from.poise += 22;
+        breakPoise(from);
         shake = Math.max(shake, 0.12);
         tone(180, 0.08, "square", 0.04);
         if (player.hp <= 0) die();
@@ -984,8 +1006,8 @@ export function createGame(
     f.state = "telegraph";
     f.t = 0;
     f.swung = false;
-    const slow = p2 ? 0.84 : 1;
-    f.span = (move === "overhead" ? 1.08 : move === "shock" ? 0.92 : move === "rush" ? 0.62 : 0.74) * slow;
+    const slow = p2 ? 0.9 : 1;
+    f.span = (move === "overhead" ? 1.22 : move === "shock" ? 1.05 : move === "rush" ? 0.72 : 0.86) * slow;
   }
 
   function stepDuke(f: Foe, dt: number, dx: number, dz: number, dist: number) {
@@ -1012,7 +1034,8 @@ export function createGame(
     }
     if (f.state === "hurt") {
       f.t += dt;
-      if (f.t > (p2 ? 0.16 : 0.28)) {
+      if (f.t > (f.stagger || (p2 ? 0.16 : 0.28))) {
+        f.stagger = 0;
         f.state = "chase";
         f.cd = 0.2;
       }
@@ -1077,7 +1100,7 @@ export function createGame(
         f.state = "recover";
         f.t = 0;
         f.span =
-          f.chain > 0 ? 0.2 : f.move === "overhead" ? 1.08 : f.move === "shock" ? 1.22 : f.move === "rush" ? 0.8 : 0.74;
+          f.chain > 0 ? 0.2 : f.move === "overhead" ? 1.12 : f.move === "shock" ? 1.22 : f.move === "rush" ? (p2 ? 1.28 : 0.92) : 0.8;
       }
       return;
     }
@@ -1318,9 +1341,10 @@ export function createGame(
         say("煤灰公爵醒來了");
       } else {
         f.state = "chase";
-        if (!warnedHollow) {
+        if (f.id === 3) say("路中灰殼。輕擊，再滾");
+        else if (!warnedHollow) {
           warnedHollow = true;
-          say("灰殼看見你了");
+          say("側翼很重。按住格擋");
         }
       }
     }
@@ -1338,7 +1362,10 @@ export function createGame(
 
     if (f.state === "hurt") {
       f.t += dt;
-      if (f.t > 0.2) f.state = "chase";
+      if (f.t > (f.stagger || 0.2)) {
+        f.stagger = 0;
+        f.state = "chase";
+      }
       return;
     }
     if (f.state === "telegraph") {
@@ -1444,12 +1471,23 @@ export function createGame(
             const dot = (fx * dx + fz * dz) / dist;
             if (dist < reach && dot > (heavy ? 0.28 : 0.16)) {
               swingHits.add(f.id);
-              f.hp = Math.max(0, f.hp - dmg);
+              const posture = heavy ? 34 : 12;
+              f.poise += posture;
+              const broken = f.poise >= f.poiseMax;
+              f.hp = Math.max(0, f.hp - Math.round(dmg * (broken ? 1.5 : 1)));
               f.flash = 0.12;
-              const armored = f.state === "swing" || f.state === "roar" || (f.state === "telegraph" && !(heavy && f.kind !== "duke"));
-              if (!armored) {
+              if (broken) {
+                f.poise = 0;
                 f.state = "hurt";
                 f.t = 0;
+                f.stagger = 1.05;
+                say("架勢崩了");
+              } else {
+                const armored = f.state === "swing" || f.state === "roar" || (f.state === "telegraph" && !(heavy && f.kind !== "duke"));
+                if (!armored) {
+                  f.state = "hurt";
+                  f.t = 0;
+                }
               }
               burst(f.x, 0.9, f.z);
               any = true;
@@ -1457,6 +1495,11 @@ export function createGame(
           }
           if (any && !player.hitDone) {
             player.hitDone = true;
+            if (muted && !heardSteel) {
+              muted = false;
+              say("刀聲開了");
+            }
+            heardSteel = true;
             shake = Math.max(shake, heavy ? 0.26 : 0.14);
             hitstop = Math.max(hitstop, heavy ? 0.07 : 0.04);
             tone(heavy ? 110 : 160, 0.09, "square", 0.05);
@@ -1558,9 +1601,10 @@ export function createGame(
     player.z = moved.z;
 
     for (const f of foes) stepFoe(f, dt);
-    const away = Math.hypot(player.x - FIRE.x, player.z - FIRE.z) > 2.5;
+    const roadClear = foes[2]!.state === "dead";
+    const away = Math.hypot(player.x - FIRE.x, player.z - FIRE.z) > 6.5;
     const dukeBusy = foes[3]!.aggro && foes[3]!.state !== "dead";
-    if (away && !dukeBusy && player.hp > 0) {
+    if (roadClear && away && !dukeBusy && player.hp > 0) {
       invadeIn -= dt;
       if (invadeIn <= 0) summonDemon();
     }
@@ -1599,7 +1643,7 @@ export function createGame(
 
     if (locked) {
       const face = Math.atan2(-(locked.x - player.x), -(locked.z - player.z));
-      camYaw = dampAngle(camYaw, face, 5, dt);
+      camYaw = dampAngle(camYaw, face, 3.1, dt);
     }
 
     emitAcc += dt;
@@ -1616,8 +1660,11 @@ export function createGame(
     const fz = -Math.cos(yaw);
     const sh = shake > 0 ? Math.sin(time * 70) * shake * 0.18 : 0;
     const sv = shake > 0 ? Math.cos(time * 53) * shake * 0.1 : 0;
+    const look = lockFoe();
+    const lookX = look ? player.x * 0.62 + look.x * 0.38 : player.x;
+    const lookZ = look ? player.z * 0.62 + look.z * 0.38 : player.z;
     camera.position.set(player.x - fx * camDist + sh, camHeight + sv, player.z - fz * camDist);
-    camera.lookAt(player.x, 1.05, player.z);
+    camera.lookAt(lookX, 1.05, lookZ);
 
     const speed = Math.hypot(player.vx, player.vz);
     const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
