@@ -545,6 +545,13 @@ export function createGame(
   let camYaw = 0.15;
   let camDist = 6.1;
   let camHeight = 2.2;
+  let camX = SPAWN.x;
+  let camY = 2.2;
+  let camZ = SPAWN.z + 6;
+  let camKick = 0;
+  let camRoll = 0;
+  let fovKick = 0;
+  let lastCamT = 0;
   let gateOpen = false;
   let lockId: number | null = null;
   let dropped: { x: number; z: number; n: number } | null = null;
@@ -1004,6 +1011,7 @@ export function createGame(
       return;
     }
     faceTarget();
+    camKick = Math.max(camKick, kind === "heavy" ? 0.32 : 0.16);
     player.act = "attack";
     player.actT = 0;
     player.hitDone = false;
@@ -1625,6 +1633,9 @@ export function createGame(
             shake = Math.max(shake, heavy ? 0.48 : 0.28);
             hitstop = Math.max(hitstop, heavy ? 0.12 : 0.07);
             hitFlash = heavy ? 0.85 : 0.45;
+            camKick = Math.max(camKick, heavy ? 0.72 : 0.4);
+            fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
+            camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
             clang(heavy);
           }
         }
@@ -1778,6 +1789,8 @@ export function createGame(
   }
 
   function draw(time: number) {
+    const dt = lastCamT === 0 ? 0.016 : Math.min(0.05, time - lastCamT);
+    lastCamT = time;
     const titleDrift = phase === "title" ? Math.sin(time * 0.28) * 0.35 : 0;
     const yaw = camYaw + titleDrift;
     const fx = -Math.sin(yaw);
@@ -1786,10 +1799,32 @@ export function createGame(
     const sv = shake > 0 ? Math.cos(time * 61) * shake * 0.16 : 0;
     renderer.toneMappingExposure = 1.28 + hitFlash * 0.55;
     const look = lockFoe();
-    const lookX = look ? player.x * 0.62 + look.x * 0.38 : player.x;
-    const lookZ = look ? player.z * 0.62 + look.z * 0.38 : player.z;
-    camera.position.set(player.x - fx * camDist + sh, camHeight + sv, player.z - fz * camDist);
-    camera.lookAt(lookX, 1.05, lookZ);
+    const swing = player.act === "attack" ? Math.sin(Math.min(1, player.actT / 0.36) * Math.PI) : 0;
+    const punch = swing * (player.atk === "heavy" ? 0.7 : 0.38);
+    camKick = Math.max(0, camKick - dt * 2.8);
+    fovKick = Math.max(0, fovKick - dt * 6);
+    camRoll *= Math.exp(-dt * 9);
+    const dist = Math.max(3.1, camDist - punch - camKick);
+    const rx = Math.cos(yaw);
+    const rz = -Math.sin(yaw);
+    const shoulder = look ? 0.62 : 0;
+    const goalX = player.x - fx * dist + rx * shoulder;
+    const goalZ = player.z - fz * dist + rz * shoulder;
+    const goalY = camHeight + (look ? 0.28 : 0) + sv;
+    const follow = 1 - Math.exp(-dt * (player.act === "attack" ? 16 : 7.5));
+    camX += (goalX - camX) * follow;
+    camY += (goalY - camY) * follow;
+    camZ += (goalZ - camZ) * follow;
+    const lookX = look ? player.x * 0.58 + look.x * 0.42 : player.x;
+    const lookZ = look ? player.z * 0.58 + look.z * 0.42 : player.z;
+    camera.position.set(camX + sh, camY, camZ);
+    camera.lookAt(lookX, look ? 1.15 : 1.05, lookZ);
+    camera.rotateZ(camRoll);
+    const nextFov = 42 - fovKick;
+    if (Math.abs(camera.fov - nextFov) > 0.02) {
+      camera.fov = nextFov;
+      camera.updateProjectionMatrix();
+    }
 
     const speed = Math.hypot(player.vx, player.vz);
     const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
