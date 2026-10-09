@@ -68,7 +68,7 @@ function Home() {
   }, []);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-bg text-fg select-none">
+    <main className="relative h-dvh w-full overflow-hidden bg-bg text-fg select-none">
       <canvas
         ref={canvasRef}
         className="absolute inset-0 h-full w-full touch-none"
@@ -250,22 +250,26 @@ function Home() {
         {hud.phase === "play" && (
           <>
             <Stick onChange={(x, y) => api.current?.setStick(x, y)} />
-            <div className="pointer-events-auto absolute right-3 bottom-3 grid grid-cols-2 gap-2">
-              <TouchBtn label="鎖" onPress={() => api.current?.lock()}>
-                <Shield className="size-5" />
-              </TouchBtn>
-              <TouchBtn label="瓶" onPress={() => api.current?.flask()}>
-                <Flame className="size-5" />
-              </TouchBtn>
-              <TouchBtn label="滾" onPress={() => api.current?.dodge()}>
-                <span className="font-display text-sm">滾</span>
-              </TouchBtn>
-              <TouchBtn label="斬" onPress={() => api.current?.attack()}>
-                <Swords className="size-5" />
-              </TouchBtn>
-              <TouchBtn label="重" onPress={() => api.current?.heavy()}>
-                <span className="font-display text-sm">重</span>
-              </TouchBtn>
+            <div className="pointer-events-auto absolute right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col items-end gap-2">
+              <div className="flex gap-2">
+                <TouchBtn label="鎖" onPress={() => api.current?.lock()}>
+                  <Shield className="size-5" />
+                </TouchBtn>
+                <TouchBtn label="瓶" onPress={() => api.current?.flask()}>
+                  <Flame className="size-5" />
+                </TouchBtn>
+              </div>
+              <div className="flex gap-2">
+                <TouchBtn label="滾" onPress={() => api.current?.dodge()}>
+                  <span className="font-display text-sm">滾</span>
+                </TouchBtn>
+                <TouchBtn label="斬" onPress={() => api.current?.attack()}>
+                  <Swords className="size-5" />
+                </TouchBtn>
+                <TouchBtn label="重" onPress={() => api.current?.heavy()}>
+                  <span className="font-display text-sm">重</span>
+                </TouchBtn>
+              </div>
             </div>
           </>
         )}
@@ -287,9 +291,10 @@ function TouchBtn({
     <button
       type="button"
       aria-label={label}
-      className="grid h-14 w-14 place-items-center border border-line bg-surface text-fg"
+      className="grid h-16 w-16 place-items-center border border-line bg-surface/95 text-fg touch-none"
       onPointerDown={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onPress();
       }}
     >
@@ -321,7 +326,7 @@ function Stick({ onChange }: { onChange: (x: number, y: number) => void }) {
   return (
     <div
       ref={base}
-      className="pointer-events-auto absolute bottom-3 left-3 grid h-32 w-32 place-items-center rounded-full border border-line bg-surface/80"
+      className="pointer-events-auto absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] grid h-32 w-32 place-items-center rounded-full border border-line bg-surface/80 touch-none"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         update(e.clientX, e.clientY);

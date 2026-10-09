@@ -37,7 +37,7 @@
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
   .touch-controls {
     display: none;
   }
