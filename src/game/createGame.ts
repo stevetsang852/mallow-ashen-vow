@@ -381,23 +381,40 @@ export function createGame(
   );
   scene.add(embers);
 
-  const SPARKS = 48;
+  const SPARKS = 96;
   const sparkPos = new Float32Array(SPARKS * 3);
   const sparkVel = new Float32Array(SPARKS * 3);
   const sparkLife = new Float32Array(SPARKS);
+  const sparkCol = new Float32Array(SPARKS * 3);
   sparkPos.fill(-20);
   const sparkGeo = new THREE.BufferGeometry();
   sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
+  sparkGeo.setAttribute("color", new THREE.BufferAttribute(sparkCol, 3));
   const sparks = new THREE.Points(
     sparkGeo,
     new THREE.PointsMaterial({
-      color: 0xf0d2a4,
-      size: 0.09,
+      size: 0.11,
+      vertexColors: true,
       transparent: true,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     }),
   );
   scene.add(sparks);
+  const dustRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.35, 0.58, 36),
+    new THREE.MeshBasicMaterial({
+      color: 0xd7c4a4,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  dustRing.rotation.x = -Math.PI / 2;
+  dustRing.visible = false;
+  scene.add(dustRing);
+  let dustT = 0;
 
   const slashMat = new THREE.MeshBasicMaterial({
     color: 0xffe7c2,
@@ -681,20 +698,66 @@ export function createGame(
     }
   }
 
-  function burst(x: number, y: number, z: number, power = 1, dx = 0, dz = 0) {
-    const n = power > 1.3 ? 18 : 12;
+  const SPARK_RGB: Record<string, [number, number, number]> = {
+    steel: [0.96, 0.88, 0.72],
+    pink: [1, 0.48, 0.68],
+    ash: [1, 0.52, 0.18],
+    dust: [0.78, 0.7, 0.6],
+    demon: [1, 0.22, 0.24],
+  };
+
+  function burst(
+    x: number,
+    y: number,
+    z: number,
+    power = 1,
+    dx = 0,
+    dz = 0,
+    kind: keyof typeof SPARK_RGB = "steel",
+  ) {
+    const n = power > 1.3 ? 20 : 12;
+    const rgb = SPARK_RGB[kind];
     for (let i = 0; i < n; i++) {
       const k = sparkCursor % SPARKS;
       sparkCursor++;
-      sparkPos[k * 3] = x;
+      sparkPos[k * 3] = x + (hash(k + 3) - 0.5) * 0.2;
       sparkPos[k * 3 + 1] = y;
-      sparkPos[k * 3 + 2] = z;
+      sparkPos[k * 3 + 2] = z + (hash(k + 7) - 0.5) * 0.2;
       const spread = (hash(k + sparkCursor) - 0.5) * 3.2;
+      const lift = kind === "dust" ? 0.35 : kind === "ash" ? 2.2 : 1.4;
       sparkVel[k * 3] = dx * (2.4 + power) + spread;
-      sparkVel[k * 3 + 1] = 1.4 + hash(k + 5) * 3.2 * power;
+      sparkVel[k * 3 + 1] = lift + hash(k + 5) * (kind === "dust" ? 1.2 : 3.2) * power;
       sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2;
-      sparkLife[k] = 0.22 + hash(k) * 0.22;
+      sparkLife[k] = (kind === "ash" ? 0.38 : 0.22) + hash(k) * 0.22;
+      sparkCol[k * 3] = rgb[0];
+      sparkCol[k * 3 + 1] = rgb[1];
+      sparkCol[k * 3 + 2] = rgb[2];
     }
+    sparkGeo.attributes.color!.needsUpdate = true;
+  }
+
+  function shockDust(x: number, z: number) {
+    dustT = 0.48;
+    dustRing.visible = true;
+    dustRing.position.set(x, 0.05, z);
+    dustRing.scale.setScalar(0.4);
+    (dustRing.material as THREE.MeshBasicMaterial).opacity = 0.62;
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * Math.PI * 2;
+      const k = sparkCursor % SPARKS;
+      sparkCursor++;
+      sparkPos[k * 3] = x + Math.cos(a) * 0.45;
+      sparkPos[k * 3 + 1] = 0.12;
+      sparkPos[k * 3 + 2] = z + Math.sin(a) * 0.45;
+      sparkVel[k * 3] = Math.cos(a) * 3.4;
+      sparkVel[k * 3 + 1] = 0.4 + hash(k) * 0.8;
+      sparkVel[k * 3 + 2] = Math.sin(a) * 3.4;
+      sparkLife[k] = 0.36;
+      sparkCol[k * 3] = 0.78;
+      sparkCol[k * 3 + 1] = 0.68;
+      sparkCol[k * 3 + 2] = 0.52;
+    }
+    sparkGeo.attributes.color!.needsUpdate = true;
   }
 
   function slash(x: number, y: number, z: number, yaw: number, heavy: boolean) {
@@ -829,7 +892,7 @@ export function createGame(
     hitstop = Math.max(hitstop, 0.16);
     shake = Math.max(shake, 0.55);
     hitFlash = 1;
-    burst(f.x, 1.1, f.z, 1.8);
+    burst(f.x, 1.1, f.z, 1.8, 0, 0, "pink");
     slash(f.x, 1.05, f.z, f.yaw, true);
     clang(true);
     tone(70, 0.22, "sawtooth", 0.06);
@@ -852,7 +915,7 @@ export function createGame(
         breakPoise(from);
         shake = Math.max(shake, 0.22);
         hitstop = Math.max(hitstop, 0.05);
-        burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1);
+        burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
         noise(0.04, 0.1);
         tone(210, 0.07, "square", 0.05);
         if (player.hp <= 0) die();
@@ -891,6 +954,7 @@ export function createGame(
     phase = "dead";
     lockId = null;
     save();
+    burst(player.x, 0.7, player.z, 1.4, 0, 0, "ash");
     say("灰燼留在原地");
     emit(true);
   }
@@ -969,6 +1033,7 @@ export function createGame(
     }
     player.act = "dodge";
     player.actT = 0;
+    burst(player.x, 0.2, player.z, 0.6, -player.dodgeX, -player.dodgeZ, "dust");
     const face = Math.atan2(-player.dodgeX, -player.dodgeZ);
     player.yaw = face;
     noise(0.06, 0.05);
@@ -1136,6 +1201,7 @@ export function createGame(
       } else if (f.move === "shock") {
         if (!f.swung && f.t > 0.4) {
           f.swung = true;
+          shockDust(f.x, f.z);
           if (Math.hypot(player.x - f.x, player.z - f.z) < 2.9) {
             hurtPlayer(32, f);
             shake = Math.max(shake, 0.48);
@@ -1366,6 +1432,7 @@ export function createGame(
     demon.chain = 1;
     demon.cd = 0.3;
     demon.swung = false;
+    burst(demon.x, 1.2, demon.z, 1.7, 0, 0, "demon");
     say("線上惡魔 紅契 侵入了");
     tone(78, 0.4, "sawtooth", 0.06);
     shake = Math.max(shake, 0.22);
@@ -1511,6 +1578,7 @@ export function createGame(
       if (player.act === "drink" && !player.healed && player.actT > 0.34) {
         player.hp = Math.min(player.hpMax, player.hp + 48);
         player.healed = true;
+        burst(player.x, 0.8, player.z, 1.1, 0, 0, "pink");
       }
       if (player.act === "attack") {
         if (atkQueue === "light" && player.atk === "light" && player.combo < 1 && player.actT > 0.3 && spendSta(14)) {
@@ -1557,7 +1625,7 @@ export function createGame(
                   f.t = 0;
                 }
               }
-              burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz);
+              burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz, heavy ? "pink" : "steel");
               slash(f.x, 1.05, f.z, player.yaw, heavy);
               any = true;
             }
@@ -1701,6 +1769,7 @@ export function createGame(
 
     if (dropped && Math.hypot(player.x - dropped.x, player.z - dropped.z) < 1.15) {
       ash += dropped.n;
+      burst(dropped.x, 0.4, dropped.z, 1.2, 0, 0, "ash");
       dropped = null;
       say("取回灰燼");
     }
@@ -1870,6 +1939,13 @@ export function createGame(
     }
     if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - 0.05);
 
+    if (dustT > 0) {
+      dustT = Math.max(0, dustT - 0.016);
+      const u = 1 - dustT / 0.48;
+      dustRing.scale.setScalar(0.4 + u * 6.2);
+      (dustRing.material as THREE.MeshBasicMaterial).opacity = 0.62 * (1 - u);
+      dustRing.visible = dustT > 0;
+    }
     for (let i = 0; i < SPARKS; i++) {
       if (sparkLife[i]! <= 0) {
         sparkPos[i * 3 + 1] = -30;
@@ -1882,6 +1958,7 @@ export function createGame(
       sparkVel[i * 3 + 1] = (sparkVel[i * 3 + 1] ?? 0) - 6 * 0.016;
     }
     sparkGeo.attributes.position!.needsUpdate = true;
+    sparkGeo.attributes.color!.needsUpdate = true;
 
     if (shake > 0) shake = Math.max(0, shake - 0.016);
     renderer.render(scene, camera);
