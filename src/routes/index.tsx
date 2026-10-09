@@ -10,14 +10,17 @@ import {
 
 const PAYME = "https://payme.hsbc/d6d295dff7854566b4536a98f0b02ef8";
 
+const CREDIT_NOTE = `謝謝你陪騎士貓走到這裡。
+如果牠的戰鬥讓你覺得過瘾，也想看牠繼續打下去，
+歡迎用 PayMe 支持我。
+你的一份心意，會變成下一場冒險的燃料。`;
+
 function Credits() {
   return (
     <section className="pointer-events-auto border border-line bg-surface/95 p-4">
       <p className="font-display text-xs tracking-widest text-ember">開發者名單</p>
       <p className="mt-1 font-display text-xl text-fg">YIN T</p>
-      <p className="mt-1 text-sm leading-relaxed text-muted">
-        粉誓。如果這隻騎士貓打得過癮，用 PayMe 請我繼續做。
-      </p>
+      <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-muted">{CREDIT_NOTE}</p>
       <a
         href={PAYME}
         target="_blank"
