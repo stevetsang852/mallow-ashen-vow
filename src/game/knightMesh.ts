@@ -230,56 +230,240 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   return { root, bob, head, weapon, cape, legL, legR, tail, armorMat, furMat, eyeMat };
 }
 
+function smooth01(u: number) {
+  const x = Math.max(0, Math.min(1, u));
+  return x * x * (3 - 2 * x);
+}
+
+export type PoseHint = {
+  state?: string;
+  move?: string;
+  u?: number;
+  boss?: boolean;
+  phase2?: boolean;
+};
+
+type Springs = {
+  wx: number;
+  wz: number;
+  wy: number;
+  bx: number;
+  by: number;
+  bz: number;
+  hy: number;
+  hx: number;
+  hz: number;
+  capeX: number;
+  capeZ: number;
+  lx: number;
+  rx: number;
+  tx: number;
+  ty: number;
+  bobY: number;
+  prev: number;
+};
+
+function springsOf(rig: KnightRig): Springs {
+  const bag = rig.root.userData as { springs?: Springs };
+  if (!bag.springs) {
+    bag.springs = {
+      wx: 0,
+      wz: 0,
+      wy: 0,
+      bx: 0,
+      by: 0,
+      bz: 0,
+      hy: 0,
+      hx: 0,
+      hz: 0,
+      capeX: 0,
+      capeZ: 0,
+      lx: 0,
+      rx: 0,
+      tx: 0,
+      ty: 0,
+      bobY: 0,
+      prev: -1,
+    };
+  }
+  return bag.springs;
+}
+
+function lag(cur: number, target: number, rate: number, dt: number) {
+  return cur + (target - cur) * (1 - Math.exp(-rate * dt));
+}
+
+function combatPose(hint: PoseHint) {
+  const u = hint.u ?? 0;
+  const k = smooth01(Math.min(1, u));
+  const snap = Math.pow(k, hint.move === "overhead" ? 2.1 : 1.25);
+  const move = hint.move ?? "cleave";
+  if (hint.state === "roar") {
+    const s = Math.sin(Math.min(1, u) * Math.PI);
+    return { wx: -0.15 - s * 0.55, wz: 0, wy: 0, bx: -0.4 * s, by: 0, bz: 0, bobY: s * 0.06 };
+  }
+  if (hint.state === "telegraph") {
+    if (move === "overhead") return { wx: -0.15 + k * 1.25, wz: 0, wy: 0, bx: -0.5 * k, by: 0, bz: 0, bobY: 0.04 * k };
+    if (move === "shock") return { wx: 0.15 + k * 0.35, wz: 0, wy: 0, bx: 0.2 * k, by: 0, bz: 0, bobY: -0.16 * k };
+    if (move === "rush") return { wx: -0.1 - 0.75 * k, wz: 0.15 * k, wy: 0, bx: 0.48 * k, by: 0, bz: 0, bobY: -0.04 * k };
+    return { wx: -0.3, wz: -1.2 * k, wy: -0.35 * k, bx: -0.06 * k, by: -0.5 * k, bz: 0.14 * k, bobY: 0 };
+  }
+  if (hint.state === "swing") {
+    if (move === "overhead") return { wx: 1.1 + (-2.15 - 1.1) * snap, wz: 0, wy: 0, bx: -0.5 + 0.85 * snap, by: 0, bz: 0, bobY: 0.04 * (1 - snap) };
+    if (move === "shock") return { wx: 0.5 - 1.55 * snap, wz: 0, wy: 0, bx: 0.2 + 0.4 * snap, by: 0, bz: 0, bobY: -0.16 * (1 - snap) };
+    if (move === "rush") return { wx: -0.9, wz: 0.1, wy: 0, bx: 0.5, by: 0, bz: 0, bobY: -0.02 };
+    return { wx: -1.75, wz: -1.2 + 2.25 * snap, wy: -0.35 + 0.85 * snap, bx: 0.08 * snap, by: -0.5 + 0.75 * snap, bz: 0.14 * (1 - snap), bobY: 0 };
+  }
+  if (hint.state === "recover") {
+    const hold = smooth01(Math.min(1, u));
+    return { wx: -1.15 * (1 - hold), wz: 0.15 * (1 - hold), wy: 0, bx: 0.22 * (1 - hold), by: 0, bz: 0, bobY: -0.05 * (1 - hold) };
+  }
+  return null;
+}
+
 export function poseKnight(
   rig: KnightRig,
   t: number,
   moving: number,
   act: string,
   actT: number,
+  hint?: PoseHint,
 ) {
-  const step = Math.sin(t * 9) * moving;
-  rig.legL.rotation.x = step * 0.75;
-  rig.legR.rotation.x = -step * 0.75;
-  rig.bob.position.y = Math.abs(step) * 0.04 + Math.sin(t * 2.1) * 0.012;
-  rig.bob.rotation.x = 0;
-  rig.bob.rotation.z = Math.sin(t * 9) * 0.04 * moving;
-  rig.head.rotation.x = moving * 0.06;
-  rig.head.rotation.z = Math.sin(t * 1.7) * 0.04;
-  rig.head.rotation.y = 0;
-  rig.tail.rotation.y = Math.sin(t * 2.6) * 0.3;
-  rig.tail.rotation.x = moving * 0.25;
+  const baked = rig.root.userData.baked === true;
+  const s = springsOf(rig);
+  let dt = s.prev < 0 ? 1 / 60 : Math.min(0.05, t - s.prev);
+  if (!(dt > 0)) dt = 1 / 60;
+  s.prev = t;
 
-  if (rig.cape instanceof THREE.Mesh) {
-    rig.cape.rotation.x = 0.3 + Math.sin(t * 1.6) * 0.05 + moving * 0.28;
-    rig.cape.rotation.z = Math.sin(t * 1.2) * 0.06;
-  }
+  const ph = t * (7.2 + moving * 1.4);
+  const skew = Math.sin(ph + 0.35 * Math.sin(ph));
+  const breathe = Math.sin(t * 2.15);
 
-  let wx = -0.18;
+  if (rig.legL.userData.baseY == null) rig.legL.userData.baseY = rig.legL.position.y;
+  if (rig.legR.userData.baseY == null) rig.legR.userData.baseY = rig.legR.position.y;
+
+  let wx = baked ? 0 : -0.18;
   let wz = 0;
-  if (act === "attack") {
-    const u = Math.min(1, actT / 0.52);
-    const swing = u < 0.28 ? u / 0.28 : Math.max(0, 1 - (u - 0.28) / 0.72);
-    wx = -0.25 - swing * 1.65;
-    rig.bob.rotation.x = swing * 0.4;
-    wz = Math.sin(swing * Math.PI) * 0.12;
+  let wy = 0;
+  let bx = 0;
+  let by = 0;
+  let bz = skew * 0.07 * moving;
+  let bobY = Math.abs(skew) * 0.045 * moving + breathe * 0.014;
+  let hx = moving * 0.05 + breathe * 0.03;
+  let hy = Math.sin(t * 0.8) * 0.07 * (1 - moving * 0.4);
+  let hz = -skew * 0.06 * moving + Math.sin(t * 1.5) * 0.035;
+  let lx = skew * 0.95 * moving;
+  let rx = -skew * 0.95 * moving;
+  let tx = moving * 0.2 + Math.sin(t * 2.4) * 0.18;
+  let ty = Math.sin(t * 2.1 + 0.6) * 0.45;
+  const capeBase = typeof rig.cape.userData.baseX === "number" ? rig.cape.userData.baseX : 0.3;
+  let capeX = capeBase + Math.sin(t * 1.5) * 0.05 + moving * (baked ? 0.16 : 0.3);
+  let capeZ = Math.sin(t * 1.15 + 0.4) * (0.05 + moving * 0.08);
+
+  const fight = hint ? combatPose(hint) : null;
+  let weaponRate = moving > 0 ? 14 : 10;
+  if (fight) {
+    wx = fight.wx;
+    wz = fight.wz;
+    wy = fight.wy;
+    bx = fight.bx;
+    by = fight.by;
+    bz = fight.bz;
+    bobY += fight.bobY;
+    weaponRate = hint?.state === "swing" ? 26 : 9;
+    if (hint?.move === "overhead" && hint.state === "telegraph") weaponRate = 7;
+  } else if (act === "attack") {
+    const wind = 0.16;
+    const hit = 0.3;
+    const end = 0.52;
+    if (actT < wind) {
+      const k = smooth01(actT / wind);
+      wx = (baked ? 0.5 : 0.35) * k;
+      bx = -0.22 * k;
+      wz = -0.22 * k;
+      by = -0.28 * k;
+    } else if (actT < hit) {
+      const k = Math.pow(smooth01((actT - wind) / (hit - wind)), 1.7);
+      wx = (baked ? 0.5 : 0.35) + ((baked ? -1.7 : -1.9) - (baked ? 0.5 : 0.35)) * k;
+      bx = -0.22 + 0.58 * k;
+      wz = -0.22 + 0.5 * k;
+      by = -0.28 + 0.45 * k;
+      weaponRate = 32;
+    } else {
+      const k = smooth01((actT - hit) / (end - hit));
+      wx = (baked ? -1.7 : -1.9) * (1 - k) + (baked ? -0.15 : -0.18) * k;
+      bx = 0.36 * (1 - k);
+      wz = 0.28 * (1 - k);
+      by = 0.17 * (1 - k);
+      weaponRate = 12;
+    }
+    hx += 0.08;
   } else if (act === "dodge") {
-    const u = Math.min(1, actT / 0.48);
-    rig.bob.rotation.x = Math.sin(u * Math.PI) * 1.25;
-    rig.bob.position.y += Math.sin(u * Math.PI) * 0.1;
-    rig.bob.rotation.z = 0;
-    wx = -1.15;
+    const u = Math.min(1, actT / 0.46);
+    const roll = Math.sin(u * Math.PI);
+    const tuck = smooth01(Math.min(1, u / 0.35));
+    bx = 0.22 * roll;
+    bz = 1.05 * roll;
+    bobY += 0.12 * roll;
+    wx = (baked ? -0.55 : -0.8) * tuck;
+    hx = 0.25 * roll;
+    lx *= 0.2;
+    rx *= 0.2;
+    weaponRate = 16;
   } else if (act === "hurt") {
-    rig.bob.rotation.x = -0.28;
-    rig.head.rotation.x = -0.35;
-    wx = -0.55;
+    const k = 1 - Math.exp(-actT * 14);
+    bx = -0.32 * k;
+    hx = -0.4 * k;
+    wx = (baked ? -0.4 : -0.6) * k;
+    bz = 0.12 * k;
+    weaponRate = 18;
   } else if (act === "drink") {
-    wx = -0.45;
-    wz = 0.9;
-    rig.head.rotation.x = 0.25;
-    rig.head.rotation.y = -0.3;
+    const k = smooth01(Math.min(1, actT / 0.28));
+    wx = (baked ? -0.25 : -0.45) * k;
+    wz = (baked ? 0.4 : 0.9) * k;
+    hx = 0.28 * k;
+    hy = -0.35 * k;
+  } else if (moving > 0) {
+    wx += -skew * (baked ? 0.38 : 0.22);
+    by += skew * 0.06;
   }
 
-  rig.weapon.rotation.x = wx;
-  rig.weapon.rotation.z = wz;
-  rig.weapon.rotation.y = 0;
+  s.wx = lag(s.wx, wx, weaponRate, dt);
+  s.wz = lag(s.wz, wz, weaponRate, dt);
+  s.wy = lag(s.wy, wy, weaponRate * 0.8, dt);
+  s.bx = lag(s.bx, bx, 12, dt);
+  s.by = lag(s.by, by, 12, dt);
+  s.bz = lag(s.bz, bz, 12, dt);
+  s.hx = lag(s.hx, hx, 10, dt);
+  s.hy = lag(s.hy, hy, 8, dt);
+  s.hz = lag(s.hz, hz, 8, dt);
+  s.lx = lag(s.lx, lx, 16, dt);
+  s.rx = lag(s.rx, rx, 16, dt);
+  s.tx = lag(s.tx, tx, 6, dt);
+  s.ty = lag(s.ty, ty, 5, dt);
+  s.capeX = lag(s.capeX, capeX, 4.5, dt);
+  s.capeZ = lag(s.capeZ, capeZ, 4.5, dt);
+  s.bobY = lag(s.bobY, bobY, 10, dt);
+
+  rig.bob.rotation.x = s.bx;
+  rig.bob.rotation.y = s.by;
+  rig.bob.rotation.z = s.bz;
+  rig.bob.position.y = s.bobY;
+  rig.head.rotation.x = s.hx;
+  rig.head.rotation.y = s.hy;
+  rig.head.rotation.z = s.hz;
+  rig.weapon.rotation.x = s.wx;
+  rig.weapon.rotation.z = s.wz;
+  rig.weapon.rotation.y = s.wy;
+  rig.legL.rotation.x = s.lx;
+  rig.legR.rotation.x = s.rx;
+  const lift = Math.max(0, skew) * 0.05 * moving;
+  rig.legL.position.y = (rig.legL.userData.baseY as number) + (skew > 0 ? lift : 0);
+  rig.legR.position.y = (rig.legR.userData.baseY as number) + (skew < 0 ? lift : 0);
+  rig.tail.rotation.x = s.tx;
+  rig.tail.rotation.y = s.ty;
+  if (rig.cape) {
+    rig.cape.rotation.x = s.capeX;
+    rig.cape.rotation.z = s.capeZ;
+  }
 }

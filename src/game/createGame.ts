@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
+import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 
 export type Phase = "title" | "play" | "dead" | "win";
 
@@ -20,6 +21,7 @@ export type HudSnap = {
   bossHp: number | null;
   bossMax: number;
   bossShown: boolean;
+  bossPhase: number;
   lockName: string | null;
   nearFire: boolean;
   canTemper: boolean;
@@ -27,6 +29,10 @@ export type HudSnap = {
   hurt: number;
   muted: boolean;
   gateOpen: boolean;
+  demonShown: boolean;
+  demonName: string;
+  demonHp: number | null;
+  demonMax: number;
 };
 
 export type GameApi = {
@@ -66,12 +72,13 @@ const PILLARS = [
 ];
 
 type Act = "free" | "attack" | "dodge" | "drink" | "hurt";
-type FoeState = "idle" | "chase" | "telegraph" | "swing" | "recover" | "hurt" | "dead";
+type FoeState = "idle" | "chase" | "roar" | "telegraph" | "swing" | "recover" | "hurt" | "dodge" | "drink" | "dead";
+type DukeMove = "cleave" | "overhead" | "shock" | "rush";
 
 type Foe = {
   id: number;
   name: string;
-  kind: "hollow" | "duke";
+  kind: "hollow" | "duke" | "demon";
   x: number;
   z: number;
   yaw: number;
@@ -90,6 +97,12 @@ type Foe = {
   swung: boolean;
   flash: number;
   aggro: boolean;
+  move: DukeMove;
+  enraged: boolean;
+  chain: number;
+  span: number;
+  aimX: number;
+  aimZ: number;
 };
 
 export const INITIAL_HUD: HudSnap = {
@@ -107,8 +120,9 @@ export const INITIAL_HUD: HudSnap = {
   clears: 0,
   runMs: 0,
   bossHp: null,
-  bossMax: 220,
+  bossMax: 280,
   bossShown: false,
+  bossPhase: 1,
   lockName: null,
   nearFire: false,
   canTemper: false,
@@ -116,6 +130,10 @@ export const INITIAL_HUD: HudSnap = {
   hurt: 0,
   muted: true,
   gateOpen: false,
+  demonShown: false,
+  demonName: "紅契",
+  demonHp: null,
+  demonMax: 150,
 };
 
 function hash(i: number) {
@@ -165,12 +183,19 @@ function template(): Foe[] {
     swung: false,
     flash: 0,
     aggro: false,
+    move: "cleave",
+    enraged: false,
+    chain: 0,
+    span: 1,
+    aimX: 0,
+    aimZ: 0,
   });
   return [
     row(1, "灰殼侍從", "hollow", -4.8, -1.8, 58, 2.05, 18, 1.55, 0.7, 6.4, 0.42),
     row(2, "灰殼侍從", "hollow", 4.4, -2.4, 58, 2.05, 18, 1.55, 0.66, 6.4, 0.42),
     row(3, "灰殼侍從", "hollow", 0.1, -5.4, 72, 2.15, 20, 1.6, 0.6, 6.6, 0.44),
-    row(4, "煤灰公爵", "duke", 0, -14.1, 220, 1.62, 30, 2.15, 0.84, 10, 0.78),
+    row(4, "煤灰公爵", "duke", 0, -14.1, 280, 1.7, 30, 2.15, 0.84, 10, 0.78),
+    row(5, "紅契", "demon", 42, 42, 150, 2.65, 16, 1.7, 0.4, 7, 0.4),
   ];
 }
 
@@ -362,7 +387,7 @@ export function createGame(
   );
   scene.add(sparks);
 
-  const playerRig = makeKnight({
+  let playerRig: KnightRig = makeKnight({
     fur: 0xc4a574,
     armor: 0xc5ced8,
     bow: true,
@@ -372,21 +397,33 @@ export function createGame(
   });
   playerRig.root.rotation.order = "YXZ";
   scene.add(playerRig.root);
+  loadMallowRig()
+    .then((rig) => {
+      const prev = playerRig.root;
+      scene.remove(prev);
+      playerRig = rig;
+      playerRig.root.rotation.order = "YXZ";
+      scene.add(playerRig.root);
+    })
+    .catch(() => {
+      /* keep the procedural cat if the model fails to load */
+    });
 
   const foeRigs: KnightRig[] = [];
   const foes = template();
   for (const f of foes) {
     const rig = makeKnight({
-      fur: f.kind === "duke" ? 0x2c2624 : 0x6e5b49,
-      armor: f.kind === "duke" ? 0x5c534c : 0x8d8680,
+      fur: f.kind === "duke" ? 0x2c2624 : f.kind === "demon" ? 0x3a1418 : 0x6e5b49,
+      armor: f.kind === "duke" ? 0x5c534c : f.kind === "demon" ? 0x7a2430 : 0x8d8680,
       bow: false,
-      helm: f.kind === "duke",
-      cape: false,
-      eye: f.kind === "duke" ? 0x2a0c08 : 0x1a1412,
-      eyeEmissive: f.kind === "duke" ? 0xff4d2e : 0,
+      helm: f.kind === "duke" || f.kind === "demon",
+      cape: f.kind === "demon",
+      eye: f.kind === "hollow" ? 0x1a1412 : 0x2a0c08,
+      eyeEmissive: f.kind === "duke" ? 0xff4d2e : f.kind === "demon" ? 0xff2430 : 0,
     });
     rig.root.rotation.order = "YXZ";
-    rig.root.scale.setScalar(f.kind === "duke" ? 1.5 : 0.96);
+    rig.root.scale.setScalar(f.kind === "duke" ? 1.5 : f.kind === "demon" ? 1.08 : 0.96);
+    rig.root.visible = f.kind !== "demon";
     scene.add(rig.root);
     foeRigs.push(rig);
   }
@@ -468,6 +505,7 @@ export function createGame(
   let shake = 0;
   let hitstop = 0;
   let winArm = 0;
+  let invadeIn = 7;
   let runStart = 0;
   let frozenRun = 0;
   let muted = true;
@@ -508,6 +546,7 @@ export function createGame(
 
   function makeSnap(): HudSnap {
     const duke = foes[3]!;
+    const demon = foes[4]!;
     const locked = lockFoe();
     const runMs = phase === "play" ? performance.now() - runStart : frozenRun;
     return {
@@ -527,6 +566,7 @@ export function createGame(
       bossHp: duke.hp,
       bossMax: duke.hpMax,
       bossShown: duke.aggro && phase === "play",
+      bossPhase: duke.enraged ? 2 : 1,
       lockName: locked ? locked.name : null,
       nearFire: phase === "play" && nearFire(),
       canTemper: phase === "play" && nearFire() && ash >= 200 && player.hpMax < 180,
@@ -534,6 +574,10 @@ export function createGame(
       hurt: hurtV,
       muted,
       gateOpen,
+      demonShown: demon.aggro && demon.state !== "dead" && phase === "play",
+      demonName: demon.name,
+      demonHp: demon.hp,
+      demonMax: demon.hpMax,
     };
   }
 
@@ -548,12 +592,14 @@ export function createGame(
       snap.ash,
       snap.deaths,
       snap.bossShown ? Math.round(snap.bossHp ?? 0) : "-",
+      snap.bossPhase,
       snap.lockName ?? "",
       snap.nearFire ? 1 : 0,
       snap.canTemper ? 1 : 0,
       snap.toast,
       snap.muted ? 1 : 0,
       snap.gateOpen ? 1 : 0,
+      snap.demonShown ? Math.round(snap.demonHp ?? 0) : "-",
       snap.clears,
       snap.bestMs ?? "",
     ].join("|");
@@ -690,6 +736,7 @@ export function createGame(
     lockId = null;
     warnedHollow = false;
     winArm = 0;
+    invadeIn = 7;
   }
 
   function hurtPlayer(amount: number) {
@@ -776,7 +823,7 @@ export function createGame(
     if (phase !== "play") return;
     const cands = foes
       .filter((f) => f.state !== "dead" && Math.hypot(f.x - player.x, f.z - player.z) < 14)
-      .filter((f) => (f.kind === "duke" ? gateOpen : true))
+      .filter((f) => (f.kind === "duke" ? gateOpen : f.kind === "demon" ? f.aggro : true))
       .sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z));
     if (!cands.length) {
       lockId = null;
@@ -850,6 +897,313 @@ export function createGame(
     return { ix, iz, mag };
   }
 
+  function startDukeMove(f: Foe, dist: number, p2: boolean) {
+    let move: DukeMove;
+    if (dist > 4.5) move = Math.random() < 0.72 ? "rush" : "overhead";
+    else if (p2 && dist < 2.2 && Math.random() < 0.42) move = "shock";
+    else if (Math.random() < 0.48) move = "overhead";
+    else move = "cleave";
+    f.move = move;
+    f.chain = move === "cleave" && p2 && Math.random() < 0.7 ? 1 : 0;
+    f.state = "telegraph";
+    f.t = 0;
+    f.swung = false;
+    const slow = p2 ? 0.84 : 1;
+    f.span = (move === "overhead" ? 1.08 : move === "shock" ? 0.92 : move === "rush" ? 0.62 : 0.74) * slow;
+  }
+
+  function stepDuke(f: Foe, dt: number, dx: number, dz: number, dist: number) {
+    const p2 = f.hp < f.hpMax * 0.5;
+    if (p2 && !f.enraged) {
+      f.enraged = true;
+      say("第二階段。連段，還有震地");
+      tone(70, 0.4, "sawtooth", 0.06);
+      shake = Math.max(shake, 0.4);
+    }
+    const turn = f.state === "telegraph" || f.state === "swing" ? 1.35 : p2 ? 3.3 : 2.5;
+    if (!(f.state === "swing" && f.move === "rush")) {
+      f.yaw = dampAngle(f.yaw, Math.atan2(-dx, -dz), turn, dt);
+    }
+
+    if (f.state === "roar") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        f.state = "chase";
+        f.t = 0;
+        f.cd = 0.4;
+      }
+      return;
+    }
+    if (f.state === "hurt") {
+      f.t += dt;
+      if (f.t > (p2 ? 0.16 : 0.28)) {
+        f.state = "chase";
+        f.cd = 0.2;
+      }
+      return;
+    }
+    if (f.state === "telegraph") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        f.state = "swing";
+        f.t = 0;
+        f.swung = false;
+        if (f.move === "rush") {
+          f.aimX = -Math.sin(f.yaw);
+          f.aimZ = -Math.cos(f.yaw);
+        }
+        f.span = f.move === "shock" ? 0.5 : f.move === "rush" ? 0.42 : f.move === "overhead" ? 0.18 : 0.22;
+      }
+      return;
+    }
+    if (f.state === "swing") {
+      f.t += dt;
+      if (f.move === "rush") {
+        const c = clampWorld(f.x + f.aimX * 8.6 * dt, f.z + f.aimZ * 8.6 * dt, f.r, "south");
+        f.x = c.x;
+        f.z = c.z;
+        if (!f.swung && f.t > 0.05 && Math.hypot(player.x - f.x, player.z - f.z) < f.r + 0.9) {
+          f.swung = true;
+          hurtPlayer(28);
+        }
+      } else if (f.move === "shock") {
+        if (!f.swung && f.t > 0.4) {
+          f.swung = true;
+          if (Math.hypot(player.x - f.x, player.z - f.z) < 2.9) {
+            hurtPlayer(32);
+            shake = Math.max(shake, 0.48);
+            hitstop = Math.max(hitstop, 0.08);
+            tone(52, 0.3, "square", 0.06);
+          }
+        }
+      } else {
+        if (f.t < 0.14) {
+          const fx = -Math.sin(f.yaw);
+          const fz = -Math.cos(f.yaw);
+          const lunge = f.move === "overhead" ? 2.6 : 1.7;
+          const c = clampWorld(f.x + fx * lunge * dt, f.z + fz * lunge * dt, f.r, "south");
+          f.x = c.x;
+          f.z = c.z;
+        }
+        if (!f.swung && f.t > 0.04) {
+          f.swung = true;
+          const fx = -Math.sin(f.yaw);
+          const fz = -Math.cos(f.yaw);
+          const px = player.x - f.x;
+          const pz = player.z - f.z;
+          const nd = Math.hypot(px, pz) || 0.0001;
+          const dot = (fx * px + fz * pz) / nd;
+          const reach = f.move === "overhead" ? 2.4 : 2.6;
+          if (nd < reach && dot > (f.move === "overhead" ? 0.28 : 0.12)) hurtPlayer(f.move === "overhead" ? 40 : 24);
+        }
+      }
+      if (f.t >= f.span) {
+        f.state = "recover";
+        f.t = 0;
+        f.span =
+          f.chain > 0 ? 0.2 : f.move === "overhead" ? 1.08 : f.move === "shock" ? 1.22 : f.move === "rush" ? 0.8 : 0.74;
+      }
+      return;
+    }
+    if (f.state === "recover") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        if (f.chain > 0) {
+          f.chain -= 1;
+          f.move = "cleave";
+          f.state = "telegraph";
+          f.t = 0;
+          f.swung = false;
+          f.span = p2 ? 0.4 : 0.52;
+        } else {
+          f.state = "chase";
+          f.cd = p2 ? 0.34 : 0.58;
+        }
+      }
+      return;
+    }
+
+    if (f.cd <= 0 && (dist < 2.65 || dist > 4.55)) {
+      startDukeMove(f, dist, p2);
+      return;
+    }
+    if (dist > 2.05) {
+      const sp = f.speed * (p2 ? 1.24 : 1);
+      const c = clampWorld(f.x + (dx / dist) * sp * dt, f.z + (dz / dist) * sp * dt, f.r, "south");
+      f.x = c.x;
+      f.z = c.z;
+    }
+  }
+
+  function stepDemon(f: Foe, dt: number, dx: number, dz: number, dist: number) {
+    if (f.state !== "dodge" && !(f.state === "swing" && f.move === "rush")) {
+      f.yaw = dampAngle(f.yaw, Math.atan2(-dx, -dz), 8.5, dt);
+    }
+
+    if (f.state === "roar") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        f.state = "chase";
+        f.t = 0;
+        f.cd = 0.35;
+      }
+      return;
+    }
+    if (f.state === "hurt") {
+      f.t += dt;
+      if (f.t > 0.22) {
+        f.state = "chase";
+        f.t = 0;
+      }
+      return;
+    }
+    if (f.state === "dodge") {
+      f.t += dt;
+      const c = clampWorld(f.x + f.aimX * 7.4 * dt, f.z + f.aimZ * 7.4 * dt, f.r, "north");
+      f.x = c.x;
+      f.z = c.z;
+      if (f.t >= f.span) {
+        f.state = "chase";
+        f.t = 0;
+        f.cd = 0.28;
+      }
+      return;
+    }
+    if (f.state === "drink") {
+      f.t += dt;
+      if (!f.swung && f.t > 0.42) {
+        f.hp = Math.min(f.hpMax, f.hp + 48);
+        f.swung = true;
+      }
+      if (f.t > 0.72) {
+        f.state = "chase";
+        f.t = 0;
+        f.cd = 0.2;
+      }
+      return;
+    }
+    if (f.state === "telegraph") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        f.state = "swing";
+        f.t = 0;
+        f.swung = false;
+        if (f.move === "rush") {
+          f.aimX = -Math.sin(f.yaw);
+          f.aimZ = -Math.cos(f.yaw);
+        }
+        f.span = f.move === "rush" ? 0.32 : 0.16;
+      }
+      return;
+    }
+    if (f.state === "swing") {
+      f.t += dt;
+      if (f.move === "rush") {
+        const c = clampWorld(f.x + f.aimX * 7.8 * dt, f.z + f.aimZ * 7.8 * dt, f.r, "north");
+        f.x = c.x;
+        f.z = c.z;
+        if (!f.swung && f.t > 0.06 && Math.hypot(player.x - f.x, player.z - f.z) < f.r + 0.75) {
+          f.swung = true;
+          hurtPlayer(22);
+        }
+      } else if (!f.swung && f.t > 0.04) {
+        f.swung = true;
+        const fx = -Math.sin(f.yaw);
+        const fz = -Math.cos(f.yaw);
+        const px = player.x - f.x;
+        const pz = player.z - f.z;
+        const nd = Math.hypot(px, pz) || 0.0001;
+        if (nd < 2.05 && (fx * px + fz * pz) / nd > 0.15) hurtPlayer(16);
+      }
+      if (f.t >= f.span) {
+        f.state = "recover";
+        f.t = 0;
+        f.span = f.move === "rush" ? 0.55 : 0.36;
+      }
+      return;
+    }
+    if (f.state === "recover") {
+      f.t += dt;
+      if (f.t >= f.span) {
+        f.state = "chase";
+        f.t = 0;
+        f.cd = 0.32;
+      }
+      return;
+    }
+
+    f.t += dt;
+    const threatened = player.act === "attack" && player.actT > 0.06 && player.actT < 0.22 && dist < 2.55;
+    if (threatened && f.cd <= 0) {
+      const side = f.t * 3 > Math.PI ? 1 : -1;
+      f.aimX = (-dz / dist) * side;
+      f.aimZ = (dx / dist) * side;
+      f.state = "dodge";
+      f.t = 0;
+      f.span = 0.28;
+      return;
+    }
+    if (f.chain > 0 && f.hp < f.hpMax * 0.42 && dist > 2.15 && f.cd <= 0) {
+      f.chain = 0;
+      f.state = "drink";
+      f.t = 0;
+      f.swung = false;
+      return;
+    }
+    if (f.cd <= 0 && dist < 2.05) {
+      f.move = "cleave";
+      f.state = "telegraph";
+      f.t = 0;
+      f.span = 0.38;
+      f.swung = false;
+      return;
+    }
+    if (f.cd <= 0 && dist > 3.15 && dist < 6.5) {
+      f.move = "rush";
+      f.state = "telegraph";
+      f.t = 0;
+      f.span = 0.42;
+      f.swung = false;
+      return;
+    }
+    const side = Math.sin(f.t * 2.4) * 0.9;
+    const sp = dist > 2.3 ? f.speed : f.speed * 0.45;
+    const c = clampWorld(
+      f.x + ((dx / dist) * 0.8 + (-dz / dist) * side) * sp * dt,
+      f.z + ((dz / dist) * 0.8 + (dx / dist) * side) * sp * dt,
+      f.r,
+      "north",
+    );
+    f.x = c.x;
+    f.z = c.z;
+  }
+
+  function summonDemon() {
+    const demon = foes[4];
+    if (!demon || demon.aggro || demon.state === "dead") return;
+    const c = clampWorld(
+      player.x + Math.sin(player.yaw) * 4.4,
+      player.z + Math.cos(player.yaw) * 4.4,
+      demon.r,
+      "north",
+    );
+    demon.x = c.x;
+    demon.z = c.z;
+    demon.yaw = Math.atan2(-(player.x - demon.x), -(player.z - demon.z));
+    demon.hp = demon.hpMax;
+    demon.aggro = true;
+    demon.state = "roar";
+    demon.t = 0;
+    demon.span = 0.9;
+    demon.move = "overhead";
+    demon.chain = 1;
+    demon.cd = 0.3;
+    demon.swung = false;
+    say("線上惡魔 紅契 侵入了");
+    tone(78, 0.4, "sawtooth", 0.06);
+    shake = Math.max(shake, 0.22);
+  }
+
   function stepFoe(f: Foe, dt: number) {
     f.flash = Math.max(0, f.flash - dt);
     f.cd = Math.max(0, f.cd - dt);
@@ -860,34 +1214,51 @@ export function createGame(
     if (f.hp <= 0) {
       f.state = "dead";
       f.t = 0;
-      ash += f.kind === "duke" ? 420 : 80;
+      ash += f.kind === "duke" ? 420 : f.kind === "demon" ? 200 : 80;
       burst(f.x, 0.8, f.z);
       if (lockId === f.id) lockId = null;
       tone(70, 0.25, "square", 0.04);
       if (f.kind === "duke") winArm = 1.15;
+      if (f.kind === "demon") say("紅契被逐回線上");
       return;
     }
 
     const dx = player.x - f.x;
     const dz = player.z - f.z;
     const dist = Math.hypot(dx, dz) || 0.0001;
+    if (f.kind === "demon") {
+      if (!f.aggro) return;
+      stepDemon(f, dt, dx, dz, dist);
+      return;
+    }
     const canSee = f.kind === "hollow" || (gateOpen && player.z < GATE_Z + 0.15);
     if (!f.aggro && canSee && dist < f.aggroR) {
       f.aggro = true;
-      f.state = "chase";
-      if (f.kind === "duke") say("煤灰公爵醒來了");
-      else if (!warnedHollow) {
-        warnedHollow = true;
-        say("灰殼看見你了");
+      if (f.kind === "duke") {
+        f.state = "roar";
+        f.t = 0;
+        f.span = 1.05;
+        f.move = "overhead";
+        say("煤灰公爵醒來了");
+      } else {
+        f.state = "chase";
+        if (!warnedHollow) {
+          warnedHollow = true;
+          say("灰殼看見你了");
+        }
       }
     }
     if (!f.aggro) {
       f.yaw = f.baseYaw + Math.sin(performance.now() / 700 + f.id) * 0.12;
       return;
     }
+    if (f.kind === "duke") {
+      stepDuke(f, dt, dx, dz, dist);
+      return;
+    }
 
     const face = Math.atan2(-dx, -dz);
-    f.yaw = dampAngle(f.yaw, face, f.kind === "duke" ? 4.5 : 6.5, dt);
+    f.yaw = dampAngle(f.yaw, face, 6.5, dt);
 
     if (f.state === "hurt") {
       f.t += dt;
@@ -896,11 +1267,11 @@ export function createGame(
     }
     if (f.state === "telegraph") {
       f.t += dt;
-      const wind = f.kind === "duke" && f.hp < f.hpMax * 0.5 ? f.windup * 0.72 : f.windup;
-      if (f.t >= wind) {
+      if (f.t >= f.span) {
         f.state = "swing";
         f.t = 0;
         f.swung = false;
+        f.span = 0.24;
       }
       return;
     }
@@ -916,6 +1287,7 @@ export function createGame(
       if (f.t > 0.24) {
         f.state = "recover";
         f.t = 0;
+        f.span = 0.42;
       }
       return;
     }
@@ -923,7 +1295,7 @@ export function createGame(
       f.t += dt;
       if (f.t > 0.42) {
         f.state = "chase";
-        f.cd = f.kind === "duke" && f.hp < f.hpMax * 0.5 ? 0.28 : 0.5;
+        f.cd = 0.5;
       }
       return;
     }
@@ -931,14 +1303,14 @@ export function createGame(
     if (dist <= f.range && f.cd <= 0) {
       f.state = "telegraph";
       f.t = 0;
+      f.span = f.windup;
+      f.move = "cleave";
       return;
     }
     if (dist > f.range * 0.82) {
-      const sp = f.speed * (f.kind === "duke" && f.hp < f.hpMax * 0.5 ? 1.28 : 1);
-      const nx = f.x + (dx / dist) * sp * dt;
-      const nz = f.z + (dz / dist) * sp * dt;
-      const side = f.kind === "duke" ? "south" : "north";
-      const c = clampWorld(nx, nz, f.r, side);
+      const nx = f.x + (dx / dist) * f.speed * dt;
+      const nz = f.z + (dz / dist) * f.speed * dt;
+      const c = clampWorld(nx, nz, f.r, "north");
       f.x = c.x;
       f.z = c.z;
     }
@@ -984,7 +1356,7 @@ export function createGame(
           if (dist < reach && dot > 0.22) {
             f.hp = Math.max(0, f.hp - 34);
             f.flash = 0.12;
-            if (f.state !== "telegraph" && f.state !== "swing") {
+            if (f.state !== "telegraph" && f.state !== "swing" && f.state !== "roar") {
               f.state = "hurt";
               f.t = 0;
             }
@@ -1053,6 +1425,12 @@ export function createGame(
     player.z = moved.z;
 
     for (const f of foes) stepFoe(f, dt);
+    const away = Math.hypot(player.x - FIRE.x, player.z - FIRE.z) > 2.5;
+    const dukeBusy = foes[3]!.aggro && foes[3]!.state !== "dead";
+    if (away && !dukeBusy && player.hp > 0) {
+      invadeIn -= dt;
+      if (invadeIn <= 0) summonDemon();
+    }
 
     for (const f of foes) {
       if (f.state === "dead") continue;
@@ -1117,28 +1495,83 @@ export function createGame(
     playerRig.root.rotation.x = 0;
     poseKnight(playerRig, time, moving, player.act, player.actT);
     const pf = player.act === "hurt" ? 0.45 : 0;
-    playerRig.armorMat.emissive.setRGB(pf, pf * 0.4, pf * 0.3);
-    playerRig.furMat.emissive.setRGB(pf * 0.3, pf * 0.15, pf * 0.1);
+    if (playerRig.root.userData.mallow) flashMallow(playerRig.root, pf);
+    else {
+      playerRig.armorMat.emissive.setRGB(pf, pf * 0.4, pf * 0.3);
+      playerRig.furMat.emissive.setRGB(pf * 0.3, pf * 0.15, pf * 0.1);
+    }
 
     foes.forEach((f, i) => {
       const rig = foeRigs[i]!;
       const dead = f.state === "dead";
-      rig.root.position.set(f.x, dead ? -Math.min(0.45, f.t * 0.25) : 0, f.z);
+      const ring = rings[i]!;
+      if (f.kind === "demon" && !f.aggro && !(dead && f.t < 1.5)) {
+        rig.root.visible = false;
+        ring.visible = false;
+        return;
+      }
+      rig.root.visible = !(f.kind === "demon" && dead && f.t >= 1.5);
+      const bob =
+        dead ? -Math.min(0.45, f.t * 0.25) : f.kind === "duke" && f.state === "roar" ? Math.sin(f.t * 18) * 0.04 : 0;
+      rig.root.position.set(f.x, bob, f.z);
       rig.root.rotation.y = f.yaw + Math.PI;
       rig.root.rotation.x = dead ? Math.min(1.2, f.t * 1.4) : 0;
+      if (f.kind === "duke") rig.root.scale.setScalar(f.enraged ? 1.62 : 1.5);
+      if (f.kind === "demon") rig.root.scale.setScalar(1.08);
       const mv = f.aggro && (f.state === "chase" || f.state === "idle") && !dead ? 1 : 0;
-      poseKnight(rig, time + f.id, mv, dead ? "hurt" : "free", 0);
-      if (f.state === "telegraph") rig.weapon.rotation.x = -0.2 - Math.min(1, f.t / f.windup) * 1.3;
-      if (f.state === "swing") rig.weapon.rotation.x = -1.7 + f.t * 4;
+      const telling = f.state === "telegraph" || f.state === "swing" || f.state === "recover" || f.state === "roar";
+      const act = dead || f.state === "hurt" ? "hurt" : f.state === "drink" ? "drink" : f.state === "dodge" ? "dodge" : "free";
+      const actT = f.state === "hurt" || f.state === "drink" || f.state === "dodge" ? f.t : 0;
+      poseKnight(
+        rig,
+        time + f.id,
+        mv,
+        act,
+        actT,
+        telling
+          ? {
+              state: f.state,
+              move: f.move,
+              u: f.span > 0 ? f.t / f.span : 0,
+              boss: f.kind === "duke",
+              phase2: f.enraged,
+            }
+          : undefined,
+      );
       const fl = f.flash > 0 ? 0.7 : 0;
       rig.armorMat.emissive.setRGB(fl, fl * 0.5, fl * 0.3);
       rig.furMat.emissive.setRGB(fl * 0.4, fl * 0.2, fl * 0.15);
-      const ring = rings[i]!;
-      const showRing = f.state === "telegraph" || f.state === "swing";
+      if (f.kind === "duke" && f.enraged) {
+        rig.eyeMat.emissive.setHex(0xff4d2e);
+        rig.eyeMat.emissiveIntensity = 1.1 + Math.sin(time * 9) * 0.35;
+      }
+      if (f.kind === "demon") {
+        const pulse = 0.7 + Math.sin(time * 7) * 0.2;
+        rig.armorMat.emissive.setRGB(pulse, 0.08, 0.1);
+        rig.furMat.emissive.setRGB(0.28, 0.04, 0.05);
+        rig.eyeMat.emissive.setHex(0xff2430);
+        rig.eyeMat.emissiveIntensity = 1.35;
+      }
+      const showRing = f.state === "telegraph" || f.state === "swing" || (f.kind === "demon" && f.aggro && !dead);
       ring.visible = showRing;
       ring.position.set(f.x, 0.04, f.z);
-      const sc = f.kind === "duke" ? 1.7 : 1.15;
-      ring.scale.setScalar(sc * (f.state === "swing" ? 1.15 : 0.85 + (f.t / Math.max(0.2, f.windup)) * 0.4));
+      const mat = ring.material as THREE.MeshBasicMaterial;
+      const u = f.span > 0 ? f.t / f.span : 0;
+      if (f.kind === "duke") {
+        const warn = f.move === "shock" ? 0xff4d2e : f.move === "overhead" ? 0xf4d35e : f.move === "rush" ? 0xf6efe4 : 0xe85d04;
+        mat.color.setHex(f.state === "swing" ? 0x9b2335 : warn);
+        mat.opacity = f.state === "swing" ? 0.7 : 0.45;
+        const sc = f.move === "shock" ? (f.state === "swing" ? 0.8 + u * 2.4 : 1.15 + u * 0.35) : f.state === "swing" ? 1.35 : 1.05 + u * 0.45;
+        ring.scale.setScalar(sc);
+      } else if (f.kind === "demon") {
+        mat.color.setHex(f.state === "swing" ? 0xff4d4d : 0x9b2335);
+        mat.opacity = f.state === "telegraph" || f.state === "swing" ? 0.7 : 0.4;
+        ring.scale.setScalar(f.state === "swing" ? 1.2 : 0.95);
+      } else {
+        mat.color.setHex(0x9b2335);
+        mat.opacity = 0.45;
+        ring.scale.setScalar(f.state === "swing" ? 1.15 : 0.85 + u * 0.4);
+      }
     });
 
     const locked = lockFoe();

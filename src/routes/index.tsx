@@ -8,6 +8,35 @@ import {
   type HudSnap,
 } from "@/game/createGame";
 
+const PAYME = "https://qr.payme.hsbc.com.hk/1/Mfv9c4puET3PhoMR6z7hcE";
+
+function Credits() {
+  return (
+    <section className="pointer-events-auto border border-line bg-surface/95 p-4">
+      <p className="font-display text-xs tracking-widest text-ember">開發者名單</p>
+      <p className="mt-1 font-display text-xl text-fg">YIN T</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        粉誓。如果這隻騎士貓打得過癮，用 PayMe 請我繼續做。
+      </p>
+      <a
+        href={PAYME}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-block bg-fg p-2"
+      >
+        <img
+          src="/payme-qr.png"
+          alt="PayMe 贊助 QR Code，連到 YIN T"
+          width={144}
+          height={144}
+          className="h-36 w-36"
+        />
+      </a>
+      <p className="mt-2 text-sm text-steel">點 QR，或用 PayMe 掃描</p>
+    </section>
+  );
+}
+
 export const Route = createFileRoute("/")({ component: Home });
 
 function fmt(ms: number) {
@@ -22,6 +51,7 @@ function Home() {
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
   const bossPct = Math.max(0, Math.min(100, ((hud.bossHp ?? 0) / Math.max(1, hud.bossMax)) * 100));
+  const demonPct = Math.max(0, Math.min(100, ((hud.demonHp ?? 0) / Math.max(1, hud.demonMax)) * 100));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -80,9 +110,19 @@ function Home() {
               {hud.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
             </button>
           </div>
+          {hud.demonShown && (
+            <div className="mx-auto w-full max-w-xs text-center">
+              <p className="font-display text-xs tracking-widest text-hp">線上惡魔 · {hud.demonName}</p>
+              <div className="mt-1 h-2 border border-line bg-surface">
+                <div className="h-full bg-hp" style={{ width: `${demonPct}%` }} />
+              </div>
+            </div>
+          )}
           {hud.bossShown && (
             <div className="mx-auto w-full max-w-xs text-center">
-              <p className="font-display text-xs tracking-widest text-ember">煤灰公爵</p>
+              <p className="font-display text-xs tracking-widest text-ember">
+                煤灰公爵{hud.bossPhase > 1 ? " · 第二階段" : ""}
+              </p>
               <div className="mt-1 h-2 border border-line bg-surface">
                 <div className="h-full bg-ember" style={{ width: `${bossPct}%` }} />
               </div>
@@ -117,11 +157,11 @@ function Home() {
       )}
 
       {hud.phase === "title" && (
-        <section className="absolute top-4 right-4 left-4 z-30 max-w-md border border-line bg-surface/95 p-5 sm:left-6 sm:max-w-sm">
+        <section className="absolute top-4 right-4 left-4 z-30 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
           <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            戴粉紅蝴蝶結的騎士貓。庭院不寬恕猶豫。清掉拱門前的灰殼，再進去會會煤灰公爵。
+            戴粉紅蝴蝶結的騎士貓。清掉拱門前的灰殼，再進去會會煤灰公爵。離開火芯一會兒，線上惡魔可能會侵入。舉劍是重擊要滾，圈往外擴是震地要退，低頭是衝鋒。他收招時才能砍。
           </p>
           <p className="mt-3 text-sm leading-relaxed text-steel">
             WASD 移動 · 點擊或 J 揮劍 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯
@@ -152,6 +192,9 @@ function Home() {
               {hud.muted ? "開啟聲音" : "聲音已開"}
             </button>
           </div>
+          <div className="mt-4">
+            <Credits />
+          </div>
         </section>
       )}
 
@@ -175,7 +218,7 @@ function Home() {
       )}
 
       {hud.phase === "win" && (
-        <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg/75 p-6">
+        <section className="absolute inset-0 z-30 flex items-center justify-center overflow-y-auto bg-bg/75 p-6">
           <div className="max-w-sm text-center">
             <p className="font-display text-xs tracking-widest text-ember">STILL</p>
             <h2 className="mt-2 font-display text-4xl text-fg">庭院安靜了</h2>
@@ -190,6 +233,9 @@ function Home() {
             >
               再走一次庭院
             </button>
+            <div className="mt-5 text-left">
+              <Credits />
+            </div>
           </div>
         </section>
       )}
