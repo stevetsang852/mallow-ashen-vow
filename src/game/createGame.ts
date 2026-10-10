@@ -1672,7 +1672,12 @@ export function createGame(
     } else if (player.act === "block") {
       player.sta = Math.max(0, player.sta - 12 * dt);
       player.staDelay = 0.2;
-      if (player.sta <= 0) player.act = "free";
+      if (player.sta <= 0) {
+        player.act = "free";
+        say("氣力空了");
+        shake = Math.max(shake, 0.18);
+        camPush = Math.max(camPush, 0.25);
+      }
     } else if (player.staDelay > 0) {
       player.staDelay -= dt;
     } else {
