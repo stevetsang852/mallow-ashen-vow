@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
+import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -1135,13 +1136,10 @@ export function createGame(
   }
 
   function startDukeMove(f: Foe, dist: number, p2: boolean) {
-    let move: DukeMove;
-    if (dist > 4.5) move = Math.random() < 0.72 ? "rush" : "overhead";
-    else if (p2 && dist < 2.2 && Math.random() < 0.42) move = "shock";
-    else if (Math.random() < 0.48) move = "overhead";
-    else move = "cleave";
+    const picked = chooseDukeMove(dist, p2);
+    const move = picked.move;
     f.move = move;
-    f.chain = move === "cleave" && p2 && Math.random() < 0.7 ? 1 : 0;
+    f.chain = picked.chain;
     f.state = "telegraph";
     f.t = 0;
     f.swung = false;
@@ -1191,7 +1189,7 @@ export function createGame(
           f.aimX = -Math.sin(f.yaw);
           f.aimZ = -Math.cos(f.yaw);
         }
-        f.span = f.move === "shock" ? 0.5 : f.move === "rush" ? 0.42 : f.move === "overhead" ? 0.18 : 0.22;
+        f.span = dukeSwingSpan(f.move);
       }
       return;
     }
@@ -1240,8 +1238,7 @@ export function createGame(
       if (f.t >= f.span) {
         f.state = "recover";
         f.t = 0;
-        f.span =
-          f.chain > 0 ? 0.2 : f.move === "overhead" ? 1.12 : f.move === "shock" ? 1.22 : f.move === "rush" ? (p2 ? 1.28 : 0.92) : 0.8;
+        f.span = dukeRecoverSpan(f.move, p2, f.chain);
       }
       return;
     }
@@ -1938,10 +1935,11 @@ export function createGame(
         mat.opacity = punish ? 0.7 : 0.45;
         ring.scale.setScalar(punish ? 1.25 : f.state === "swing" ? 1.15 : 0.85 + u * 0.4);
       }
-      if (punish && f.kind === "duke") {
+      if (punish) {
+        const left = f.span > 0 ? Math.max(0.25, 1 - f.t / f.span) : 1;
         mat.color.setHex(0xf3efe7);
         mat.opacity = 0.75;
-        ring.scale.setScalar(1.45);
+        ring.scale.setScalar((f.kind === "duke" ? 1.45 : 1.25) * left);
       }
     });
 
