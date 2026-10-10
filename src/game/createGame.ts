@@ -917,7 +917,6 @@ export function createGame(
         breakPoise(from);
         strikeCamera(from, amount, true);
         guardV = 1;
-        popNum(player.x, 1.45, player.z, "格", "guard");
         burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
         noise(0.04, 0.1);
         tone(210, 0.07, "square", 0.05);
@@ -1759,7 +1758,6 @@ export function createGame(
 
     if (dropped && Math.hypot(player.x - dropped.x, player.z - dropped.z) < 1.15) {
       ash += dropped.n;
-      popNum(dropped.x, 0.8, dropped.z, `+${dropped.n}`, "ash");
       burst(dropped.x, 0.4, dropped.z, 1.2, 0, 0, "ash");
       dropped = null;
       say("取回灰燼");

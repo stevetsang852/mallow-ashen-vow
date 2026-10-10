@@ -134,14 +134,7 @@ function Home() {
                     className={i < hud.flasks ? "h-3 w-3 bg-ember" : "h-3 w-3 border border-line bg-surface opacity-35"}
                   />
                 ))}
-                <span className="relative ml-2 text-sm text-muted">
-                  灰 {hud.ash}
-                  {ashFly && (
-                    <span key={ashFly.id} className="absolute -top-4 left-0 animate-pulse text-ember">
-                      +{ashFly.n}
-                    </span>
-                  )}
-                </span>
+                <span className="ml-2 text-sm text-muted">灰</span>
               </div>
             </div>
             <button
@@ -202,7 +195,7 @@ function Home() {
                   className="min-h-11 bg-ember px-4 text-sm text-bg"
                   onClick={() => api.current?.temper()}
                 >
-                  F 鍛誓 +12（200 灰）
+                  F 鍛誓
                 </button>
               )}
             </div>
