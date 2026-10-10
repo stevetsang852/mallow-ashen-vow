@@ -425,68 +425,84 @@ export function poseKnight(
     rx *= 0.25;
     if (hint?.move === "overhead" && hint.state === "telegraph") weaponK = 42;
   } else if (act === "attack") {
-    const wind = seg(actT, 0, 0.14);
-    const hit = seg(actT, 0.14, 0.28);
-    const back = seg(actT, 0.28, 0.48);
-    if (actT < 0.14) {
+    const wind = seg(actT, 0, 0.12);
+    const hit = seg(actT, 0.12, 0.26);
+    const back = seg(actT, 0.26, 0.5);
+    if (actT < 0.12) {
       const k = easeInCubic(wind);
-      wz = 1.25 * k;
-      wy = 0.25 * k;
-      bx = -0.32 * k;
-      by = -0.6 * k;
-      weaponK = 55;
-    } else if (actT < 0.28) {
-      const k = Math.pow(hit, 0.45);
-      wz = 1.25 + (-2.45 - 1.25) * k;
-      wy = 0.25 - 0.7 * k;
-      bx = -0.32 + 0.62 * k;
-      by = -0.6 + 1.15 * k;
-      wx = -0.35 * k;
-      weaponK = 320;
+      wz = 1.05 * k;
+      wy = 0.42 * k;
+      wx = 0.18 * k;
+      bx = -0.22 * k;
+      by = -0.48 * k;
+      bz = 0.08 * k;
+      hx = 0.08 * k;
+      weaponK = 48;
+      weaponDamp = 11;
+    } else if (actT < 0.26) {
+      const k = Math.pow(hit, 0.35);
+      wz = 1.05 + (-2.15 - 1.05) * k;
+      wy = 0.42 - 1.05 * k;
+      wx = 0.18 - 0.55 * k;
+      bx = -0.22 + 0.48 * k;
+      by = -0.48 + 0.92 * k;
+      bz = 0.08 - 0.16 * k;
+      hx = 0.08 + 0.16 * k;
+      weaponK = 280;
+      weaponDamp = 10;
+    } else {
+      const k = smooth01(back);
+      const settle = 1 - Math.pow(1 - k, 1.6);
+      wz = -2.15 * (1 - settle) + -0.22 * settle;
+      wy = -0.63 * (1 - settle);
+      wx = -0.37 * (1 - settle);
+      bx = 0.26 * (1 - settle);
+      by = 0.44 * (1 - settle);
+      hx = 0.18 * (1 - settle);
+      weaponK = 62;
+      weaponDamp = 8;
+    }
+    lx = 0.22 * (actT < 0.26 ? 1 : 1 - smooth01(back));
+    rx = -0.12;
+    capeX += 0.18 + (actT > 0.12 && actT < 0.3 ? 0.16 : 0);
+  } else if (act === "heavy") {
+    const wind = seg(actT, 0, 0.3);
+    const hit = seg(actT, 0.3, 0.48);
+    const back = seg(actT, 0.48, 0.78);
+    if (actT < 0.3) {
+      const k = Math.pow(smooth01(wind), 0.85);
+      wx = 1.85 * k;
+      wz = 0.35 * k;
+      wy = -0.12 * k;
+      bx = -0.62 * k;
+      by = -0.08 * k;
+      bz = -0.1 * k;
+      bobY -= 0.04 * k;
+      weaponK = 34;
+      weaponDamp = 12;
+    } else if (actT < 0.48) {
+      const k = Math.pow(hit, 0.32);
+      wx = 1.85 + (-2.35 - 1.85) * k;
+      wz = 0.35 - 0.55 * k;
+      bx = -0.62 + 1.05 * k;
+      by = -0.08 + 0.35 * k;
+      bz = -0.1 + 0.22 * k;
+      bobY -= 0.04 * (1 - k);
+      weaponK = 300;
       weaponDamp = 9;
     } else {
       const k = smooth01(back);
-      wz = -2.45 * (1 - k) + -0.35 * k;
-      wy = -0.45 * (1 - k);
-      bx = 0.3 * (1 - k);
-      by = 0.55 * (1 - k);
-      wx = -0.35 * (1 - k);
-      weaponK = 70;
-      weaponDamp = 6;
+      const settle = 1 - Math.pow(1 - k, 1.8);
+      wx = -2.35 * (1 - settle);
+      wz = -0.2 * (1 - settle);
+      bx = 0.43 * (1 - settle);
+      by = 0.27 * (1 - settle);
+      weaponK = 58;
+      weaponDamp = 7.5;
     }
-    lx *= 0.15;
-    rx *= 0.15;
-    hx += 0.1;
-    capeX += 0.25;
-  } else if (act === "heavy") {
-    const wind = seg(actT, 0, 0.3);
-    const hit = seg(actT, 0.3, 0.46);
-    const back = seg(actT, 0.46, 0.8);
-    if (actT < 0.3) {
-      const k = Math.pow(smooth01(wind), 0.7);
-      wx = 1.65 * k;
-      bx = -0.72 * k;
-      by = -0.15 * k;
-      wz = 0.2 * k;
-      weaponK = 40;
-      weaponDamp = 10;
-    } else if (actT < 0.46) {
-      const k = Math.pow(hit, 0.4);
-      wx = 1.65 + (-2.6 - 1.65) * k;
-      bx = -0.72 + 1.2 * k;
-      wz = 0.2 - 0.15 * k;
-      weaponK = 340;
-      weaponDamp = 8;
-    } else {
-      const k = smooth01(back);
-      wx = -2.6 * (1 - k);
-      bx = 0.48 * (1 - k);
-      weaponK = 64;
-      weaponDamp = 6;
-    }
-    lx = 0.15;
-    rx = 0.15;
-    capeX += 0.35;
+    lx = 0.28;
+    rx = 0.08;
+    capeX += 0.28;
   } else if (act === "block") {
     wx = baked ? 0.25 : 0.1;
     wz = baked ? -0.95 : -1.2;

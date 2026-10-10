@@ -167,7 +167,7 @@ function Home() {
             戴粉紅蝴蝶結的騎士貓。先單挑路中灰殼，輕擊再滾。兩側灰殼很重，按住格擋。重擊和格擋會累架勢，崩了就能砍。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。衝鋒收招最長。第一刀會打開刀聲。
           </p>
           <p className="mt-3 text-sm leading-relaxed text-steel">
-            WASD 走 · Shift 跑 · J 輕擊，打完才能再砍 · K 重擊 · 按住 C 格擋 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯 · Esc 選單
+            WASD 走 · Shift 跑 · 左鍵或 J 輕擊 · 右鍵或 K 重擊 · 打完才能再砍 · 按住 C 格擋 · Space 翻滾 · Q 鎖定 · R 暖瓶 · E 火芯 · Esc 選單
           </p>
           {hud.menuOpen && hud.phase === "play" && (
             <p className="mt-2 text-sm text-ember">選單開著，庭院沒有停下。</p>

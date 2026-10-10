@@ -2002,13 +2002,18 @@ export function createGame(
   canvas.addEventListener(
     "pointerdown",
     (e) => {
-      if (e.pointerType === "touch" || e.button === 2 || e.button === 1) {
+      if (e.pointerType === "touch" || e.button === 1) {
         dragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
         return;
       }
-      if (e.button === 0) tryAttack();
+      if (e.button === 2) {
+        e.preventDefault();
+        tryAttack("heavy");
+        return;
+      }
+      if (e.button === 0) tryAttack("light");
     },
     { signal },
   );
