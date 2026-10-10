@@ -9,194 +9,194 @@ function std(color: number, rough: number, metal: number) {
   });
 }
 
-function addCracks(mesh: THREE.Mesh, color = 0xe85d04, intensity = 0.6) {
-  // Simple emissive overlay simulation via material clone for glow cracks
-  const crackMat = mesh.material.clone() as THREE.MeshStandardMaterial;
-  crackMat.emissive.setHex(color);
-  crackMat.emissiveIntensity = intensity;
-  crackMat.color.multiplyScalar(0.4);
-  // In a real model this would be a separate mesh; here we just tint the base
-  if (mesh.material instanceof THREE.MeshStandardMaterial) {
-    mesh.material.emissive = crackMat.emissive;
-    mesh.material.emissiveIntensity = intensity * 0.35;
+function addSpikes(group: THREE.Group, count: number, color: number, scale = 1) {
+  const mat = std(color, 0.6, 0.4);
+  mat.emissive.setHex(0xe85d04);
+  mat.emissiveIntensity = 0.25;
+  for (let i = 0; i < count; i++) {
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.03 * scale, 0.22 * scale, 5), mat);
+    const a = (i / count) * Math.PI * 2;
+    spike.position.set(Math.cos(a) * 0.18, 0.9 + (i % 3) * 0.08, Math.sin(a) * 0.12);
+    spike.rotation.z = Math.sin(a) * 0.4;
+    spike.rotation.x = Math.cos(a) * 0.3;
+    group.add(spike);
+  }
+}
+
+function addClaws(group: THREE.Group, side: number) {
+  const mat = std(0x3a2418, 0.5, 0.2);
+  for (let i = 0; i < 3; i++) {
+    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.14, 4), mat);
+    claw.position.set(side * (0.22 + i * 0.04), 0.72, 0.18 + i * 0.03);
+    claw.rotation.z = side * -0.8;
+    claw.rotation.x = 0.4;
+    group.add(claw);
   }
 }
 
 export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   const opts: KnightOpts = {
-    fur: 0x6e5b49,
-    armor: 0x8d8680,
+    fur: 0x4a3a2a,
+    armor: 0x5a4a3a,
     bow: false,
-    helm: true,
+    helm: false,
     cape: false,
     foe: true,
-    eye: 0x1a1412,
+    eye: 0x1a1008,
     eyeEmissive: 0xff6a2a,
   };
-  const rig = makeBaseRig(opts, "hollow");
+  const rig = makeKnight(opts);
 
-  // Ash-cracked armor plates
-  const ashMat = std(0x5a524a, 0.85, 0.45);
-  ashMat.emissive.setHex(0xe85d04);
-  ashMat.emissiveIntensity = 0.18;
-  const crackGeo = new THREE.BoxGeometry(0.06, 0.22, 0.01);
-  for (let i = 0; i < 5; i++) {
-    const crack = new THREE.Mesh(crackGeo, ashMat);
-    crack.position.set((i - 2) * 0.08, 0.85, 0.22);
-    crack.rotation.z = (i - 2) * 0.12;
-    rig.bob.add(crack);
-  }
+  // Hide most knight armor plates
+  rig.bob.traverse((o) => {
+    if (o instanceof THREE.Mesh && o.geometry instanceof THREE.BoxGeometry) {
+      o.visible = false;
+    }
+  });
 
-  // Broken sword with ember glow
+  // Ash-flesh body with irregular spikes
+  const bodyMat = std(0x3a2a20, 0.9, 0.05);
+  bodyMat.emissive.setHex(0xe85d04);
+  bodyMat.emissiveIntensity = 0.15;
+  const lump = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), bodyMat);
+  lump.scale.set(1.1, 0.85, 0.9);
+  lump.position.y = 0.78;
+  rig.bob.add(lump);
+
+  addSpikes(rig.bob, 7, 0x2a1a12, 0.8);
+  addClaws(rig.bob, -1);
+  addClaws(rig.bob, 1);
+
+  // Broken weapon remains glowing
   const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
   if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
     blade.material.emissive.setHex(0xe85d04);
-    blade.material.emissiveIntensity = 0.4;
-    blade.scale.y = 0.75;
+    blade.material.emissiveIntensity = 0.55;
+    blade.scale.set(0.6, 0.65, 0.6);
   }
 
-  // Ash shield
-  const shield = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.24, 0.24, 0.045, 8),
-    new THREE.MeshStandardMaterial({ color: 0x6e675f, roughness: 0.7, metalness: 0.35 }),
-  );
-  shield.rotation.z = Math.PI / 2;
-  shield.position.set(-0.32, 0.86, 0.16);
-  const boss = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 8, 6),
-    new THREE.MeshStandardMaterial({ color: 0xc6a15b, metalness: 0.6, roughness: 0.35 }),
-  );
-  boss.position.set(-0.34, 0.86, 0.2);
-  rig.bob.add(shield, boss);
+  // Hollow head: more skull-like, glowing eyes only
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), std(0x2a2018, 0.8, 0.1));
+  skull.position.y = 0.05;
+  skull.scale.set(1.05, 0.9, 0.95);
+  rig.head.add(skull);
 
-  // Shield already added in createGame; enhance helm
-  const helm = rig.head.children.find((c) => c instanceof THREE.Mesh && c.geometry instanceof THREE.SphereGeometry);
-  if (helm && helm instanceof THREE.Mesh && helm.material instanceof THREE.MeshStandardMaterial) {
-    helm.material.roughness = 0.7;
-    helm.material.metalness = 0.6;
-    addCracks(helm, 0xff4d2e, 0.3);
-  }
-
-  const hood = new THREE.Mesh(
-    new THREE.BoxGeometry(0.42, 0.28, 0.36),
-    std(0x3a342e, 0.8, 0.2),
-  );
-  hood.position.set(0, 0.08, 0.02);
-  rig.head.add(hood);
   if (role === "road") {
-    rig.weapon.scale.set(0.7, 0.62, 0.7);
-    rig.root.scale.set(0.82, 1.08, 0.78);
-    const shield = rig.bob.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.CylinderGeometry);
-    if (shield) shield.visible = false;
+    rig.root.scale.set(0.78, 1.12, 0.74);
+    rig.weapon.scale.set(0.6, 0.55, 0.6);
   } else {
-    rig.root.scale.set(1.18, 0.96, 1.22);
+    rig.root.scale.set(1.22, 0.92, 1.28);
   }
   return rig;
 }
 
 export function makeDuke(): KnightRig {
   const opts: KnightOpts = {
-    fur: 0x2c2624,
-    armor: 0x3a342e,
+    fur: 0x1a1210,
+    armor: 0x2a1a16,
     bow: false,
-    helm: true,
+    helm: false,
     cape: true,
     foe: true,
-    eye: 0x2a0c08,
+    eye: 0xff4d2e,
     eyeEmissive: 0xff4d2e,
   };
-  const rig = makeBaseRig(opts, "duke");
+  const rig = makeKnight(opts);
 
-  // Horned helm
+  // Massive irregular ash-beast body
+  rig.bob.traverse((o) => {
+    if (o instanceof THREE.Mesh && (o.geometry instanceof THREE.BoxGeometry || o.geometry instanceof THREE.CylinderGeometry)) {
+      o.visible = false;
+    }
+  });
+
+  const bulk = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), std(0x1c1410, 0.75, 0.15));
+  bulk.scale.set(1.15, 0.95, 1.05);
+  bulk.position.y = 0.82;
+  bulk.material.emissive.setHex(0xe85d04);
+  bulk.material.emissiveIntensity = 0.45;
+  rig.bob.add(bulk);
+
+  // Large horns and spikes
   for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(
-      new THREE.ConeGeometry(0.045, 0.38, 6),
-      std(0x1c1816, 0.4, 0.8),
-    );
-    horn.position.set(sx * 0.18, 0.38, -0.02);
-    horn.rotation.z = sx * -0.55;
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.55, 6), std(0x0c0806, 0.4, 0.6));
+    horn.position.set(sx * 0.22, 0.48, -0.04);
+    horn.rotation.z = sx * -0.7;
     rig.head.add(horn);
   }
+  addSpikes(rig.bob, 9, 0x1a100c, 1.2);
 
-  // Glowing cracks on torso
-  const plate = rig.bob.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
-  if (plate && plate instanceof THREE.Mesh && plate.material instanceof THREE.MeshStandardMaterial) {
-    plate.material.color.setHex(0x2a241f);
-    plate.material.emissive.setHex(0xe85d04);
-    plate.material.emissiveIntensity = 0.55;
-    plate.material.roughness = 0.55;
-  }
-
-  // Larger greatsword
-  rig.weapon.scale.set(1.15, 1.35, 1.1);
+  // Oversized glowing weapon
+  rig.weapon.scale.set(1.35, 1.55, 1.2);
   const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
   if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
     blade.material.emissive.setHex(0xff7a32);
-    blade.material.emissiveIntensity = 0.7;
+    blade.material.emissiveIntensity = 0.85;
   }
 
-  // Tattered cape already present; scale up
-  const visor = new THREE.Mesh(
-    new THREE.BoxGeometry(0.46, 0.22, 0.12),
-    std(0x1c1816, 0.45, 0.7),
-  );
-  visor.position.set(0, 0.04, 0.22);
-  rig.head.add(visor);
-  rig.root.scale.set(1.62, 1.96, 1.62);
+  rig.root.scale.set(1.7, 2.05, 1.7);
   return rig;
 }
 
 export function makeDemon(): KnightRig {
   const opts: KnightOpts = {
-    fur: 0x3a1418,
-    armor: 0x5a1c28,
+    fur: 0x2a0c14,
+    armor: 0x3a1018,
     bow: false,
     helm: false,
-    cape: true,
+    cape: false,
     foe: true,
     eye: 0xff2430,
     eyeEmissive: 0xff2430,
   };
-  const rig = makeBaseRig(opts, "demon");
+  const rig = makeKnight(opts);
 
-  // Horns
+  // Slim demonic form with wings and claws
+  rig.bob.traverse((o) => {
+    if (o instanceof THREE.Mesh && o.geometry instanceof THREE.BoxGeometry) {
+      o.visible = false;
+    }
+  });
+
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), std(0x2a0c12, 0.85, 0.08));
+  body.scale.set(0.9, 1.05, 0.85);
+  body.position.y = 0.75;
+  body.material.emissive.setHex(0xff2430);
+  body.material.emissiveIntensity = 0.3;
+  rig.bob.add(body);
+
+  // Large horns
   for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(
-      new THREE.ConeGeometry(0.038, 0.32, 5),
-      std(0x2a0c10, 0.5, 0.3),
-    );
-    horn.position.set(sx * 0.14, 0.32, 0);
-    horn.rotation.z = sx * -0.4;
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.42, 5), std(0x1a080c, 0.5, 0.25));
+    horn.position.set(sx * 0.16, 0.38, 0.02);
+    horn.rotation.z = sx * -0.55;
     rig.head.add(horn);
   }
 
-  // Small wings / tattered cape already; add wing-like planes
+  // Bat-like wings
   for (const sx of [-1, 1]) {
-    const wing = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.55, 0.7, 2, 3),
-      std(0x4a1822, 0.9, 0.05),
-    );
-    wing.position.set(sx * 0.32, 0.9, -0.1);
-    wing.rotation.y = sx * 0.6;
-    wing.rotation.z = sx * -0.2;
+    const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85, 2, 3), std(0x3a1018, 0.9, 0.04));
+    wing.position.set(sx * 0.38, 0.95, -0.08);
+    wing.rotation.y = sx * 0.7;
+    wing.rotation.z = sx * -0.25;
     wing.material.side = THREE.DoubleSide;
+    wing.material.emissive.setHex(0xff2430);
+    wing.material.emissiveIntensity = 0.2;
     rig.bob.add(wing);
   }
 
-  // Curved blade glow
+  addClaws(rig.bob, -1);
+  addClaws(rig.bob, 1);
+
+  // Curved glowing blade
   const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
   if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
     blade.material.color.setHex(0x8a2430);
     blade.material.emissive.setHex(0xff2430);
-    blade.material.emissiveIntensity = 0.6;
-    blade.scale.set(0.7, 0.85, 1);
+    blade.material.emissiveIntensity = 0.75;
+    blade.scale.set(0.55, 0.7, 0.8);
   }
 
-  rig.root.scale.setScalar(1.06);
+  rig.root.scale.setScalar(1.08);
   return rig;
-}
-
-// Shared base builder that mirrors makeKnight structure so poseKnight works
-function makeBaseRig(opts: KnightOpts, _kind: string): KnightRig {
-  return makeKnight(opts);
 }
