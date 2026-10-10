@@ -196,7 +196,7 @@ function Home() {
 
       {(hud.phase === "title" || hud.menuOpen) && (
         <section className="absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
-          <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW</p>
+          <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW · {GAME_VERSION}</p>
           <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             戴粉紅蝴蝶結的騎士貓。先單挑路中灰殼，輕擊再滾。兩側灰殼很重，按住格擋。重擊和格擋會累架勢，崩了就能砍。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。衝鋒收招最長。第一刀會打開刀聲。
