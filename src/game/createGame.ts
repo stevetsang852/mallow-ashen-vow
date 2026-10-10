@@ -346,6 +346,23 @@ export function createGame(
   );
   cloth.position.set(0, 1.7, GATE_Z + 0.08);
   scene.add(cloth);
+  let clothDrop = 0;
+  for (const sx of [-1, 1]) {
+    const crack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 1.3, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+    );
+    crack.position.set(sx * 2.15, 1.1, GATE_Z + 0.28);
+    crack.rotation.z = sx * 0.18;
+    scene.add(crack);
+  }
+  const path = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.15, 8.2),
+    new THREE.MeshStandardMaterial({ color: 0x3c342e, roughness: 1 }),
+  );
+  path.rotation.x = -Math.PI / 2;
+  path.position.set(-1.2, 0.018, -3.6);
+  scene.add(path);
   const rubbleMat = new THREE.MeshStandardMaterial({ color: 0x4a433c, roughness: 1 });
   for (let i = 0; i < 7; i++) {
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16 + hash(i) * 0.18, 0), rubbleMat);
@@ -382,6 +399,20 @@ export function createGame(
     log.castShadow = true;
     scene.add(log);
   }
+  const ringStone = new THREE.Mesh(
+    new THREE.TorusGeometry(0.55, 0.08, 6, 14),
+    new THREE.MeshStandardMaterial({ color: 0x4e463f, roughness: 0.95 }),
+  );
+  ringStone.rotation.x = Math.PI / 2;
+  ringStone.position.set(FIRE.x, 0.08, FIRE.z);
+  scene.add(ringStone);
+  const coalMat = new THREE.MeshStandardMaterial({ color: 0x241c18, roughness: 1 });
+  for (let i = 0; i < 6; i++) {
+    const coal = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06 + hash(i + 8) * 0.04, 0), coalMat);
+    const a = (i / 6) * Math.PI * 2;
+    coal.position.set(FIRE.x + Math.cos(a) * 0.22, 0.05, FIRE.z + Math.sin(a) * 0.22);
+    scene.add(coal);
+  }
   const flame = new THREE.Mesh(
     new THREE.ConeGeometry(0.16, 0.5, 7),
     new THREE.MeshBasicMaterial({ color: 0xe85d04 }),
@@ -392,7 +423,12 @@ export function createGame(
     new THREE.MeshBasicMaterial({ color: 0xf6efe4 }),
   );
   core.position.set(FIRE.x, 0.42, FIRE.z);
-  scene.add(flame, core);
+  const tongue = new THREE.Mesh(
+    new THREE.ConeGeometry(0.08, 0.28, 5),
+    new THREE.MeshBasicMaterial({ color: 0xffb35c }),
+  );
+  tongue.position.set(FIRE.x + 0.05, 0.55, FIRE.z);
+  scene.add(flame, core, tongue);
 
   const emberPos = new Float32Array(18 * 3);
   const emberGeo = new THREE.BufferGeometry();
@@ -2095,10 +2131,15 @@ export function createGame(
 
     fogMat.opacity = gateOpen ? Math.max(0, fogMat.opacity - 0.02) : 0.38;
     fogWall.visible = fogMat.opacity > 0.02;
+    if (gateOpen) clothDrop = Math.min(1, clothDrop + 0.012);
+    cloth.position.y = 1.7 - clothDrop * 1.35;
+    cloth.rotation.x = clothDrop * 1.15;
+    cloth.rotation.z = clothDrop * 0.35;
 
     const flick = 0.85 + Math.sin(time * 9) * 0.08 + Math.sin(time * 23) * 0.05;
     flame.scale.set(1, flick, 1);
     core.scale.set(1, 0.85 + Math.sin(time * 11) * 0.1, 1);
+    tongue.scale.set(1, 0.7 + Math.sin(time * 13) * 0.2, 1);
     bonfireLight.intensity = 16 + Math.sin(time * 9) * 3;
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
 
