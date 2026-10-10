@@ -1086,7 +1086,7 @@ export function createGame(
       return;
     }
     if (ash < 200) {
-      say("灰不夠，需要 200");
+      say("灰還不夠");
       return;
     }
     ash -= 200;

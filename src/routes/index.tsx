@@ -52,8 +52,6 @@ function Home() {
   const api = useRef<GameApi | null>(null);
   const [hud, setHud] = useState<HudSnap>(INITIAL_HUD);
   const [cardOn, setCardOn] = useState(false);
-  const prevAsh = useRef(0);
-  const [ashFly, setAshFly] = useState<{ id: number; n: number } | null>(null);
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
   const bossPct = Math.max(0, Math.min(100, ((hud.bossHp ?? 0) / Math.max(1, hud.bossMax)) * 100));
@@ -69,13 +67,6 @@ function Home() {
     const id = window.setTimeout(() => setCardOn(true), wait);
     return () => window.clearTimeout(id);
   }, [hud.phase]);
-
-  useEffect(() => {
-    if (hud.ash > prevAsh.current) {
-      setAshFly({ id: Date.now(), n: hud.ash - prevAsh.current });
-    }
-    prevAsh.current = hud.ash;
-  }, [hud.ash]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -219,13 +210,6 @@ function Home() {
           {!hud.webgl && (
             <p className="mt-3 text-sm text-hp">這台裝置開不了 WebGL，庭院沒有升起。</p>
           )}
-          {hud.deaths > 0 && (
-            <p className="mt-2 text-sm text-muted">
-              倒下 {hud.deaths} 次
-              {hud.bestMs != null ? ` · 最快 ${fmt(hud.bestMs)}` : ""}
-              {hud.clears > 0 ? ` · 平靜 ${hud.clears}` : ""}
-            </p>
-          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
@@ -254,7 +238,7 @@ function Home() {
             <p className="font-display text-xs tracking-widest text-ember">FALLEN</p>
             <h2 className="mt-2 font-display text-4xl text-fg">誓約斷了</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              灰留在你倒下的地方。火芯還在。這一次 {fmt(hud.runMs)}，累計倒下 {hud.deaths} 次。
+              灰留在你倒下的地方。火芯還在。
             </p>
             <button
               type="button"
@@ -273,8 +257,7 @@ function Home() {
             <p className="font-display text-xs tracking-widest text-ember">STILL</p>
             <h2 className="mt-2 font-display text-4xl text-fg">庭院安靜了</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              粉紅的誓約還在。這一次 {fmt(hud.runMs)}
-              {hud.bestMs != null ? `，最快 ${fmt(hud.bestMs)}` : ""}。
+              粉紅的誓約還在。
             </p>
             <button
               type="button"
