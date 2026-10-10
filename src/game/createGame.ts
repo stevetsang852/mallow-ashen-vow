@@ -2165,7 +2165,7 @@ export function createGame(
       if (e.code === "KeyJ") tryAttack("light");
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
-      if (e.code === "KeyE" || e.code === "KeyR") tryFlask();
+      if (e.code === "KeyE") tryFlask();
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
     },
