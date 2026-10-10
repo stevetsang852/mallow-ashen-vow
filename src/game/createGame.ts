@@ -4,7 +4,7 @@ import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
 import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
-import { actionEnd, inIFrame } from "@/game/player";
+import { actionEnd, hitWindow, inIFrame } from "@/game/player";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -451,6 +451,13 @@ export function createGame(
   blockArc.rotation.x = -Math.PI / 2;
   blockArc.visible = false;
   scene.add(blockArc);
+  const iframeRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.42, 0.55, 16),
+    new THREE.MeshBasicMaterial({ color: 0xf6efe4, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }),
+  );
+  iframeRing.rotation.x = -Math.PI / 2;
+  iframeRing.visible = false;
+  scene.add(iframeRing);
 
   const player = {
     x: SPAWN.x,
@@ -1569,8 +1576,7 @@ export function createGame(
       }
       if (player.act === "attack") {
         const heavy = player.atk === "heavy";
-        const open = heavy ? MOVE.heavyOpen : MOVE.lightOpen;
-        const shut = heavy ? MOVE.heavyShut : MOVE.lightShut;
+        const { open, shut } = hitWindow(heavy);
         if (player.actT > open && player.actT < shut) {
           const fx = -Math.sin(player.yaw);
           const fz = -Math.cos(player.yaw);
@@ -1809,6 +1815,12 @@ export function createGame(
     playerRig.root.visible = !blink;
     playerRig.root.position.set(player.x, 0, player.z);
     playerRig.root.rotation.y = player.yaw + Math.PI;
+    const rolling = inIFrame(player.act, player.actT);
+    iframeRing.visible = rolling && phase === "play";
+    if (iframeRing.visible) {
+      iframeRing.position.set(player.x, 0.04, player.z);
+      iframeRing.scale.setScalar(1 + player.actT * 1.4);
+    }
     blockArc.visible = player.act === "block" && phase === "play";
     if (blockArc.visible) {
       const fx = -Math.sin(player.yaw);

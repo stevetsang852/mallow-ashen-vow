@@ -20,3 +20,9 @@ export function actionEnd(act: string, heavy: boolean) {
 export function inIFrame(act: string, actT: number) {
   return act === "dodge" && actT > PLAYER.iframeStart && actT < PLAYER.iframeEnd;
 }
+
+export function hitWindow(heavy: boolean) {
+  return heavy
+    ? { open: MOVE.heavyOpen, shut: MOVE.heavyShut }
+    : { open: MOVE.lightOpen, shut: MOVE.lightShut };
+}
