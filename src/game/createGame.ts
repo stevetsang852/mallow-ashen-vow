@@ -617,8 +617,10 @@ export function createGame(
   let camY = 2.2;
   let camZ = SPAWN.z + 6;
   let camKick = 0;
+  let camPush = 0;
   let camRoll = 0;
   let fovKick = 0;
+  let hurtDip = 0;
   let lastCamT = 0;
   let gateOpen = false;
   let lockId: number | null = null;
@@ -972,6 +974,23 @@ export function createGame(
     tone(70, 0.22, "sawtooth", 0.06);
   }
 
+  function strikeCamera(from: Foe | undefined, amount: number, blocked = false) {
+    const power = Math.min(1.4, amount / 28);
+    const scale = blocked ? 0.4 : 1;
+    camPush = Math.max(camPush, (0.9 + power * 0.75) * scale);
+    fovKick = Math.max(fovKick, (blocked ? 1.1 : 2.4 + power * 1.6));
+    shake = Math.max(shake, (blocked ? 0.24 : 0.46 + power * 0.22));
+    hitstop = Math.max(hitstop, blocked ? 0.05 : 0.09 + power * 0.04);
+    hurtDip = Math.max(hurtDip, blocked ? 0.08 : 0.24);
+    if (from) {
+      const side = Math.sin(Math.atan2(from.x - player.x, from.z - player.z) - camYaw);
+      camRoll = (side >= 0 ? 1 : -1) * (blocked ? 0.028 : 0.07) * (0.7 + power);
+      camYaw += side * (blocked ? 0.035 : 0.08);
+    } else {
+      camRoll = blocked ? 0.02 : 0.05;
+    }
+  }
+
   function hurtPlayer(amount: number, from?: Foe) {
     if (phase !== "play" || player.hp <= 0 || player.invuln > 0) return;
     if (player.act === "dodge" && player.actT > 0.04 && player.actT < 0.34) return;
@@ -987,8 +1006,7 @@ export function createGame(
         player.hp = Math.max(0, player.hp - Math.max(1, Math.round(amount * 0.18)));
         from.poise += 22;
         breakPoise(from);
-        shake = Math.max(shake, 0.22);
-        hitstop = Math.max(hitstop, 0.05);
+        strikeCamera(from, amount, true);
         burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
         noise(0.04, 0.1);
         tone(210, 0.07, "square", 0.05);
@@ -1005,8 +1023,7 @@ export function createGame(
     player.hp = Math.max(0, player.hp - amount);
     player.invuln = 0.62;
     hurtV = 1;
-    shake = Math.max(shake, 0.28);
-    hitstop = Math.max(hitstop, 0.06);
+    strikeCamera(from, amount, false);
     tone(90, 0.2, "sawtooth", 0.05);
     if (player.hp <= 0) {
       die();
@@ -1870,9 +1887,11 @@ export function createGame(
     const swing = player.act === "attack" ? Math.sin(Math.min(1, player.actT / 0.36) * Math.PI) : 0;
     const punch = swing * (player.atk === "heavy" ? 0.7 : 0.38);
     camKick = Math.max(0, camKick - dt * 2.8);
+    camPush = Math.max(0, camPush - dt * 3.2);
+    hurtDip = Math.max(0, hurtDip - dt * 2.4);
     fovKick = Math.max(0, fovKick - dt * 6);
     camRoll *= Math.exp(-dt * 9);
-    const dist = Math.max(3.1, camDist - punch - camKick);
+    const dist = Math.max(3.1, Math.min(8.4, camDist - punch - camKick + camPush));
     const rx = Math.cos(yaw);
     const rz = -Math.sin(yaw);
     const shoulder = look ? 0.62 : 0;
@@ -1886,7 +1905,7 @@ export function createGame(
     const lookX = look ? player.x * 0.58 + look.x * 0.42 : player.x;
     const lookZ = look ? player.z * 0.58 + look.z * 0.42 : player.z;
     camera.position.set(camX + sh, camY, camZ);
-    camera.lookAt(lookX, look ? 1.15 : 1.05, lookZ);
+    camera.lookAt(lookX, (look ? 1.15 : 1.05) - hurtDip, lookZ);
     camera.rotateZ(camRoll);
     const nextFov = 42 - fovKick;
     if (Math.abs(camera.fov - nextFov) > 0.02) {
