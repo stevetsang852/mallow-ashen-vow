@@ -7,6 +7,7 @@ import {
   type GameApi,
   type HudSnap,
 } from "@/game/createGame";
+import { GAME_VERSION } from "@/game/version";
 
 const PAYME = "https://payme.hsbc/d6d295dff7854566b4536a98f0b02ef8";
 
