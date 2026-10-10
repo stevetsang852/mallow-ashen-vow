@@ -32,3 +32,9 @@ export function inRecover(act: string, actT: number, heavy: boolean) {
   const { shut } = hitWindow(heavy);
   return actT >= shut && actT < actionEnd(act, heavy);
 }
+
+export function inWindup(act: string, actT: number, heavy: boolean) {
+  if (act !== "attack") return false;
+  const { open } = hitWindow(heavy);
+  return actT < open;
+}

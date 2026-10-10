@@ -4,7 +4,7 @@ import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
 import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
-import { actionEnd, hitWindow, inIFrame, inRecover } from "@/game/player";
+import { actionEnd, hitWindow, inIFrame, inRecover, inWindup } from "@/game/player";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -465,6 +465,13 @@ export function createGame(
   recoverRing.rotation.x = -Math.PI / 2;
   recoverRing.visible = false;
   scene.add(recoverRing);
+  const windupRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.62, 0.7, 14),
+    new THREE.MeshBasicMaterial({ color: 0xe85d04, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }),
+  );
+  windupRing.rotation.x = -Math.PI / 2;
+  windupRing.visible = false;
+  scene.add(windupRing);
 
   const player = {
     x: SPAWN.x,
@@ -1827,6 +1834,12 @@ export function createGame(
     if (iframeRing.visible) {
       iframeRing.position.set(player.x, 0.04, player.z);
       iframeRing.scale.setScalar(1 + player.actT * 1.4);
+    }
+    const winding = inWindup(player.act, player.actT, player.atk === "heavy");
+    windupRing.visible = winding && phase === "play";
+    if (windupRing.visible) {
+      windupRing.position.set(player.x, 0.05, player.z);
+      windupRing.scale.setScalar(player.atk === "heavy" ? 1.25 : 1);
     }
     const recovering = inRecover(player.act, player.actT, player.atk === "heavy");
     recoverRing.visible = recovering && phase === "play";
