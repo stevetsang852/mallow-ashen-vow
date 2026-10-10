@@ -2,220 +2,34 @@ import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
+import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
+import {
+  FIRE,
+  FLASK_MAX,
+  GATE_Z,
+  MAX_X,
+  MAX_Z,
+  MIN_X,
+  MIN_Z,
+  MOVE,
+  PILLARS,
+  RUN,
+  SAVE_KEY,
+  SPAWN,
+  STA_MAX,
+  STEP,
+  WALK,
+  dampAngle,
+  dukeTell,
+  hash,
+  template,
+  type Act,
+  type DukeMove,
+  type Foe,
+} from "@/game/moves";
 
-export type Phase = "title" | "play" | "dead" | "win";
-
-export type HudSnap = {
-  phase: Phase;
-  webgl: boolean;
-  hp: number;
-  hpMax: number;
-  sta: number;
-  staMax: number;
-  flasks: number;
-  flaskMax: number;
-  ash: number;
-  deaths: number;
-  bestMs: number | null;
-  clears: number;
-  runMs: number;
-  bossHp: number | null;
-  bossMax: number;
-  bossShown: boolean;
-  bossPhase: number;
-  lockName: string | null;
-  banner: string;
-  nearFire: boolean;
-  canTemper: boolean;
-  toast: string;
-  hurt: number;
-  guard: number;
-  staFlash: number;
-  muted: boolean;
-  gateOpen: boolean;
-  menuOpen: boolean;
-  demonShown: boolean;
-  demonName: string;
-  demonHp: number | null;
-  demonMax: number;
-};
-
-export type GameApi = {
-  begin: () => void;
-  rise: () => void;
-  again: () => void;
-  rest: () => void;
-  temper: () => void;
-  attack: () => void;
-  heavy: () => void;
-  dodge: () => void;
-  lock: () => void;
-  flask: () => void;
-  toggleMute: () => void;
-  closeMenu: () => void;
-  setStick: (x: number, y: number) => void;
-  dispose: () => void;
-};
-
-const SAVE_KEY = "mallow-ashen-vow-v1";
-const STEP = 1 / 60;
-const STA_MAX = 100;
-const FLASK_MAX = 4;
-const WALK = 3.05;
-const RUN = 5.35;
-const FIRE = { x: -3.1, z: 0.2 };
-const SPAWN = { x: 0.35, z: 3.55 };
-const GATE_Z = -8;
-const MIN_X = -11;
-const MAX_X = 11;
-const MIN_Z = -18;
-const MAX_Z = 8.2;
-const PILLARS = [
-  { x: -6.5, z: -8, r: 0.55 },
-  { x: 6.5, z: -8, r: 0.55 },
-  { x: -8.6, z: 2.2, r: 0.48 },
-  { x: 8.6, z: 2.2, r: 0.48 },
-  { x: -8.6, z: -13.2, r: 0.48 },
-  { x: 8.6, z: -13.2, r: 0.48 },
-];
-
-type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block";
-type FoeState = "idle" | "chase" | "roar" | "telegraph" | "swing" | "recover" | "hurt" | "dodge" | "drink" | "dead";
-type DukeMove = "cleave" | "overhead" | "shock" | "rush";
-
-type Foe = {
-  id: number;
-  name: string;
-  kind: "hollow" | "duke" | "demon";
-  x: number;
-  z: number;
-  yaw: number;
-  baseYaw: number;
-  hp: number;
-  hpMax: number;
-  r: number;
-  speed: number;
-  dmg: number;
-  range: number;
-  windup: number;
-  aggroR: number;
-  state: FoeState;
-  t: number;
-  cd: number;
-  swung: boolean;
-  flash: number;
-  aggro: boolean;
-  move: DukeMove;
-  enraged: boolean;
-  chain: number;
-  span: number;
-  aimX: number;
-  aimZ: number;
-  poise: number;
-  poiseMax: number;
-  stagger: number;
-};
-
-export const INITIAL_HUD: HudSnap = {
-  phase: "title",
-  webgl: true,
-  hp: 100,
-  hpMax: 100,
-  sta: STA_MAX,
-  staMax: STA_MAX,
-  flasks: FLASK_MAX,
-  flaskMax: FLASK_MAX,
-  ash: 0,
-  deaths: 0,
-  bestMs: null,
-  clears: 0,
-  runMs: 0,
-  bossHp: null,
-  bossMax: 280,
-  bossShown: false,
-  bossPhase: 1,
-  lockName: null,
-  banner: "",
-  nearFire: false,
-  canTemper: false,
-  toast: "",
-  hurt: 0,
-  guard: 0,
-  staFlash: 0,
-  muted: true,
-  gateOpen: false,
-  menuOpen: false,
-  demonShown: false,
-  demonName: "紅契",
-  demonHp: null,
-  demonMax: 150,
-};
-
-function hash(i: number) {
-  const x = Math.sin(i * 127.1 + 3.1) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-function dampAngle(current: number, target: number, speed: number, dt: number) {
-  const diff = Math.atan2(Math.sin(target - current), Math.cos(target - current));
-  const max = speed * dt;
-  return current + Math.max(-max, Math.min(max, diff));
-}
-
-function template(): Foe[] {
-  const row = (
-    id: number,
-    name: string,
-    kind: Foe["kind"],
-    x: number,
-    z: number,
-    hp: number,
-    speed: number,
-    dmg: number,
-    range: number,
-    windup: number,
-    aggroR: number,
-    r: number,
-  ): Foe => ({
-    id,
-    name,
-    kind,
-    x,
-    z,
-    yaw: Math.PI,
-    baseYaw: Math.PI,
-    hp,
-    hpMax: hp,
-    r,
-    speed,
-    dmg,
-    range,
-    windup,
-    aggroR,
-    state: "idle",
-    t: 0,
-    cd: 0.4,
-    swung: false,
-    flash: 0,
-    aggro: false,
-    move: "cleave",
-    enraged: false,
-    chain: 0,
-    span: 1,
-    aimX: 0,
-    aimZ: 0,
-    poise: 0,
-    poiseMax: kind === "duke" ? 86 : kind === "demon" ? 48 : id === 3 ? 36 : 52,
-    stagger: 0,
-  });
-  return [
-    row(1, "側翼灰殼", "hollow", -5.8, -3.8, 58, 1.7, 22, 1.55, 1.08, 3.1, 0.42),
-    row(2, "側翼灰殼", "hollow", 5.6, -4.0, 58, 1.7, 22, 1.55, 1.08, 3.1, 0.42),
-    row(3, "路中灰殼", "hollow", 0.15, -4.5, 64, 1.75, 14, 1.55, 0.62, 5.2, 0.44),
-    row(4, "煤灰公爵", "duke", 0, -14.1, 280, 1.7, 30, 2.15, 0.96, 10, 0.78),
-    row(5, "紅契", "demon", 42, 42, 150, 2.65, 16, 1.7, 0.4, 7, 0.4),
-  ];
-}
+export type { GameApi, HudSnap, Phase };
+export { INITIAL_HUD };
 
 declare global {
   interface Window {
@@ -1159,7 +973,7 @@ export function createGame(
   function tryAttack(kind: "light" | "heavy" = "light") {
     if (phase !== "play") return;
     if (player.act !== "free" && player.act !== "block") return;
-    const cost = kind === "heavy" ? 34 : 16;
+    const cost = kind === "heavy" ? MOVE.heavyCost : MOVE.lightCost;
     if (!spendSta(cost)) {
       say("氣力不夠");
       return;
@@ -1178,7 +992,7 @@ export function createGame(
 
   function tryDodge() {
     if (phase !== "play" || (player.act !== "free" && player.act !== "block")) return;
-    if (!spendSta(28)) return;
+    if (!spendSta(MOVE.dodgeCost)) return;
     const { ix, iz, mag } = wishDir();
     if (mag > 0.2) {
       player.dodgeX = ix / mag;
@@ -1295,8 +1109,7 @@ export function createGame(
     f.state = "telegraph";
     f.t = 0;
     f.swung = false;
-    const slow = p2 ? 0.9 : 1;
-    f.span = (move === "overhead" ? 1.22 : move === "shock" ? 1.05 : move === "rush" ? 0.72 : 0.86) * slow;
+    f.span = dukeTell(move, p2);
   }
 
   function stepDuke(f: Foe, dt: number, dx: number, dz: number, dist: number) {
@@ -1747,12 +1560,12 @@ export function createGame(
       }
       if (player.act === "attack") {
         const heavy = player.atk === "heavy";
-        const open = heavy ? 0.32 : 0.12;
-        const shut = heavy ? 0.5 : 0.3;
+        const open = heavy ? MOVE.heavyOpen : MOVE.lightOpen;
+        const shut = heavy ? MOVE.heavyShut : MOVE.lightShut;
         if (player.actT > open && player.actT < shut) {
           const fx = -Math.sin(player.yaw);
           const fz = -Math.cos(player.yaw);
-          const dmg = heavy ? 46 : 20;
+          const dmg = heavy ? MOVE.heavyDmg : MOVE.lightDmg;
           let any = false;
           for (const f of foes) {
             if (!livingFoe(f) || swingHits.has(f.id)) continue;
@@ -1807,8 +1620,8 @@ export function createGame(
       const end =
         player.act === "attack"
           ? player.atk === "heavy"
-            ? 0.78
-            : 0.5
+            ? MOVE.heavyEnd
+            : MOVE.lightEnd
           : player.act === "dodge"
             ? 0.46
             : player.act === "drink"
