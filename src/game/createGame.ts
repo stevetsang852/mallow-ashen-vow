@@ -334,6 +334,27 @@ export function createGame(
   beam.position.set(0, 2.55, GATE_Z);
   beam.castShadow = true;
   scene.add(beam);
+  const cloth = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.1, 1.4, 3, 4),
+    new THREE.MeshStandardMaterial({ color: 0x8a3d42, roughness: 0.9, side: THREE.DoubleSide }),
+  );
+  cloth.position.set(0, 1.7, GATE_Z + 0.08);
+  scene.add(cloth);
+  const rubbleMat = new THREE.MeshStandardMaterial({ color: 0x4a433c, roughness: 1 });
+  for (let i = 0; i < 7; i++) {
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16 + hash(i) * 0.18, 0), rubbleMat);
+    rock.position.set(-2.4 + hash(i + 2) * 4.8, 0.08, -2.2 + hash(i + 5) * 3.4);
+    rock.rotation.set(hash(i) * 2, hash(i + 1) * 2, 0);
+    rock.castShadow = true;
+    scene.add(rock);
+  }
+  const ashPile = new THREE.Mesh(
+    new THREE.CircleGeometry(0.55, 12),
+    new THREE.MeshStandardMaterial({ color: 0x2a241f, roughness: 1 }),
+  );
+  ashPile.rotation.x = -Math.PI / 2;
+  ashPile.position.set(FIRE.x + 0.2, 0.02, FIRE.z + 0.15);
+  scene.add(ashPile);
 
   const fogMat = new THREE.MeshBasicMaterial({
     color: 0xcfc3b4,

@@ -99,6 +99,15 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   const emblem = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.025), gold);
   emblem.position.set(0, 0.86, 0.22);
   bob.add(emblem);
+  for (const sx of [-1, 1]) {
+    const tasset = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.08), darkArmor);
+    tasset.position.set(sx * 0.16, 0.46, 0.08);
+    tasset.rotation.z = sx * 0.18;
+    const vam = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.16, 6), armorMat);
+    vam.position.set(sx * 0.22, 0.78, 0.16);
+    vam.rotation.z = sx * 0.4;
+    bob.add(tasset, vam);
+  }
 
   const pGeo = new THREE.SphereGeometry(0.12, 10, 8);
   for (const sx of [-1, 1]) {
@@ -208,6 +217,8 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   guard.position.y = 0.13;
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.12, 0.012), steel);
   blade.position.y = 0.7;
+  const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.86, 0.014), darkArmor);
+  fuller.position.y = 0.72;
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.16, 4), steel);
   tip.position.y = 1.32;
   const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 6), gold);
@@ -217,7 +228,7 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   const h2 = new THREE.Mesh(handGeo, armorMat);
   h1.position.set(-0.06, 0.02, 0);
   h2.position.set(0.055, -0.01, 0.01);
-  weapon.add(grip, guard, blade, tip, pommel, h1, h2);
+  weapon.add(grip, guard, blade, fuller, tip, pommel, h1, h2);
   bob.add(weapon);
 
   root.traverse((o) => {
