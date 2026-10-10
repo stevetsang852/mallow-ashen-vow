@@ -1902,7 +1902,8 @@ export function createGame(
         rig.eyeMat.emissive.setHex(0xff2430);
         rig.eyeMat.emissiveIntensity = 1.35;
       }
-      const showRing = f.state === "telegraph" || f.state === "swing" || (f.kind === "demon" && f.aggro && !dead);
+      const punish = f.state === "recover" || f.state === "hurt";
+      const showRing = f.state === "telegraph" || f.state === "swing" || punish || (f.kind === "demon" && f.aggro && !dead);
       ring.visible = showRing;
       ring.position.set(f.x, 0.04, f.z);
       const mat = ring.material as THREE.MeshBasicMaterial;
@@ -1918,9 +1919,14 @@ export function createGame(
         mat.opacity = f.state === "telegraph" || f.state === "swing" ? 0.7 : 0.4;
         ring.scale.setScalar(f.state === "swing" ? 1.2 : 0.95);
       } else {
-        mat.color.setHex(0x9b2335);
-        mat.opacity = 0.45;
-        ring.scale.setScalar(f.state === "swing" ? 1.15 : 0.85 + u * 0.4);
+        mat.color.setHex(punish ? 0xf3efe7 : 0x9b2335);
+        mat.opacity = punish ? 0.7 : 0.45;
+        ring.scale.setScalar(punish ? 1.25 : f.state === "swing" ? 1.15 : 0.85 + u * 0.4);
+      }
+      if (punish && f.kind === "duke") {
+        mat.color.setHex(0xf3efe7);
+        mat.opacity = 0.75;
+        ring.scale.setScalar(1.45);
       }
     });
 
