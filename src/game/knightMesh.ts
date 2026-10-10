@@ -8,6 +8,7 @@ export type KnightOpts = {
   cape: boolean;
   eye: number;
   eyeEmissive?: number;
+  foe?: boolean;
 };
 
 export type KnightRig = {
@@ -132,14 +133,15 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   skull.scale.set(1.06, 0.96, 0.98);
   head.add(skull);
 
-  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), furMat);
-  muzzle.position.set(0, -0.06, 0.2);
-  muzzle.scale.set(1.05, 0.72, 0.9);
-  head.add(muzzle);
-
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), noseMat);
-  nose.position.set(0, -0.04, 0.3);
-  head.add(nose);
+  if (!opts.foe) {
+    const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), furMat);
+    muzzle.position.set(0, -0.06, 0.2);
+    muzzle.scale.set(1.05, 0.72, 0.9);
+    head.add(muzzle);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), noseMat);
+    nose.position.set(0, -0.04, 0.3);
+    head.add(nose);
+  }
 
   const eyeGeo = new THREE.SphereGeometry(0.055, 10, 8);
   const catchGeo = new THREE.SphereGeometry(0.016, 6, 4);
@@ -151,16 +153,18 @@ export function makeKnight(opts: KnightOpts): KnightRig {
     head.add(eye, catchL);
   }
 
-  const earGeo = new THREE.ConeGeometry(0.085, 0.2, 7);
-  const innerGeo = new THREE.ConeGeometry(0.04, 0.11, 6);
-  for (const sx of [-1, 1]) {
-    const ear = new THREE.Mesh(earGeo, furMat);
-    ear.position.set(sx * 0.15, 0.22, -0.02);
-    ear.rotation.z = sx * -0.5;
-    const inner = new THREE.Mesh(innerGeo, innerMat);
-    inner.position.set(sx * 0.15, 0.2, 0.02);
-    inner.rotation.z = sx * -0.5;
-    head.add(ear, inner);
+  if (!opts.foe) {
+    const earGeo = new THREE.ConeGeometry(0.085, 0.2, 7);
+    const innerGeo = new THREE.ConeGeometry(0.04, 0.11, 6);
+    for (const sx of [-1, 1]) {
+      const ear = new THREE.Mesh(earGeo, furMat);
+      ear.position.set(sx * 0.15, 0.22, -0.02);
+      ear.rotation.z = sx * -0.5;
+      const inner = new THREE.Mesh(innerGeo, innerMat);
+      inner.position.set(sx * 0.15, 0.2, 0.02);
+      inner.rotation.z = sx * -0.5;
+      head.add(ear, inner);
+    }
   }
 
   if (opts.bow) {
@@ -193,12 +197,14 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   bob.add(head);
 
   const tail = new THREE.Group();
-  tail.position.set(0, 0.58, -0.26);
-  const tailMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.26, 3, 5), furMat);
-  tailMesh.rotation.x = Math.PI / 2.5;
-  tailMesh.position.set(0, 0, -0.12);
-  tail.add(tailMesh);
-  bob.add(tail);
+  if (!opts.foe) {
+    tail.position.set(0, 0.58, -0.26);
+    const tailMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.26, 3, 5), furMat);
+    tailMesh.rotation.x = Math.PI / 2.5;
+    tailMesh.position.set(0, 0, -0.12);
+    tail.add(tailMesh);
+    bob.add(tail);
+  }
 
   let cape: THREE.Object3D = new THREE.Group();
   if (opts.cape) {

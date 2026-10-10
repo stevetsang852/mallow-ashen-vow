@@ -29,6 +29,7 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
     bow: false,
     helm: true,
     cape: false,
+    foe: true,
     eye: 0x1a1412,
     eyeEmissive: 0xff6a2a,
   };
@@ -100,6 +101,7 @@ export function makeDuke(): KnightRig {
     bow: false,
     helm: true,
     cape: true,
+    foe: true,
     eye: 0x2a0c08,
     eyeEmissive: 0xff4d2e,
   };
@@ -151,6 +153,7 @@ export function makeDemon(): KnightRig {
     bow: false,
     helm: false,
     cape: true,
+    foe: true,
     eye: 0xff2430,
     eyeEmissive: 0xff2430,
   };
