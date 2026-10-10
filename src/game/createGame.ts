@@ -591,6 +591,8 @@ export function createGame(
       bossShown: duke.aggro && phase === "play",
       bossPhase: duke.enraged ? 2 : 1,
       lockName: locked ? locked.name : null,
+      poise: locked ? Math.max(0, locked.poiseMax - locked.poise) : null,
+      poiseMax: locked ? locked.poiseMax : 1,
       banner: bannerT > 0 ? banner : "",
       nearFire: phase === "play" && nearFire(),
       canTemper: phase === "play" && nearFire() && ash >= 200 && player.hpMax < 180,

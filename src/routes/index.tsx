@@ -172,7 +172,15 @@ function Home() {
             </div>
           )}
           {hud.lockName && (
-            <p className="text-center font-display text-sm text-fg">鎖定 · {hud.lockName}</p>
+            <div className="mx-auto w-full max-w-[10rem] text-center">
+              <p className="font-display text-sm text-fg">鎖定 · {hud.lockName}</p>
+              <div className="mt-1 h-1 border border-line bg-surface">
+                <div
+                  className="h-full bg-ember"
+                  style={{ width: `${Math.max(0, Math.min(100, ((hud.poise ?? 0) / Math.max(1, hud.poiseMax)) * 100))}%` }}
+                />
+              </div>
+            </div>
           )}
           {hud.banner && (
             <p className="text-center font-display text-2xl tracking-widest text-hp">{hud.banner}</p>

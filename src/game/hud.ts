@@ -19,6 +19,8 @@ export type HudSnap = {
   bossShown: boolean;
   bossPhase: number;
   lockName: string | null;
+  poise: number | null;
+  poiseMax: number;
   banner: string;
   nearFire: boolean;
   canTemper: boolean;
@@ -71,6 +73,8 @@ export const INITIAL_HUD: HudSnap = {
   bossShown: false,
   bossPhase: 1,
   lockName: null,
+  poise: null,
+  poiseMax: 1,
   banner: "",
   nearFire: false,
   canTemper: false,

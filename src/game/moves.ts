@@ -35,10 +35,10 @@ export const MOVE = {
   heavyShut: 0.5,
   heavyEnd: 0.78,
   duke: {
-    overheadTell: 1.28,
+    overheadTell: 1.34,
     shockTell: 1.12,
-    rushTell: 0.86,
-    cleaveTell: 0.92,
+    rushTell: 0.96,
+    cleaveTell: 0.98,
     phase2Slow: 0.9,
     rushRecover: 0.92,
     rushRecoverP2: 1.28,
