@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
+import { applyCamera, stepCamera } from "@/game/camera";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -1797,42 +1798,36 @@ export function createGame(
   function draw(time: number) {
     const dt = lastCamT === 0 ? 0.016 : Math.min(0.05, time - lastCamT);
     lastCamT = time;
-    const titleDrift = phase === "title" ? Math.sin(time * 0.28) * 0.35 : 0;
-    const yaw = camYaw + titleDrift;
-    const fx = -Math.sin(yaw);
-    const fz = -Math.cos(yaw);
-    const sh = shake > 0 ? Math.sin(time * 78) * shake * 0.28 : 0;
-    const sv = shake > 0 ? Math.cos(time * 61) * shake * 0.16 : 0;
     renderer.toneMappingExposure = 1.28 + hitFlash * 0.55;
     const look = lockFoe();
-    const swing = player.act === "attack" ? Math.sin(Math.min(1, player.actT / 0.36) * Math.PI) : 0;
-    const punch = swing * (player.atk === "heavy" ? 0.7 : 0.38);
-    camKick = Math.max(0, camKick - dt * 2.8);
-    camPush = Math.max(0, camPush - dt * 3.2);
-    hurtDip = Math.max(0, hurtDip - dt * 2.4);
-    fovKick = Math.max(0, fovKick - dt * 6);
-    camRoll *= Math.exp(-dt * 9);
-    const dist = Math.max(3.1, Math.min(8.4, camDist - punch - camKick + camPush));
-    const rx = Math.cos(yaw);
-    const rz = -Math.sin(yaw);
-    const shoulder = look ? 0.62 : 0;
-    const goalX = player.x - fx * dist + rx * shoulder;
-    const goalZ = player.z - fz * dist + rz * shoulder;
-    const goalY = camHeight + (look ? 0.28 : 0) + sv;
-    const follow = 1 - Math.exp(-dt * (player.act === "attack" ? 16 : 7.5));
-    camX += (goalX - camX) * follow;
-    camY += (goalY - camY) * follow;
-    camZ += (goalZ - camZ) * follow;
-    const lookX = look ? player.x * 0.58 + look.x * 0.42 : player.x;
-    const lookZ = look ? player.z * 0.58 + look.z * 0.42 : player.z;
-    camera.position.set(camX + sh, camY, camZ);
-    camera.lookAt(lookX, (look ? 1.15 : 1.05) - hurtDip, lookZ);
-    camera.rotateZ(camRoll);
-    const nextFov = 42 - fovKick;
-    if (Math.abs(camera.fov - nextFov) > 0.02) {
-      camera.fov = nextFov;
-      camera.updateProjectionMatrix();
-    }
+    const nextCam = stepCamera(
+      { x: camX, y: camY, z: camZ, kick: camKick, push: camPush, roll: camRoll, fovKick, dip: hurtDip },
+      {
+        dt,
+        time,
+        phase,
+        yaw: camYaw,
+        dist: camDist,
+        height: camHeight,
+        shake,
+        playerX: player.x,
+        playerZ: player.z,
+        act: player.act,
+        actT: player.actT,
+        heavy: player.atk === "heavy",
+        lookX: look ? look.x : null,
+        lookZ: look ? look.z : null,
+      },
+    );
+    camX = nextCam.x;
+    camY = nextCam.y;
+    camZ = nextCam.z;
+    camKick = nextCam.kick;
+    camPush = nextCam.push;
+    camRoll = nextCam.roll;
+    fovKick = nextCam.fovKick;
+    hurtDip = nextCam.dip;
+    applyCamera(camera, nextCam);
 
     const speed = Math.hypot(player.vx, player.vz);
     const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
