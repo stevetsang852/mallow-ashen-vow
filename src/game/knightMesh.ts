@@ -202,33 +202,44 @@ export function makeKnight(opts: KnightOpts): KnightRig {
 
   let cape: THREE.Object3D = new THREE.Group();
   if (opts.cape) {
-    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.95, 5, 5), capeMat);
-    cloth.position.set(0, 0.95, -0.2);
-    cloth.rotation.x = 0.3;
-    bob.add(cloth);
-    cape = cloth;
+    const wrap = new THREE.Group();
+    wrap.position.set(0, 1.05, -0.16);
+    wrap.userData.baseX = 0.28;
+    for (const sx of [-1, 1]) {
+      const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 1.05, 3, 5), capeMat);
+      cloth.position.set(sx * 0.2, -0.15, sx * 0.02);
+      cloth.rotation.y = sx * 0.18;
+      cloth.rotation.z = sx * -0.08;
+      wrap.add(cloth);
+    }
+    bob.add(wrap);
+    cape = wrap;
   }
 
   const weapon = new THREE.Group();
   weapon.position.set(0, 0.9, 0.32);
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.2, 7), leather);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.22, 7), leather);
   grip.position.y = 0.02;
-  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.035, 0.05), gold);
-  guard.position.y = 0.13;
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.12, 0.012), steel);
-  blade.position.y = 0.7;
-  const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.86, 0.014), darkArmor);
-  fuller.position.y = 0.72;
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.16, 4), steel);
-  tip.position.y = 1.32;
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.035, 0.05), gold);
+  guard.position.y = 0.14;
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.048, 1.48, 0.012), steel);
+  blade.position.y = 0.9;
+  const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.12, 0.014), darkArmor);
+  fuller.position.y = 0.92;
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.2, 4), steel);
+  tip.position.y = 1.72;
   const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 6), gold);
-  pommel.position.y = -0.1;
-  const handGeo = new THREE.SphereGeometry(0.065, 8, 6);
-  const h1 = new THREE.Mesh(handGeo, armorMat);
-  const h2 = new THREE.Mesh(handGeo, armorMat);
-  h1.position.set(-0.06, 0.02, 0);
-  h2.position.set(0.055, -0.01, 0.01);
-  weapon.add(grip, guard, blade, fuller, tip, pommel, h1, h2);
+  pommel.position.y = -0.12;
+  const hand = new THREE.Group();
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.08), armorMat);
+  const thumb = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.07, 5), armorMat);
+  thumb.position.set(0.07, 0.02, 0.02);
+  thumb.rotation.z = -1.1;
+  const fingers = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.05), armorMat);
+  fingers.position.set(0, -0.02, 0.03);
+  hand.add(palm, thumb, fingers);
+  hand.position.set(0.01, 0.02, 0);
+  weapon.add(grip, guard, blade, fuller, tip, pommel, hand);
   bob.add(weapon);
 
   root.traverse((o) => {
