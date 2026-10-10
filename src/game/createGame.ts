@@ -342,6 +342,14 @@ export function createGame(
   dustRing.rotation.x = -Math.PI / 2;
   dustRing.visible = false;
   scene.add(dustRing);
+  const pickupRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.2, 0.32, 20),
+    new THREE.MeshBasicMaterial({ color: 0xe85d04, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }),
+  );
+  pickupRing.rotation.x = -Math.PI / 2;
+  pickupRing.visible = false;
+  scene.add(pickupRing);
+  let pickupT = 0;
   let dustT = 0;
 
   const slashMat = new THREE.MeshBasicMaterial({
@@ -686,9 +694,8 @@ export function createGame(
     demon: [1, 0.22, 0.24],
   };
 
-  function popNum(x: number, y: number, z: number, text: string, kind: string) {
-    floaters.push({ id: floaterId++, x, y, z, text, kind, life: 0.72 });
-    if (floaters.length > 10) floaters.shift();
+  function popNum(_x: number, _y: number, _z: number, _text: string, _kind: string) {
+    // Numbers stay off the normal player UI.
   }
 
   function burst(
@@ -1758,7 +1765,15 @@ export function createGame(
 
     if (dropped && Math.hypot(player.x - dropped.x, player.z - dropped.z) < 1.15) {
       ash += dropped.n;
-      burst(dropped.x, 0.4, dropped.z, 1.2, 0, 0, "ash");
+      burst(dropped.x, 0.55, dropped.z, 1.8, 0, 0, "ash");
+      burst(dropped.x, 0.2, dropped.z, 1.1, 0, 0, "pink");
+      pickupRing.position.set(dropped.x, 0.06, dropped.z);
+      pickupRing.visible = true;
+      pickupRing.scale.setScalar(0.4);
+      (pickupRing.material as THREE.MeshBasicMaterial).opacity = 0.8;
+      pickupT = 0.45;
+      tone(420, 0.12, "sine", 0.05);
+      tone(640, 0.18, "triangle", 0.04);
       dropped = null;
       say("取回灰燼");
     }
@@ -1950,6 +1965,12 @@ export function createGame(
       gemZ = player.z;
     }
 
+    if (pickupT > 0) {
+      pickupT = Math.max(0, pickupT - 0.016);
+      pickupRing.scale.setScalar(0.4 + (0.45 - pickupT) * 4.2);
+      (pickupRing.material as THREE.MeshBasicMaterial).opacity = pickupT * 1.6;
+      pickupRing.visible = pickupT > 0;
+    }
     stain.visible = !!dropped;
     if (dropped) {
       stain.position.set(dropped.x, 0.35 + Math.sin(time * 3) * 0.06, dropped.z);
