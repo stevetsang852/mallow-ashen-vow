@@ -467,6 +467,13 @@ export function createGame(
   );
   stain.visible = false;
   scene.add(stain);
+  const blockArc = new THREE.Mesh(
+    new THREE.RingGeometry(0.7, 0.86, 10, 1, -0.7, 1.4),
+    new THREE.MeshBasicMaterial({ color: 0xf3efe7, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
+  );
+  blockArc.rotation.x = -Math.PI / 2;
+  blockArc.visible = false;
+  scene.add(blockArc);
 
   const player = {
     x: SPAWN.x,
@@ -1835,6 +1842,14 @@ export function createGame(
     playerRig.root.visible = !blink;
     playerRig.root.position.set(player.x, 0, player.z);
     playerRig.root.rotation.y = player.yaw + Math.PI;
+    blockArc.visible = player.act === "block" && phase === "play";
+    if (blockArc.visible) {
+      const fx = -Math.sin(player.yaw);
+      const fz = -Math.cos(player.yaw);
+      blockArc.position.set(player.x + fx * 0.55, 0.05, player.z + fz * 0.55);
+      blockArc.rotation.z = -player.yaw;
+      (blockArc.material as THREE.MeshBasicMaterial).opacity = player.sta < 20 ? 0.28 : 0.55;
+    }
     playerRig.root.rotation.x = 0;
     const poseAct = player.act === "attack" && player.atk === "heavy" ? "heavy" : player.act;
     poseKnight(playerRig, time, moving, poseAct, player.actT);
