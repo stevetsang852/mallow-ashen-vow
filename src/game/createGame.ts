@@ -593,6 +593,7 @@ export function createGame(
       lockName: locked ? locked.name : null,
       poise: locked ? Math.max(0, locked.poiseMax - locked.poise) : null,
       poiseMax: locked ? locked.poiseMax : 1,
+      punish: !!locked && (locked.state === "recover" || locked.state === "hurt"),
       banner: bannerT > 0 ? banner : "",
       nearFire: phase === "play" && nearFire(),
       canTemper: phase === "play" && nearFire() && ash >= 200 && player.hpMax < 180,

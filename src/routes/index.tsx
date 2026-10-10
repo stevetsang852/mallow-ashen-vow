@@ -173,7 +173,7 @@ function Home() {
           )}
           {hud.lockName && (
             <div className="mx-auto w-full max-w-[10rem] text-center">
-              <p className="font-display text-sm text-fg">鎖定 · {hud.lockName}</p>
+              <p className="font-display text-sm text-fg">鎖定 · {hud.lockName}{hud.punish ? " · 可打" : ""}</p>
               <div className="mt-1 h-1 border border-line bg-surface">
                 <div
                   className="h-full bg-ember"
