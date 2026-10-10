@@ -26,3 +26,9 @@ export function hitWindow(heavy: boolean) {
     ? { open: MOVE.heavyOpen, shut: MOVE.heavyShut }
     : { open: MOVE.lightOpen, shut: MOVE.lightShut };
 }
+
+export function inRecover(act: string, actT: number, heavy: boolean) {
+  if (act !== "attack") return false;
+  const { shut } = hitWindow(heavy);
+  return actT >= shut && actT < actionEnd(act, heavy);
+}
