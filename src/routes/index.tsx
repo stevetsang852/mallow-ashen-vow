@@ -51,10 +51,31 @@ function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const api = useRef<GameApi | null>(null);
   const [hud, setHud] = useState<HudSnap>(INITIAL_HUD);
+  const [cardOn, setCardOn] = useState(false);
+  const prevAsh = useRef(0);
+  const [ashFly, setAshFly] = useState<{ id: number; n: number } | null>(null);
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
   const bossPct = Math.max(0, Math.min(100, ((hud.bossHp ?? 0) / Math.max(1, hud.bossMax)) * 100));
   const demonPct = Math.max(0, Math.min(100, ((hud.demonHp ?? 0) / Math.max(1, hud.demonMax)) * 100));
+
+  useEffect(() => {
+    if (hud.phase !== "dead" && hud.phase !== "win") {
+      setCardOn(false);
+      return;
+    }
+    setCardOn(false);
+    const wait = hud.phase === "dead" ? 650 : 900;
+    const id = window.setTimeout(() => setCardOn(true), wait);
+    return () => window.clearTimeout(id);
+  }, [hud.phase]);
+
+  useEffect(() => {
+    if (hud.ash > prevAsh.current) {
+      setAshFly({ id: Date.now(), n: hud.ash - prevAsh.current });
+    }
+    prevAsh.current = hud.ash;
+  }, [hud.ash]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -110,10 +131,17 @@ function Home() {
                 {Array.from({ length: hud.flaskMax }, (_, i) => (
                   <span
                     key={i}
-                    className={i < hud.flasks ? "h-3 w-3 bg-ember" : "h-3 w-3 border border-line bg-surface"}
+                    className={i < hud.flasks ? "h-3 w-3 bg-ember" : "h-3 w-3 border border-line bg-surface opacity-35"}
                   />
                 ))}
-                <span className="ml-2 text-sm text-muted">灰 {hud.ash}</span>
+                <span className="relative ml-2 text-sm text-muted">
+                  灰 {hud.ash}
+                  {ashFly && (
+                    <span key={ashFly.id} className="absolute -top-4 left-0 animate-pulse text-ember">
+                      +{ashFly.n}
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
             <button
@@ -139,12 +167,15 @@ function Home() {
                 煤灰公爵{hud.bossPhase > 1 ? " · 第二階段" : ""}
               </p>
               <div className="mt-1 h-2 border border-line bg-surface">
-                <div className="h-full bg-ember" style={{ width: `${bossPct}%` }} />
+                <div className={hud.bossPhase > 1 ? "h-full bg-hp" : "h-full bg-ember"} style={{ width: `${bossPct}%` }} />
               </div>
             </div>
           )}
           {hud.lockName && (
             <p className="text-center font-display text-sm text-fg">鎖定 · {hud.lockName}</p>
+          )}
+          {hud.banner && (
+            <p className="text-center font-display text-2xl tracking-widest text-hp">{hud.banner}</p>
           )}
           {hud.toast && <p className="text-center text-sm text-fg">{hud.toast}</p>}
           {hud.nearFire && hud.phase === "play" && (
@@ -217,8 +248,8 @@ function Home() {
       )}
 
       {hud.phase === "dead" && (
-        <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg/80 p-6">
-          <div className="max-w-sm text-center">
+        <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg p-6">
+          <div className={`max-w-sm text-center transition-opacity duration-300 ${cardOn ? "opacity-100" : "opacity-0"}`}>
             <p className="font-display text-xs tracking-widest text-ember">FALLEN</p>
             <h2 className="mt-2 font-display text-4xl text-fg">誓約斷了</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
@@ -236,8 +267,8 @@ function Home() {
       )}
 
       {hud.phase === "win" && (
-        <section className="absolute inset-0 z-30 flex items-center justify-center overflow-y-auto bg-bg/75 p-6">
-          <div className="max-w-sm text-center">
+        <section className={`absolute inset-0 z-30 flex items-center justify-center overflow-y-auto p-6 transition-colors ${cardOn ? "bg-bg/75" : "bg-transparent"}`}>
+          <div className={`max-w-sm text-center transition-opacity duration-300 ${cardOn ? "opacity-100" : "opacity-0"}`}>
             <p className="font-display text-xs tracking-widest text-ember">STILL</p>
             <h2 className="mt-2 font-display text-4xl text-fg">庭院安靜了</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
@@ -264,22 +295,22 @@ function Home() {
             <Stick onChange={(x, y) => api.current?.setStick(x, y)} />
             <div className="pointer-events-auto absolute right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col items-end gap-2">
               <div className="flex gap-2">
-                <TouchBtn label="鎖" onPress={() => api.current?.lock()}>
-                  <Shield className="size-5" />
+                <TouchBtn label="鎖" big onPress={() => api.current?.lock()}>
+                  <Shield className="size-6" />
                 </TouchBtn>
                 <TouchBtn label="瓶" onPress={() => api.current?.flask()}>
                   <Flame className="size-5" />
                 </TouchBtn>
               </div>
               <div className="flex gap-2">
-                <TouchBtn label="滾" onPress={() => api.current?.dodge()}>
-                  <span className="font-display text-sm">滾</span>
+                <TouchBtn label="滾" big onPress={() => api.current?.dodge()}>
+                  <span className="font-display text-base">滾</span>
                 </TouchBtn>
                 <TouchBtn label="斬" onPress={() => api.current?.attack()}>
                   <Swords className="size-5" />
                 </TouchBtn>
                 <TouchBtn label="重" onPress={() => api.current?.heavy()}>
-                  <span className="font-display text-sm">重</span>
+                  <span className="font-display text-sm text-ember">重</span>
                 </TouchBtn>
               </div>
             </div>
@@ -293,17 +324,19 @@ function Home() {
 function TouchBtn({
   label,
   onPress,
+  big,
   children,
 }: {
   label: string;
   onPress: () => void;
+  big?: boolean;
   children: ReactNode;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
-      className="grid h-16 w-16 place-items-center border border-line bg-surface/95 text-fg touch-none"
+      className={`grid place-items-center border border-line bg-surface/95 text-fg touch-none ${big ? "h-20 w-20" : "h-16 w-16"}`}
       onPointerDown={(e) => {
         e.preventDefault();
         e.stopPropagation();

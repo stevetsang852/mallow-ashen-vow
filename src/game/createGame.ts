@@ -23,6 +23,7 @@ export type HudSnap = {
   bossShown: boolean;
   bossPhase: number;
   lockName: string | null;
+  banner: string;
   nearFire: boolean;
   canTemper: boolean;
   toast: string;
@@ -133,6 +134,7 @@ export const INITIAL_HUD: HudSnap = {
   bossShown: false,
   bossPhase: 1,
   lockName: null,
+  banner: "",
   nearFire: false,
   canTemper: false,
   toast: "",
@@ -631,6 +633,8 @@ export function createGame(
   let dropped: { x: number; z: number; n: number } | null = null;
   let toast = "";
   let toastT = 0;
+  let banner = "";
+  let bannerT = 0;
   let hurtV = 0;
   let guardV = 0;
   let staFlash = 0;
@@ -708,6 +712,7 @@ export function createGame(
       bossShown: duke.aggro && phase === "play",
       bossPhase: duke.enraged ? 2 : 1,
       lockName: locked ? locked.name : null,
+      banner: bannerT > 0 ? banner : "",
       nearFire: phase === "play" && nearFire(),
       canTemper: phase === "play" && nearFire() && ash >= 200 && player.hpMax < 180,
       toast: toastT > 0 ? toast : "",
@@ -737,6 +742,7 @@ export function createGame(
       snap.bossShown ? Math.round(snap.bossHp ?? 0) : "-",
       snap.bossPhase,
       snap.lockName ?? "",
+      snap.banner,
       snap.nearFire ? 1 : 0,
       snap.canTemper ? 1 : 0,
       snap.toast,
@@ -1257,6 +1263,8 @@ export function createGame(
     const p2 = f.hp < f.hpMax * 0.5;
     if (p2 && !f.enraged) {
       f.enraged = true;
+      banner = "第二階段";
+      bannerT = 1.8;
       say("第二階段。連段，還有震地");
       tone(70, 0.4, "sawtooth", 0.06);
       shake = Math.max(shake, 0.4);
@@ -1562,7 +1570,7 @@ export function createGame(
       burst(f.x, 0.8, f.z);
       if (lockId === f.id) lockId = null;
       tone(70, 0.25, "square", 0.04);
-      if (f.kind === "duke") winArm = 1.15;
+      if (f.kind === "duke") winArm = 1.6;
       if (f.kind === "demon") say("紅契被逐回線上");
       return;
     }
@@ -1675,6 +1683,7 @@ export function createGame(
       if (floaters[i]!.life <= 0) floaters.splice(i, 1);
     }
     if (toastT > 0) toastT -= dt;
+    if (bannerT > 0) bannerT -= dt;
     if (winArm > 0) {
       winArm -= dt;
       if (winArm <= 0) {
@@ -1751,7 +1760,7 @@ export function createGame(
             fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
             camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
             clang(heavy);
-            popNum(f.x, 1.6, f.z, String(Math.round(dmg * (broken ? 1.5 : 1))), broken ? "pink" : heavy ? "heavy" : "light");
+            popNum(f.x, 1.6, f.z, String(heavy ? 46 : 20), heavy ? "heavy" : "light");
           }
         }
       }
@@ -1880,6 +1889,7 @@ export function createGame(
 
     if (dropped && Math.hypot(player.x - dropped.x, player.z - dropped.z) < 1.15) {
       ash += dropped.n;
+      popNum(dropped.x, 0.8, dropped.z, `+${dropped.n}`, "ash");
       burst(dropped.x, 0.4, dropped.z, 1.2, 0, 0, "ash");
       dropped = null;
       say("取回灰燼");
