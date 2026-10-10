@@ -38,14 +38,14 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## 同事接手
 
-戰鬥數字和狀態機都在 `src/game/createGame.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts` 和 `src/game/mallowRig.ts`。
+戰鬥模擬還在 `src/game/createGame.ts`。招式數字在 `src/game/moves.ts`。HUD 型別在 `src/game/hud.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts` 和 `src/game/mallowRig.ts`。
 
 先不要加地圖或第二個主角。粉紅蝴蝶結和太大的劍就是識別。
 
 下一刀照下面的 **Planning** 做。先做介面手感，再雕模型和場景。不要加地圖或第二主角。
 
 1. 自己連續打公爵五次。若有一次不知道死在哪招，就把那招的前搖再拉長，不要加新敵人。
-2. `createGame.ts` 仍然很大。要拆時分成玩家、敵人、鏡頭，招式數字留在同一個表。
+2. 招式數字已抽到 `src/game/moves.ts`。模擬仍在 `createGame.ts`。再拆時才分玩家、敵人、鏡頭。
 3. 音效仍是 WebAudio 合成。第一刀會自動開聲，標題的靜音按鈕仍可用。
 
 
@@ -82,7 +82,7 @@ npm run dev
 4. **受擊介面。** 已做。吃傷紅邊，格擋白邊。
 5. **鎖定。** 已做。頭上粉紅菱形，切換時滑過去。
 
-介面和模型計畫這一輪已做完。下一刀可以拆 `createGame.ts`，或自己連打公爵五次再調前搖。
+介面和模型計畫這一輪已做完。招式數字已抽到 `src/game/moves.ts`。下一刀是自己連打公爵五次，看不懂的前搖只改 `MOVE.duke`。
 
 第二輪進度：
 
@@ -91,7 +91,7 @@ npm run dev
 8. 手機斬和重分開。滾和鎖加大。已做。自動測試手勢仍不在按鈕上。
 9. 倒下先黑屏再出字。通關先留約 1.6 秒再出結算。已做。
 
-介面和模型計畫這一輪已做完。下一刀可以拆 `createGame.ts`，或自己連打公爵五次再調前搖。
+介面和模型計畫這一輪已做完。招式數字已抽到 `src/game/moves.ts`。下一刀是自己連打公爵五次，看不懂的前搖只改 `MOVE.duke`。
 
 ### 3D 模型
 
