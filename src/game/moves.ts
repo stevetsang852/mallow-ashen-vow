@@ -37,8 +37,8 @@ export const MOVE = {
   duke: {
     overheadTell: 1.34,
     shockTell: 1.12,
-    rushTell: 0.96,
-    cleaveTell: 0.98,
+    rushTell: 1.08,
+    cleaveTell: 1.06,
     phase2Slow: 0.9,
     rushRecover: 0.92,
     rushRecoverP2: 1.28,
