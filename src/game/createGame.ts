@@ -938,7 +938,6 @@ export function createGame(
     player.hp = Math.max(0, player.hp - amount);
     player.invuln = 0.62;
     hurtV = 1;
-    popNum(player.x, 1.5, player.z, String(amount), "hurt");
     strikeCamera(from, amount, false);
     tone(90, 0.2, "sawtooth", 0.05);
     if (player.hp <= 0) {
@@ -1642,7 +1641,6 @@ export function createGame(
             fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
             camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
             clang(heavy);
-            popNum(f.x, 1.6, f.z, String(heavy ? 46 : 20), heavy ? "heavy" : "light");
           }
         }
       }
