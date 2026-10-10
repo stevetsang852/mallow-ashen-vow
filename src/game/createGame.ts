@@ -565,16 +565,21 @@ export function createGame(
   });
 
   const gem = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.12, 0),
-    new THREE.MeshStandardMaterial({
-      color: 0xf3efe7,
-      emissive: 0xe85d04,
-      emissiveIntensity: 0.7,
-      metalness: 0.4,
-      roughness: 0.3,
-    }),
+    new THREE.OctahedronGeometry(0.16, 0),
+    new THREE.MeshBasicMaterial({ color: 0xf6efe4, transparent: true, opacity: 0.95, depthTest: false }),
   );
+  gem.scale.set(1, 1.35, 1);
+  const lockRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.42, 0.5, 4),
+    new THREE.MeshBasicMaterial({ color: 0xe7a0b0, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthTest: false }),
+  );
+  lockRing.rotation.x = -Math.PI / 2;
+  lockRing.rotation.z = Math.PI / 4;
+  gem.add(lockRing);
+  gem.visible = false;
   scene.add(gem);
+  let gemX = SPAWN.x;
+  let gemZ = SPAWN.z;
 
   const stain = new THREE.Mesh(
     new THREE.OctahedronGeometry(0.16, 0),
@@ -2045,8 +2050,16 @@ export function createGame(
     const locked = lockFoe();
     gem.visible = !!locked && phase === "play";
     if (locked) {
-      gem.position.set(locked.x, 2.15 + Math.sin(time * 3) * 0.06, locked.z);
-      gem.rotation.y = time * 2;
+      const k = 1 - Math.exp(-dt * 10);
+      gemX += (locked.x - gemX) * k;
+      gemZ += (locked.z - gemZ) * k;
+      const h = locked.kind === "duke" ? 2.55 : 2.15;
+      gem.position.set(gemX, h + Math.sin(time * 3) * 0.06, gemZ);
+      gem.rotation.y = time * 2.2;
+      lockRing.scale.setScalar(1 + Math.sin(time * 4) * 0.08);
+    } else {
+      gemX = player.x;
+      gemZ = player.z;
     }
 
     stain.visible = !!dropped;
