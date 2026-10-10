@@ -77,11 +77,20 @@ function Home() {
 
       <div
         className="pointer-events-none absolute inset-0 z-10"
-        style={{ opacity: hud.hurt }}
+        style={{
+          opacity: hud.hurt,
+          background: "radial-gradient(circle, transparent 42%, rgba(226,59,59,0.55) 100%)",
+        }}
         aria-hidden="true"
-      >
-        <div className="h-full w-full bg-hp/50" />
-      </div>
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{
+          opacity: hud.guard,
+          background: "radial-gradient(circle, transparent 55%, rgba(243,239,231,0.45) 100%)",
+        }}
+        aria-hidden="true"
+      />
 
       {hud.phase !== "title" && (
         <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-3 p-4">
@@ -91,8 +100,11 @@ function Home() {
               <div className="mt-1 h-3 border border-line bg-surface">
                 <div className="h-full bg-hp" style={{ width: `${hpPct}%` }} />
               </div>
-              <div className="mt-1 h-1.5 border border-line bg-surface">
-                <div className="h-full bg-sta" style={{ width: `${staPct}%` }} />
+              <div className={`mt-1 h-1.5 border bg-surface ${hud.sta < 16 ? "border-muted" : "border-line"}`}>
+                <div
+                  className="h-full bg-sta"
+                  style={{ width: `${staPct}%`, opacity: hud.staFlash > 0 ? 0.45 : 1 }}
+                />
               </div>
               <div className="mt-2 flex items-center gap-1">
                 {Array.from({ length: hud.flaskMax }, (_, i) => (

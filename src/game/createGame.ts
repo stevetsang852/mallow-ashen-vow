@@ -27,6 +27,8 @@ export type HudSnap = {
   canTemper: boolean;
   toast: string;
   hurt: number;
+  guard: number;
+  staFlash: number;
   muted: boolean;
   gateOpen: boolean;
   menuOpen: boolean;
@@ -135,6 +137,8 @@ export const INITIAL_HUD: HudSnap = {
   canTemper: false,
   toast: "",
   hurt: 0,
+  guard: 0,
+  staFlash: 0,
   muted: true,
   gateOpen: false,
   menuOpen: false,
@@ -628,6 +632,14 @@ export function createGame(
   let toast = "";
   let toastT = 0;
   let hurtV = 0;
+  let guardV = 0;
+  let staFlash = 0;
+  let floaterId = 1;
+  const floaters: { id: number; x: number; y: number; z: number; text: string; kind: string; life: number }[] = [];
+  const floaterLayer = document.createElement("div");
+  floaterLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:12;overflow:hidden;";
+  (canvas.parentElement ?? document.body).appendChild(floaterLayer);
+  const tellBars = new Map<number, THREE.Mesh>();
   let shake = 0;
   let hitstop = 0;
   let winArm = 0;
@@ -700,6 +712,8 @@ export function createGame(
       canTemper: phase === "play" && nearFire() && ash >= 200 && player.hpMax < 180,
       toast: toastT > 0 ? toast : "",
       hurt: hurtV,
+      guard: guardV,
+      staFlash,
       muted,
       gateOpen,
       menuOpen,
@@ -781,6 +795,11 @@ export function createGame(
     dust: [0.78, 0.7, 0.6],
     demon: [1, 0.22, 0.24],
   };
+
+  function popNum(x: number, y: number, z: number, text: string, kind: string) {
+    floaters.push({ id: floaterId++, x, y, z, text, kind, life: 0.72 });
+    if (floaters.length > 10) floaters.shift();
+  }
 
   function burst(
     x: number,
@@ -1007,6 +1026,8 @@ export function createGame(
         from.poise += 22;
         breakPoise(from);
         strikeCamera(from, amount, true);
+        guardV = 1;
+        popNum(player.x, 1.45, player.z, "格", "guard");
         burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
         noise(0.04, 0.1);
         tone(210, 0.07, "square", 0.05);
@@ -1023,6 +1044,7 @@ export function createGame(
     player.hp = Math.max(0, player.hp - amount);
     player.invuln = 0.62;
     hurtV = 1;
+    popNum(player.x, 1.5, player.z, String(amount), "hurt");
     strikeCamera(from, amount, false);
     tone(90, 0.2, "sawtooth", 0.05);
     if (player.hp <= 0) {
@@ -1057,6 +1079,7 @@ export function createGame(
     }
     player.sta -= cost;
     player.staDelay = 0.48;
+    staFlash = 1;
     return true;
   }
 
@@ -1645,6 +1668,12 @@ export function createGame(
     if (phase !== "play") return;
     player.invuln = Math.max(0, player.invuln - dt);
     hurtV = Math.max(0, hurtV - dt * 1.6);
+    guardV = Math.max(0, guardV - dt * 2.4);
+    staFlash = Math.max(0, staFlash - dt * 2.2);
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      floaters[i]!.life -= dt;
+      if (floaters[i]!.life <= 0) floaters.splice(i, 1);
+    }
     if (toastT > 0) toastT -= dt;
     if (winArm > 0) {
       winArm -= dt;
@@ -1722,6 +1751,7 @@ export function createGame(
             fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
             camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
             clang(heavy);
+            popNum(f.x, 1.6, f.z, String(Math.round(dmg * (broken ? 1.5 : 1))), broken ? "pink" : heavy ? "heavy" : "light");
           }
         }
       }
@@ -2081,6 +2111,42 @@ export function createGame(
     sparkGeo.attributes.color!.needsUpdate = true;
 
     if (shake > 0) shake = Math.max(0, shake - 0.016);
+    const tmp = new THREE.Vector3();
+    floaterLayer.replaceChildren();
+    for (const f of floaters) {
+      tmp.set(f.x, f.y + (0.72 - f.life) * 0.8, f.z);
+      tmp.project(camera);
+      if (tmp.z > 1) continue;
+      const el = document.createElement("p");
+      const color = f.kind === "pink" ? "#ff7aa2" : f.kind === "heavy" ? "#fff1d2" : f.kind === "hurt" ? "#e23b3b" : f.kind === "guard" ? "#f3efe7" : "#f0d2a4";
+      const size = f.kind === "heavy" || f.kind === "pink" ? 22 : 16;
+      el.textContent = f.text;
+      el.style.cssText = `position:absolute;left:${(tmp.x * 0.5 + 0.5) * 100}%;top:${(-tmp.y * 0.5 + 0.5) * 100}%;transform:translate(-50%,-50%);color:${color};font:700 ${size}px sans-serif;text-shadow:0 1px 2px #1b1714;opacity:${Math.max(0, f.life / 0.72)};`;
+      floaterLayer.appendChild(el);
+    }
+    for (const f of foes) {
+      const telling = f.state === "telegraph" || f.state === "swing";
+      let bar = tellBars.get(f.id);
+      if (!telling || f.state === "dead") {
+        if (bar) bar.visible = false;
+        continue;
+      }
+      if (!bar) {
+        bar = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.8, 0.06),
+          new THREE.MeshBasicMaterial({ color: 0xf4d35e, transparent: true, opacity: 0.9, depthTest: false }),
+        );
+        scene.add(bar);
+        tellBars.set(f.id, bar);
+      }
+      const u = f.span > 0 ? Math.max(0, Math.min(1, f.t / f.span)) : 0;
+      const hue = f.move === "shock" ? 0xff4d2e : f.move === "overhead" ? 0xf4d35e : f.move === "rush" ? 0xf6efe4 : 0xe85d04;
+      (bar.material as THREE.MeshBasicMaterial).color.setHex(f.state === "swing" ? 0x9b2335 : hue);
+      bar.visible = true;
+      bar.position.set(f.x, f.kind === "duke" ? 2.7 : 2.05, f.z);
+      bar.scale.x = 0.15 + u * 0.85;
+      bar.lookAt(camera.position);
+    }
     renderer.render(scene, camera);
   }
 
@@ -2443,6 +2509,7 @@ export function createGame(
     renderer.setAnimationLoop(null);
     if (window.__controlsTest) delete window.__controlsTest;
     autoPanel?.remove();
+    floaterLayer.remove();
     disposeObject(scene);
     stoneTex?.dispose();
     renderer.dispose();
