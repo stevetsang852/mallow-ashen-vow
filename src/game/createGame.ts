@@ -253,12 +253,12 @@ export function createGame(
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1b1714);
-  scene.fog = new THREE.FogExp2(0x1b1714, 0.02);
+  scene.background = new THREE.Color(0x2a221c);
+  scene.fog = new THREE.FogExp2(0x3a3128, 0.045);
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
 
-  const hemi = new THREE.HemisphereLight(0xe6d5c4, 0x3a2a22, 1.05);
+  const hemi = new THREE.HemisphereLight(0xf0d7b8, 0x2c241e, 1.25);
   scene.add(hemi);
   const moon = new THREE.DirectionalLight(0xd5e0ee, 1.45);
   moon.position.set(7, 14, 8);
@@ -380,6 +380,53 @@ export function createGame(
     }),
   );
   scene.add(embers);
+
+  const MOTES = 72;
+  const motePos = new Float32Array(MOTES * 3);
+  const moteCol = new Float32Array(MOTES * 3);
+  const moteSeed = new Float32Array(MOTES);
+  for (let i = 0; i < MOTES; i++) {
+    motePos[i * 3] = -10 + hash(i) * 20;
+    motePos[i * 3 + 1] = 0.3 + hash(i + 3) * 3.4;
+    motePos[i * 3 + 2] = -16 + hash(i + 7) * 22;
+    moteSeed[i] = hash(i + 11) * Math.PI * 2;
+    const warm = hash(i + 13) > 0.45;
+    moteCol[i * 3] = warm ? 1 : 0.78;
+    moteCol[i * 3 + 1] = warm ? 0.62 : 0.7;
+    moteCol[i * 3 + 2] = warm ? 0.28 : 0.62;
+  }
+  const moteGeo = new THREE.BufferGeometry();
+  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+  moteGeo.setAttribute("color", new THREE.BufferAttribute(moteCol, 3));
+  const motes = new THREE.Points(
+    moteGeo,
+    new THREE.PointsMaterial({
+      size: 0.07,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  scene.add(motes);
+
+  const shaftMat = new THREE.MeshBasicMaterial({
+    color: 0xf3d7b0,
+    transparent: true,
+    opacity: 0.06,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+  });
+  const shafts = [0, 1].map((i) => {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 7.5), shaftMat.clone());
+    mesh.position.set(i === 0 ? -4.2 : 3.6, 3.4, i === 0 ? -6.5 : -11);
+    mesh.rotation.y = i === 0 ? 0.4 : -0.55;
+    mesh.rotation.z = i === 0 ? 0.18 : -0.12;
+    scene.add(mesh);
+    return mesh;
+  });
 
   const SPARKS = 96;
   const sparkPos = new Float32Array(SPARKS * 3);
@@ -1946,6 +1993,19 @@ export function createGame(
       emberPos[i * 3 + 2] = FIRE.z + Math.sin(ang) * rad;
     }
     emberGeo.attributes.position!.needsUpdate = true;
+
+    for (let i = 0; i < MOTES; i++) {
+      const drift = time * (0.12 + hash(i) * 0.08);
+      motePos[i * 3] = -10 + ((hash(i) * 20 + Math.sin(drift + moteSeed[i]) * 0.8) % 20);
+      motePos[i * 3 + 1] = 0.25 + ((hash(i + 3) * 3.4 + drift * 0.35) % 3.6);
+      motePos[i * 3 + 2] = -16 + ((hash(i + 7) * 22 + Math.cos(drift * 0.7) * 0.6) % 22);
+    }
+    moteGeo.attributes.position!.needsUpdate = true;
+    shafts.forEach((mesh, i) => {
+      const mat = mesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.035 + Math.sin(time * 0.6 + i) * 0.02;
+      mesh.rotation.y += Math.sin(time * 0.2 + i) * 0.0004;
+    });
 
     for (const arc of slashes) {
       const life = Number(arc.userData.life ?? 0);
