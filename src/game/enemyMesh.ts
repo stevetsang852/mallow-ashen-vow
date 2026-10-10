@@ -23,7 +23,29 @@ function addSpikes(group: THREE.Group, count: number, color: number, scale = 1) 
   }
 }
 
-function addClaws(group: THREE.Group, side: number) {
+function addTentacles(group: THREE.Group, count: number, color: number) {
+  const mat = std(color, 0.75, 0.05);
+  mat.emissive.setHex(0xe85d04);
+  mat.emissiveIntensity = 0.2;
+  for (let i = 0; i < count; i++) {
+    const tent = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.35, 4, 6), mat);
+    const a = (i / count) * Math.PI * 2;
+    tent.position.set(Math.cos(a) * 0.12, 0.65, Math.sin(a) * 0.1);
+    tent.rotation.z = Math.sin(a) * 0.6;
+    tent.rotation.x = Math.cos(a) * 0.4;
+    group.add(tent);
+  }
+}
+
+function addBones(group: THREE.Group) {
+  const boneMat = std(0x4a4038, 0.85, 0.1);
+  for (let i = 0; i < 4; i++) {
+    const bone = new THREE.Mesh(new THREE.CapsuleGeometry(0.015, 0.18, 3, 4), boneMat);
+    bone.position.set((i - 1.5) * 0.08, 0.55, 0.15);
+    bone.rotation.z = (i - 1.5) * 0.3;
+    group.add(bone);
+  }
+}
   const mat = std(0x3a2418, 0.5, 0.2);
   for (let i = 0; i < 3; i++) {
     const claw = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.14, 4), mat);
@@ -66,6 +88,8 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   addSpikes(rig.bob, 7, 0x2a1a12, 0.8);
   addClaws(rig.bob, -1);
   addClaws(rig.bob, 1);
+  addTentacles(rig.bob, 5, 0x3a2a20);
+  addBones(rig.bob);
 
   // Broken weapon remains glowing
   const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
@@ -125,6 +149,8 @@ export function makeDuke(): KnightRig {
     rig.head.add(horn);
   }
   addSpikes(rig.bob, 9, 0x1a100c, 1.2);
+  addTentacles(rig.bob, 6, 0x1c1410);
+  addBones(rig.bob);
 
   // Oversized glowing weapon
   rig.weapon.scale.set(1.35, 1.55, 1.2);

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
+import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
 import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
@@ -394,14 +395,28 @@ export function createGame(
   const foeRigs: KnightRig[] = [];
   const foes = template();
   for (const f of foes) {
-    const rig =
+    const proc =
       f.kind === "hollow" ? makeHollow(f.id === 3 ? "road" : "side") :
       f.kind === "duke" ? makeDuke() :
       makeDemon();
-    rig.root.rotation.order = "YXZ";
-    rig.root.visible = f.kind !== "demon";
-    scene.add(rig.root);
-    foeRigs.push(rig);
+    proc.root.rotation.order = "YXZ";
+    proc.root.visible = f.kind !== "demon";
+    scene.add(proc.root);
+    foeRigs.push(proc);
+
+    loadEnemyRig(f.kind as "hollow" | "duke" | "demon", f.id === 3 ? "road" : "side")
+      .then((rig) => {
+        const idx = foes.indexOf(f);
+        const prev = foeRigs[idx];
+        if (prev && prev !== rig) {
+          scene.remove(prev.root);
+          rig.root.rotation.order = "YXZ";
+          rig.root.visible = f.kind !== "demon";
+          scene.add(rig.root);
+          foeRigs[idx] = rig;
+        }
+      })
+      .catch(() => {});
   }
 
   const ringGeo = new THREE.RingGeometry(0.55, 0.72, 24);
