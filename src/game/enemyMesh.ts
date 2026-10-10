@@ -22,7 +22,7 @@ function addCracks(mesh: THREE.Mesh, color = 0xe85d04, intensity = 0.6) {
   }
 }
 
-export function makeHollow(): KnightRig {
+export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   const opts: KnightOpts = {
     fur: 0x6e5b49,
     armor: 0x8d8680,
@@ -76,7 +76,20 @@ export function makeHollow(): KnightRig {
     addCracks(helm, 0xff4d2e, 0.3);
   }
 
-  rig.root.scale.set(1.12, 0.98, 1.14);
+  const hood = new THREE.Mesh(
+    new THREE.BoxGeometry(0.42, 0.28, 0.36),
+    std(0x3a342e, 0.8, 0.2),
+  );
+  hood.position.set(0, 0.08, 0.02);
+  rig.head.add(hood);
+  if (role === "road") {
+    rig.weapon.scale.set(0.7, 0.62, 0.7);
+    rig.root.scale.set(0.82, 1.08, 0.78);
+    const shield = rig.bob.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.CylinderGeometry);
+    if (shield) shield.visible = false;
+  } else {
+    rig.root.scale.set(1.18, 0.96, 1.22);
+  }
   return rig;
 }
 
@@ -121,7 +134,13 @@ export function makeDuke(): KnightRig {
   }
 
   // Tattered cape already present; scale up
-  rig.root.scale.set(1.55, 1.82, 1.55);
+  const visor = new THREE.Mesh(
+    new THREE.BoxGeometry(0.46, 0.22, 0.12),
+    std(0x1c1816, 0.45, 0.7),
+  );
+  visor.position.set(0, 0.04, 0.22);
+  rig.head.add(visor);
+  rig.root.scale.set(1.62, 1.96, 1.62);
   return rig;
 }
 

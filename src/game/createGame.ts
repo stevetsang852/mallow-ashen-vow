@@ -387,14 +387,10 @@ export function createGame(
   const foes = template();
   for (const f of foes) {
     const rig =
-      f.kind === "hollow" ? makeHollow() :
+      f.kind === "hollow" ? makeHollow(f.id === 3 ? "road" : "side") :
       f.kind === "duke" ? makeDuke() :
       makeDemon();
     rig.root.rotation.order = "YXZ";
-    if (f.id === 3) {
-      rig.root.scale.set(0.84, 1.04, 0.8);
-      rig.weapon.scale.set(0.72, 0.7, 0.72);
-    }
     rig.root.visible = f.kind !== "demon";
     scene.add(rig.root);
     foeRigs.push(rig);
@@ -1875,7 +1871,7 @@ export function createGame(
       rig.root.position.set(f.x, bob, f.z);
       rig.root.rotation.y = f.yaw + Math.PI;
       rig.root.rotation.x = dead ? Math.min(1.2, f.t * 1.4) : 0;
-      if (f.kind === "duke") rig.root.scale.set(1.55, f.enraged ? 1.86 : 1.78, 1.55);
+      if (f.kind === "duke") rig.root.scale.set(1.62, f.enraged ? 2.05 : 1.96, 1.62);
       if (f.kind === "demon") rig.root.scale.setScalar(1.08);
       const mv = f.aggro && (f.state === "chase" || f.state === "idle") && !dead ? 1 : 0;
       const telling = f.state === "telegraph" || f.state === "swing" || f.state === "recover" || f.state === "roar";
