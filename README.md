@@ -43,7 +43,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## 同事接手
 
-戰鬥模擬還在 `src/game/createGame.ts`。招式數字在 `src/game/moves.ts`。鏡頭在 `src/game/camera.ts`。公爵選招和收招長度在 `src/game/foes.ts`。HUD 型別在 `src/game/hud.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts` 和 `src/game/mallowRig.ts`。
+戰鬥模擬還在 `src/game/createGame.ts`。招式數字在 `src/game/moves.ts`。鏡頭在 `src/game/camera.ts`。公爵選招和收招長度在 `src/game/foes.ts`。玩家動作結束和翻滾無敵在 `src/game/player.ts`。HUD 型別在 `src/game/hud.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts` 和 `src/game/mallowRig.ts`。
 
 先不要加地圖或第二個主角。粉紅蝴蝶結和太大的劍就是識別。
 

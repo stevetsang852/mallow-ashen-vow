@@ -3,6 +3,7 @@ import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
 import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
+import { actionEnd, inIFrame } from "@/game/player";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -909,7 +910,7 @@ export function createGame(
 
   function hurtPlayer(amount: number, from?: Foe) {
     if (phase !== "play" || player.hp <= 0 || player.invuln > 0) return;
-    if (player.act === "dodge" && player.actT > 0.04 && player.actT < 0.34) return;
+    if (inIFrame(player.act, player.actT)) return;
     if (player.act === "block" && from) {
       const fx = -Math.sin(player.yaw);
       const fz = -Math.cos(player.yaw);
@@ -1650,18 +1651,7 @@ export function createGame(
           }
         }
       }
-      const end =
-        player.act === "attack"
-          ? player.atk === "heavy"
-            ? MOVE.heavyEnd
-            : MOVE.lightEnd
-          : player.act === "dodge"
-            ? 0.46
-            : player.act === "drink"
-              ? 0.82
-              : player.act === "hurt"
-                ? 0.34
-                : 0.3;
+      const end = actionEnd(player.act, player.atk === "heavy");
       if (player.actT >= end) {
         player.act = "free";
         player.actT = 0;
