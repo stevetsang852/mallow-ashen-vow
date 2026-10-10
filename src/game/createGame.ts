@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
+import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 
 export type Phase = "title" | "play" | "dead" | "win";
@@ -568,40 +569,14 @@ export function createGame(
   const foeRigs: KnightRig[] = [];
   const foes = template();
   for (const f of foes) {
-    const rig = makeKnight({
-      fur: f.kind === "duke" ? 0x2c2624 : f.kind === "demon" ? 0x3a1418 : 0x6e5b49,
-      armor: f.kind === "duke" ? 0x5c534c : f.kind === "demon" ? 0x7a2430 : 0x8d8680,
-      bow: false,
-      helm: f.kind === "duke" || f.kind === "demon",
-      cape: f.kind === "demon",
-      eye: f.kind === "hollow" ? 0x1a1412 : 0x2a0c08,
-      eyeEmissive: f.kind === "duke" ? 0xff4d2e : f.kind === "demon" ? 0xff2430 : 0,
-    });
+    const rig =
+      f.kind === "hollow" ? makeHollow() :
+      f.kind === "duke" ? makeDuke() :
+      makeDemon();
     rig.root.rotation.order = "YXZ";
     if (f.id === 3) {
       rig.root.scale.set(0.84, 1.04, 0.8);
       rig.weapon.scale.set(0.72, 0.7, 0.72);
-    } else if (f.kind === "hollow") {
-      rig.root.scale.set(1.14, 0.98, 1.16);
-      const shield = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.24, 0.24, 0.045, 8),
-        new THREE.MeshStandardMaterial({ color: 0x6e675f, roughness: 0.7, metalness: 0.35 }),
-      );
-      shield.rotation.z = Math.PI / 2;
-      shield.position.set(-0.32, 0.86, 0.16);
-      const boss = new THREE.Mesh(
-        new THREE.SphereGeometry(0.05, 8, 6),
-        new THREE.MeshStandardMaterial({ color: 0xc6a15b, metalness: 0.6, roughness: 0.35 }),
-      );
-      boss.position.set(-0.34, 0.86, 0.2);
-      rig.bob.add(shield, boss);
-    } else if (f.kind === "duke") {
-      rig.root.scale.set(1.55, 1.78, 1.55);
-      rig.bob.traverse((o) => {
-        if (o.position.y > 0.95 && o.position.x !== 0) o.scale.multiplyScalar(1.25);
-      });
-    } else {
-      rig.root.scale.setScalar(1.08);
     }
     rig.root.visible = f.kind !== "demon";
     scene.add(rig.root);
