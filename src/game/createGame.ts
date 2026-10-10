@@ -542,7 +542,31 @@ export function createGame(
       eyeEmissive: f.kind === "duke" ? 0xff4d2e : f.kind === "demon" ? 0xff2430 : 0,
     });
     rig.root.rotation.order = "YXZ";
-    rig.root.scale.setScalar(f.kind === "duke" ? 1.5 : f.kind === "demon" ? 1.08 : 0.96);
+    if (f.id === 3) {
+      rig.root.scale.set(0.84, 1.04, 0.8);
+      rig.weapon.scale.set(0.72, 0.7, 0.72);
+    } else if (f.kind === "hollow") {
+      rig.root.scale.set(1.14, 0.98, 1.16);
+      const shield = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.24, 0.045, 8),
+        new THREE.MeshStandardMaterial({ color: 0x6e675f, roughness: 0.7, metalness: 0.35 }),
+      );
+      shield.rotation.z = Math.PI / 2;
+      shield.position.set(-0.32, 0.86, 0.16);
+      const boss = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 8, 6),
+        new THREE.MeshStandardMaterial({ color: 0xc6a15b, metalness: 0.6, roughness: 0.35 }),
+      );
+      boss.position.set(-0.34, 0.86, 0.2);
+      rig.bob.add(shield, boss);
+    } else if (f.kind === "duke") {
+      rig.root.scale.set(1.55, 1.78, 1.55);
+      rig.bob.traverse((o) => {
+        if (o.position.y > 0.95 && o.position.x !== 0) o.scale.multiplyScalar(1.25);
+      });
+    } else {
+      rig.root.scale.setScalar(1.08);
+    }
     rig.root.visible = f.kind !== "demon";
     scene.add(rig.root);
     foeRigs.push(rig);
@@ -1989,7 +2013,7 @@ export function createGame(
       rig.root.position.set(f.x, bob, f.z);
       rig.root.rotation.y = f.yaw + Math.PI;
       rig.root.rotation.x = dead ? Math.min(1.2, f.t * 1.4) : 0;
-      if (f.kind === "duke") rig.root.scale.setScalar(f.enraged ? 1.62 : 1.5);
+      if (f.kind === "duke") rig.root.scale.set(1.55, f.enraged ? 1.86 : 1.78, 1.55);
       if (f.kind === "demon") rig.root.scale.setScalar(1.08);
       const mv = f.aggro && (f.state === "chase" || f.state === "idle") && !dead ? 1 : 0;
       const telling = f.state === "telegraph" || f.state === "swing" || f.state === "recover" || f.state === "roar";
@@ -2017,6 +2041,7 @@ export function createGame(
       if (f.kind === "duke" && f.enraged) {
         rig.eyeMat.emissive.setHex(0xff4d2e);
         rig.eyeMat.emissiveIntensity = 1.1 + Math.sin(time * 9) * 0.35;
+        rig.armorMat.emissive.setRGB(0.55, 0.12, 0.05);
       }
       if (f.kind === "demon") {
         const pulse = 0.7 + Math.sin(time * 7) * 0.2;
@@ -2053,7 +2078,7 @@ export function createGame(
       const k = 1 - Math.exp(-dt * 10);
       gemX += (locked.x - gemX) * k;
       gemZ += (locked.z - gemZ) * k;
-      const h = locked.kind === "duke" ? 2.55 : 2.15;
+      const h = locked.kind === "duke" ? 3.05 : 2.15;
       gem.position.set(gemX, h + Math.sin(time * 3) * 0.06, gemZ);
       gem.rotation.y = time * 2.2;
       lockRing.scale.setScalar(1 + Math.sin(time * 4) * 0.08);
