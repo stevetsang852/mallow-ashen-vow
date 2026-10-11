@@ -56,15 +56,17 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 任何 PR 或直接合併到 `main` 時，**必須更新版本號**。
 
+版本規則參考 [Software versioning](https://en.wikipedia.org/wiki/Software_versioning)（Semantic Versioning 精神）：
+
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.4.0";
+  export const GAME_VERSION = "0.4.1";
   ```
 - 標題畫面會顯示這個版本。
-- 規則：
-  - 小改動／修正：patch +1（例如 `0.4.0` → `0.4.1`）
-  - 新功能／明顯外觀或戰鬥改動：minor +1（例如 `0.4.x` → `0.5.0`）
-  - 大改動：major +1
+- 規則（MAJOR.MINOR.PATCH）：
+  - **PATCH**（`x.y.Z`）：向後相容的修正、小調整、文件／模型替換等
+  - **MINOR**（`x.Y.0`）：向後相容的新功能、明顯外觀或戰鬥改動
+  - **MAJOR**（`X.0.0`）：不相容的大改動
 - PR 描述或 commit message 請註明版本變更。
 - CI 會檢查版本檔案存在，但不會自動遞增——請手動更新。
 
