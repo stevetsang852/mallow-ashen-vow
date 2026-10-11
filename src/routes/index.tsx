@@ -106,60 +106,60 @@ function Home() {
       />
 
       {hud.phase !== "title" && (
-        <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-3 p-4">
+        <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="w-full max-w-xs">
-              <p className="font-display text-xs tracking-widest text-muted">粉誓庭院</p>
-              <div className="mt-1 h-3 border border-line bg-surface">
-                <div className="h-full bg-hp" style={{ width: `${hpPct}%` }} />
+            <div className="w-full max-w-[14rem] rounded-sm bg-cinematic/80 px-2 py-1.5 backdrop-blur-[2px]">
+              <p className="font-display text-[10px] tracking-[0.2em] text-muted/80">粉誓庭院</p>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-sm border border-line/60 bg-surface/60">
+                <div className="h-full bg-hp shadow-[0_0_6px_rgba(155,35,53,0.6)]" style={{ width: `${hpPct}%` }} />
               </div>
-              <div className={`mt-1 h-1.5 border bg-surface ${hud.sta < 16 ? "border-muted" : "border-line"}`}>
+              <div className={`mt-1 h-1 overflow-hidden rounded-sm border bg-surface/60 ${hud.sta < 16 ? "border-muted/50" : "border-line/50"}`}>
                 <div
-                  className="h-full bg-sta"
-                  style={{ width: `${staPct}%`, opacity: hud.staFlash > 0 ? 0.45 : 1 }}
+                  className="h-full bg-sta shadow-[0_0_4px_rgba(214,195,122,0.4)]"
+                  style={{ width: `${staPct}%`, opacity: hud.staFlash > 0 ? 0.4 : 1 }}
                 />
               </div>
-              <div className="mt-2 flex items-center gap-1">
+              <div className="mt-1.5 flex items-center gap-1">
                 {Array.from({ length: hud.flaskMax }, (_, i) => (
                   <span
                     key={i}
-                    className={i < hud.flasks ? "h-3 w-3 bg-ember" : "h-3 w-3 border border-line bg-surface opacity-35"}
+                    className={i < hud.flasks ? "h-2 w-2 rounded-sm bg-ember shadow-[0_0_4px_rgba(232,93,4,0.5)]" : "h-2 w-2 rounded-sm border border-line/40 bg-surface/40 opacity-40"}
                   />
                 ))}
-                <span className="ml-2 text-sm text-muted">灰</span>
+                <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
               </div>
             </div>
             <button
               type="button"
-              className="pointer-events-auto grid h-11 w-11 place-items-center border border-line bg-surface text-fg"
+              className="pointer-events-auto grid h-9 w-9 place-items-center rounded-sm border border-line/50 bg-cinematic/70 text-fg/80 backdrop-blur-sm"
               onClick={() => api.current?.toggleMute()}
               aria-label={hud.muted ? "開啟聲音" : "關閉聲音"}
             >
-              {hud.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+              {hud.muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </button>
           </div>
           {hud.demonShown && (
-            <div className="mx-auto w-full max-w-xs text-center">
-              <p className="font-display text-xs tracking-widest text-hp">線上惡魔 · {hud.demonName}</p>
-              <div className="mt-1 h-2 border border-line bg-surface">
+            <div className="mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
+              <p className="font-display text-[10px] tracking-[0.18em] text-hp/90">線上惡魔 · {hud.demonName}</p>
+              <div className="mt-0.5 h-1 overflow-hidden rounded-sm border border-line/40 bg-surface/50">
                 <div className="h-full bg-hp" style={{ width: `${demonPct}%` }} />
               </div>
             </div>
           )}
           {hud.bossShown && (
-            <div className="mx-auto w-full max-w-xs text-center">
-              <p className="font-display text-xs tracking-widest text-ember">
+            <div className="mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
+              <p className="font-display text-[10px] tracking-[0.18em] text-ember/90">
                 煤灰公爵{hud.bossPhase > 1 ? " · 第二階段" : ""}
               </p>
-              <div className="mt-1 h-2 border border-line bg-surface">
+              <div className="mt-0.5 h-1 overflow-hidden rounded-sm border border-line/40 bg-surface/50">
                 <div className={hud.bossPhase > 1 ? "h-full bg-hp" : "h-full bg-ember"} style={{ width: `${bossPct}%` }} />
               </div>
             </div>
           )}
           {hud.lockName && (
-            <div className="mx-auto w-full max-w-[10rem] text-center">
-              <p className="font-display text-sm text-fg">鎖定 · {hud.lockName}{hud.punish ? " · 可打" : ""}</p>
-              <div className="mt-1 h-1 border border-line bg-surface">
+            <div className="mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]">
+              <p className="font-display text-[11px] text-fg/85">鎖定 · {hud.lockName}{hud.punish ? " · 可打" : ""}</p>
+              <div className="mt-0.5 h-0.5 overflow-hidden rounded-sm border border-line/30 bg-surface/40">
                 <div
                   className="h-full bg-ember"
                   style={{ width: `${Math.max(0, Math.min(100, ((hud.poise ?? 0) / Math.max(1, hud.poiseMax)) * 100))}%` }}
@@ -168,23 +168,23 @@ function Home() {
             </div>
           )}
           {hud.banner && (
-            <p className="text-center font-display text-2xl tracking-widest text-hp">{hud.banner}</p>
+            <p className="text-center font-display text-xl tracking-[0.25em] text-hp drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">{hud.banner}</p>
           )}
-          {hud.toast && <p className="text-center text-sm text-fg">{hud.toast}</p>}
+          {hud.toast && <p className="text-center text-xs text-fg/80 drop-shadow">{hud.toast}</p>}
           {hud.nearFire && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
-                className="min-h-11 border border-line bg-surface px-4 text-sm text-fg"
+                className="min-h-10 rounded-sm border border-line/50 bg-cinematic/80 px-3 text-xs text-fg backdrop-blur-sm"
                 onClick={() => api.current?.rest()}
               >
-                <Flame className="mr-2 inline size-4 text-ember" />
+                <Flame className="mr-1.5 inline size-3.5 text-ember" />
                 G 歇息
               </button>
               {hud.canTemper && (
                 <button
                   type="button"
-                  className="min-h-11 bg-ember px-4 text-sm text-bg"
+                  className="min-h-10 rounded-sm bg-ember/90 px-3 text-xs text-bg"
                   onClick={() => api.current?.temper()}
                 >
                   F 鍛誓

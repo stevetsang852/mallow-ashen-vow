@@ -10,9 +10,10 @@
   --color-sta: #d6c37a;
   --color-steel: #9aa3b2;
   --color-line: #3a322c;
+  --color-cinematic: rgba(12, 10, 9, 0.72);
   --font-display: "Cinzel", "Songti TC", "PMingLiU", serif;
   --font-sans: "Literata", "Songti TC", "PMingLiU", serif;
-  --radius: 0.25rem;
+  --radius: 0.125rem;
 }
 
 @layer base {

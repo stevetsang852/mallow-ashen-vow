@@ -371,9 +371,9 @@ export function createGame(
   let hitFlash = 0;
 
   let playerRig: KnightRig = makeKnight({
-    fur: 0xc4a574,
-    armor: 0xc5ced8,
-    bow: true,
+    fur: 0xe8a05a,
+    armor: 0xb8c0c8,
+    bow: false,
     helm: false,
     cape: true,
     eye: 0x241c18,
