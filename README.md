@@ -74,8 +74,21 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 平常玩家看不到。電腦在遊戲頁面鍵盤輸入 `vowdebug`（不用按 Enter），再打一次就關閉。手機在戰鬥中按鎖定 6 下、翻滾 1 下、再按鎖定 3 下，會開關自動測試。左下角會出現「QA · 騎士貓自動」。
 
 - **自動**：騎士貓自己鎖定、走近、前搖翻滾、收招出刀、血少喝瓶。死了會從火芯再起，通關會再走一次。
+- **循環**：開 AI 對 AI harness。沿用上面的自動 + 敵人程序性 AI，每場勝／敗會記下來，並累積 CombatFeel 事件（hit／heavy／stance-break／stamina／hurt／block）。狀態寫在 `sessionStorage` 的 `mallow-qa-harness`。
 - **再起**：手動從火芯或標題開始。
 - **關**：關掉面板。同一分頁重新整理還在，按關才清掉。
+
+瀏覽器 console 也可控：
+
+```js
+window.__controlsTest.setAuto(true)
+window.__controlsTest.setHarness(true)
+window.__controlsTest.harness()      // { wins, losses, feelTotals, recentRuns, ... }
+window.__controlsTest.feelCounts()   // 本局 feel 計數
+window.__controlsTest.feelRecent()   // 最近 feel 事件
+```
+
+CombatFeel 只係適配層：喺現有 FX 呼叫旁 emit，**唔改** `moves.ts`／Graphics 手感數值。模組喺 `src/game/combatFeel.ts`，自動決策喺 `src/game/autoHarness.ts`。
 
 這只用於除錯，不要放到標題畫面。
 

@@ -46,6 +46,8 @@ function addBones(group: THREE.Group) {
     group.add(bone);
   }
 }
+
+function addClaws(group: THREE.Group, side: number) {
   const mat = std(0x3a2418, 0.5, 0.2);
   for (let i = 0; i < 3; i++) {
     const claw = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.14, 4), mat);
