@@ -59,10 +59,28 @@ function addClaws(group: THREE.Group, side: number) {
   }
 }
 
+function addOnionArmor(group: THREE.Group, color: number) {
+  const mat = std(color, 0.55, 0.45);
+  mat.emissive.setHex(0xe85d04);
+  mat.emissiveIntensity = 0.12;
+  // Layered onion-style plates
+  for (let i = 0; i < 4; i++) {
+    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.22 - i * 0.03, 10, 6), mat);
+    plate.scale.set(1.15, 0.45, 1.05);
+    plate.position.y = 0.55 + i * 0.12;
+    group.add(plate);
+  }
+  // Big chibi head plate
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 8), mat);
+  helm.scale.set(1.05, 0.85, 1.05);
+  helm.position.y = 1.15;
+  group.add(helm);
+}
+
 export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   const opts: KnightOpts = {
     fur: 0x4a3a2a,
-    armor: 0x5a4a3a,
+    armor: 0x6a5a4a,
     bow: false,
     helm: false,
     cape: false,
@@ -72,47 +90,37 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   };
   const rig = makeKnight(opts);
 
-  // Hide most knight armor plates
+  // Hide original box armor
   rig.bob.traverse((o) => {
     if (o instanceof THREE.Mesh && o.geometry instanceof THREE.BoxGeometry) {
       o.visible = false;
     }
   });
 
-  // Ash-flesh body with irregular spikes
-  const bodyMat = std(0x3a2a20, 0.9, 0.05);
-  bodyMat.emissive.setHex(0xe85d04);
-  bodyMat.emissiveIntensity = 0.15;
-  const lump = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), bodyMat);
-  lump.scale.set(1.1, 0.85, 0.9);
-  lump.position.y = 0.78;
-  rig.bob.add(lump);
+  // Chibi onion armor style (ash-toned)
+  addOnionArmor(rig.bob, 0x5a4a3a);
 
-  addSpikes(rig.bob, 7, 0x2a1a12, 0.8);
+  // Short chibi body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), std(0x3a2a20, 0.85, 0.1));
+  body.scale.set(1.1, 0.7, 1.0);
+  body.position.y = 0.62;
+  rig.bob.add(body);
+
+  addSpikes(rig.bob, 4, 0x2a1a12, 0.6);
   addClaws(rig.bob, -1);
   addClaws(rig.bob, 1);
-  addTentacles(rig.bob, 5, 0x3a2a20);
-  addBones(rig.bob);
 
-  // Broken weapon remains glowing
-  const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
-  if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
-    blade.material.emissive.setHex(0xe85d04);
-    blade.material.emissiveIntensity = 0.55;
-    blade.scale.set(0.6, 0.65, 0.6);
-  }
-
-  // Hollow head: more skull-like, glowing eyes only
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), std(0x2a2018, 0.8, 0.1));
-  skull.position.y = 0.05;
-  skull.scale.set(1.05, 0.9, 0.95);
+  // Bigger chibi head
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), std(0x2a2018, 0.75, 0.15));
+  skull.position.y = 0.08;
+  skull.scale.set(1.15, 0.95, 1.1);
   rig.head.add(skull);
 
+  // Scale for chibi proportions
   if (role === "road") {
-    rig.root.scale.set(0.78, 1.12, 0.74);
-    rig.weapon.scale.set(0.6, 0.55, 0.6);
+    rig.root.scale.set(0.9, 0.85, 0.9);
   } else {
-    rig.root.scale.set(1.22, 0.92, 1.28);
+    rig.root.scale.set(1.15, 0.9, 1.1);
   }
   return rig;
 }
