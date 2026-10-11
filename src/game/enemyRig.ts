@@ -21,21 +21,32 @@ function makeSimpleRigFromScene(scene: THREE.Object3D, scale = 1): KnightRig {
   root.userData.baked = true;
   const bob = new THREE.Group();
   root.add(bob);
-  const head = groupAt(bob, 0, 0.4, 0);
-  const weapon = groupAt(bob, 0.2, 0.3, 0.1);
-  const cape = groupAt(bob, 0, 0.3, -0.1);
-  const legL = groupAt(bob, -0.1, 0.15, 0);
-  const legR = groupAt(bob, 0.1, 0.15, 0);
-  const tail = groupAt(bob, 0, 0.2, -0.15);
+
+  // Center and scale the imported model
+  const box = new THREE.Box3().setFromObject(scene);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  scene.position.sub(center);
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const fit = 1.6 / maxDim;
+  scene.scale.setScalar(fit * scale);
+  scene.position.y += size.y * fit * scale * 0.5;
+
+  bob.add(scene);
+
+  const head = groupAt(bob, 0, 0.55, 0);
+  const weapon = groupAt(bob, 0.25, 0.4, 0.1);
+  const cape = groupAt(bob, 0, 0.4, -0.15);
+  const legL = groupAt(bob, -0.12, 0.2, 0);
+  const legR = groupAt(bob, 0.12, 0.2, 0);
+  const tail = groupAt(bob, 0, 0.25, -0.2);
 
   scene.traverse((o) => {
     if (o instanceof THREE.Mesh) {
       o.castShadow = true;
       o.receiveShadow = false;
-      bob.add(o);
     }
   });
-  root.scale.setScalar(scale);
 
   const dummyMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
   return { root, bob, head, weapon, cape, legL, legR, tail, armorMat: dummyMat, furMat: dummyMat, eyeMat: dummyMat };
@@ -50,12 +61,13 @@ export function loadEnemyRig(kind: "hollow" | "duke" | "demon", role?: "road" | 
     loader.load(
       url,
       (gltf) => {
-        const scale = kind === "duke" ? 1.8 : kind === "demon" ? 1.1 : 1.2;
+        const scale = kind === "duke" ? 2.2 : kind === "demon" ? 1.4 : 1.5;
+        console.info(`[enemy] loaded external ${kind} model`);
         resolve(makeSimpleRigFromScene(gltf.scene, scale));
       },
       undefined,
-      () => {
-        // fallback to procedural
+      (err) => {
+        console.warn(`[enemy] failed to load ${url}, using procedural`, err);
         resolve(kind === "hollow" ? makeHollow(role) : kind === "duke" ? makeDuke() : makeDemon());
       },
     );

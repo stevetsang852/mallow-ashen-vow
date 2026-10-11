@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Verify enemy models exist
+        run: |
+          test -f public/models/hollow.glb
+          test -f public/models/duke.glb
+          test -f public/models/demon.glb
+          test -f public/models/mallow-knight-cat.glb
+          echo "Enemy models present"
