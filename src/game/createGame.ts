@@ -31,6 +31,13 @@ import {
   type DukeMove,
   type Foe,
 } from "@/game/moves";
+import { createCombatFeelBus } from "@/game/combatFeel";
+import {
+  createHarnessSession,
+  decideAutoThink,
+  harnessWanted,
+  type AutoThinkAction,
+} from "@/game/autoHarness";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -48,6 +55,13 @@ declare global {
       foeSummary: () => { id: number; hp: number; state: string; d: number }[];
       getDebug: () => { x: number; z: number; speed: number; err: string; phase: string };
       tick: (n: number) => void;
+      /** Combat feel recent buffer + counts (Plan A). */
+      feelRecent?: () => import("@/game/combatFeel").CombatFeelEvent[];
+      feelCounts?: () => import("@/game/combatFeel").CombatFeelCounts;
+      /** AI-vs-AI harness session summary / toggle. */
+      harness?: () => import("@/game/autoHarness").HarnessSummary;
+      setHarness?: (on: boolean) => void;
+      setAuto?: (on: boolean) => void;
     };
   }
 }
@@ -542,6 +556,9 @@ export function createGame(
   let hurtV = 0;
   let guardV = 0;
   let staFlash = 0;
+  const feel = createCombatFeelBus();
+  const harness = createHarnessSession();
+  feel.on((ev) => harness.noteFeel(ev));
   let floaterId = 1;
   const floaters: { id: number; x: number; y: number; z: number; text: string; kind: string; life: number }[] = [];
   const floaterLayer = document.createElement("div");
@@ -903,6 +920,7 @@ export function createGame(
     slash(f.x, 1.05, f.z, f.yaw, true);
     clang(true);
     tone(70, 0.22, "sawtooth", 0.06);
+    feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: 16 });
   }
 
   function strikeCamera(from: Foe | undefined, amount: number, blocked = false) {
@@ -939,6 +957,7 @@ export function createGame(
         breakPoise(from);
         strikeCamera(from, amount, true);
         guardV = 1;
+        feel.emit({ kind: "block", amount, foeId: from.id, foeKind: from.kind });
         burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
         noise(0.04, 0.1);
         tone(210, 0.07, "square", 0.05);
@@ -955,6 +974,12 @@ export function createGame(
     player.hp = Math.max(0, player.hp - amount);
     player.invuln = 0.62;
     hurtV = 1;
+    feel.emit({
+      kind: "hurt",
+      amount,
+      foeId: from?.id,
+      foeKind: from?.kind,
+    });
     strikeCamera(from, amount, false);
     tone(90, 0.2, "sawtooth", 0.05);
     if (player.hp <= 0) {
@@ -976,6 +1001,7 @@ export function createGame(
     frozenRun = performance.now() - runStart;
     phase = "dead";
     lockId = null;
+    harness.onPhase("dead");
     save();
     burst(player.x, 0.7, player.z, 1.4, 0, 0, "ash");
     say("灰燼留在原地");
@@ -990,6 +1016,7 @@ export function createGame(
     player.sta -= cost;
     player.staDelay = 0.48;
     staFlash = 1;
+    feel.emit({ kind: "stamina", amount: cost });
     return true;
   }
 
@@ -1587,6 +1614,7 @@ export function createGame(
       winArm -= dt;
       if (winArm <= 0) {
         phase = "win";
+        harness.onPhase("win");
         clears += 1;
         frozenRun = performance.now() - runStart;
         if (bestMs == null || frozenRun < bestMs) bestMs = frozenRun;
@@ -1641,6 +1669,16 @@ export function createGame(
               }
               burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz, heavy ? "pink" : "steel");
               slash(f.x, 1.05, f.z, player.yaw, heavy);
+              feel.emit({
+                kind: heavy ? "heavy" : "hit",
+                amount: dmg,
+                foeId: f.id,
+                foeKind: f.kind,
+                heavy,
+              });
+              if (broken) {
+                feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: posture });
+              }
               any = true;
             }
           }
@@ -2214,9 +2252,14 @@ export function createGame(
   function paintAuto() {
     if (!autoPanel) return;
     const foe = foes.find((f) => f.state !== "dead" && (f.kind !== "demon" || f.aggro));
-    autoStatus.textContent = autoOn
+    const h = harness.summary();
+    const base = autoOn
       ? `自動中 · ${phase} · HP ${Math.round(player.hp)} · ${foe ? foe.name + " " + foe.state : "無目標"}`
       : "已解鎖。自動戰鬥還沒開。";
+    const loop = h.enabled
+      ? ` · 循環 ${h.wins}W/${h.losses}L · feel h${h.feelTotals.hit}/H${h.feelTotals.heavy}/b${h.feelTotals.block}/u${h.feelTotals.hurt}`
+      : "";
+    autoStatus.textContent = base + loop;
   }
 
   function unlockAuto() {
@@ -2239,11 +2282,24 @@ export function createGame(
       b.addEventListener("click", fn);
       return b;
     };
+    const setHarnessOn = (on: boolean) => {
+      harness.setEnabled(on);
+      if (on) {
+        autoOn = true;
+        if (phase === "title") begin();
+        else if (phase === "play") harness.onPhase("play");
+      }
+      paintAuto();
+    };
     row.append(
       mk("自動", () => {
         autoOn = !autoOn;
         if (autoOn && phase === "title") begin();
         paintAuto();
+      }),
+      mk("循環", () => {
+        setHarnessOn(!harness.enabled);
+        say(harness.enabled ? "AI 循環開了" : "AI 循環關了");
       }),
       mk("再起", () => {
         if (phase === "dead" || phase === "win") rise();
@@ -2251,6 +2307,7 @@ export function createGame(
       }),
       mk("關", () => {
         autoOn = false;
+        harness.setEnabled(false);
         panel.remove();
         autoPanel = null;
         sessionStorage.removeItem("mallow-qa");
@@ -2284,63 +2341,81 @@ export function createGame(
     }
   }
 
-  function autoThink(dt: number) {
-    if (!autoOn || menuOpen) return;
-    autoCd = Math.max(0, autoCd - dt);
-    if (phase === "title") {
+  function applyAutoAction(action: AutoThinkAction) {
+    autoCd = action.autoCd;
+    if (action.type === "noop") return;
+    if (action.type === "begin") {
       begin();
       return;
     }
-    if (phase === "dead" || phase === "win") {
-      if (autoCd <= 0) {
-        if (phase === "dead") rise();
-        else again();
-        autoCd = 1.1;
-      }
+    if (action.type === "rise") {
+      rise();
       return;
     }
-    if (player.act === "hurt" || player.act === "drink" || player.act === "dodge") return;
-    const foe = nearestFoe(18) ?? foes.find((f) => f.kind === "hollow" && f.state !== "dead") ?? null;
-    if (!foe) return;
-    if (lockId !== foe.id) lockId = foe.id;
-    const dx = foe.x - player.x;
-    const dz = foe.z - player.z;
-    const dist = Math.hypot(dx, dz) || 0.0001;
-    const fx = -Math.sin(camYaw);
-    const fz = -Math.cos(camYaw);
-    const rx = Math.cos(camYaw);
-    const rz = -Math.sin(camYaw);
-    const forward = (dx * fx + dz * fz) / dist;
-    const right = (dx * rx + dz * rz) / dist;
-    keys.delete("KeyW");
-    keys.delete("KeyA");
-    keys.delete("KeyS");
-    keys.delete("KeyD");
-    keys.delete("ShiftLeft");
-    const danger = foe.state === "telegraph" || foe.state === "swing";
-    if (danger && dist < 3.4 && autoCd <= 0 && player.act === "free") {
-      keys.add(right > 0 ? "KeyD" : "KeyA");
+    if (action.type === "again") {
+      again();
+      return;
+    }
+    if ("lockId" in action) lockId = action.lockId;
+    if (action.type === "dodge") {
+      keys.delete("KeyW");
+      keys.delete("KeyA");
+      keys.delete("KeyS");
+      keys.delete("KeyD");
+      keys.delete("ShiftLeft");
+      keys.add(action.side === "right" ? "KeyD" : "KeyA");
       tryDodge();
-      autoCd = foe.move === "shock" ? 0.7 : 0.42;
       return;
     }
-    if (player.hp < 42 && player.flasks > 0 && dist > 2.4 && player.act === "free" && autoCd <= 0) {
+    if (action.type === "flask") {
       tryFlask();
-      autoCd = 0.9;
       return;
     }
-    if ((foe.state === "recover" || foe.state === "hurt" || foe.stagger > 0) && dist < 2.35 && autoCd <= 0) {
-      tryAttack(foe.state === "hurt" || foe.stagger > 0 ? "heavy" : "light");
-      autoCd = 0.38;
+    if (action.type === "attack") {
+      tryAttack(action.heavy ? "heavy" : "light");
       return;
     }
-    if (dist > 1.65) {
-      if (forward > 0.15) keys.add("KeyW");
-      else if (forward < -0.15) keys.add("KeyS");
-      if (right > 0.15) keys.add("KeyD");
-      else if (right < -0.15) keys.add("KeyA");
-      if (dist > 3.2) keys.add("ShiftLeft");
+    if (action.type === "move") {
+      keys.delete("KeyW");
+      keys.delete("KeyA");
+      keys.delete("KeyS");
+      keys.delete("KeyD");
+      keys.delete("ShiftLeft");
+      for (const code of action.keys) keys.add(code);
     }
+  }
+
+  function autoThink(dt: number) {
+    if (!autoOn || menuOpen) return;
+    const action = decideAutoThink(
+      {
+        phase,
+        menuOpen,
+        autoCd,
+        camYaw,
+        lockId,
+        gateOpen,
+        player: {
+          x: player.x,
+          z: player.z,
+          hp: player.hp,
+          flasks: player.flasks,
+          act: player.act,
+        },
+        foes: foes.map((f) => ({
+          id: f.id,
+          x: f.x,
+          z: f.z,
+          kind: f.kind,
+          state: f.state,
+          move: f.move,
+          aggro: f.aggro,
+          stagger: f.stagger,
+        })),
+      },
+      dt,
+    );
+    applyAutoAction(action);
   }
 
   window.addEventListener("blur", () => keys.clear(), { signal });
@@ -2375,6 +2450,25 @@ export function createGame(
     tick: (n: number) => {
       for (let i = 0; i < n; i++) step(STEP);
     },
+    feelRecent: () => feel.recent(),
+    feelCounts: () => feel.counts(),
+    harness: () => harness.summary(),
+    setHarness: (on: boolean) => {
+      unlockAuto();
+      harness.setEnabled(on);
+      if (on) {
+        autoOn = true;
+        if (phase === "title") begin();
+        else if (phase === "play") harness.onPhase("play");
+      }
+      paintAuto();
+    },
+    setAuto: (on: boolean) => {
+      unlockAuto();
+      autoOn = on;
+      if (on && phase === "title") begin();
+      paintAuto();
+    },
   };
 
   let acc = 0;
@@ -2407,10 +2501,17 @@ export function createGame(
 
   emit(true);
   if (sessionStorage.getItem("mallow-qa") === "1") unlockAuto();
+  if (harnessWanted()) {
+    unlockAuto();
+    harness.setEnabled(true);
+    autoOn = true;
+    paintAuto();
+  }
 
   function begin() {
     if (phase === "play") return;
     phase = "play";
+    harness.onPhase("play");
     menuOpen = false;
     camYaw = 0;
     player.yaw = 0;
@@ -2428,6 +2529,7 @@ export function createGame(
     resetFoes();
     placeAtBonfire();
     phase = "play";
+    harness.onPhase("play");
     runStart = performance.now();
     say("火芯把你拉回來了");
     emit(true);
@@ -2439,6 +2541,7 @@ export function createGame(
     dropped = null;
     placeAtBonfire();
     phase = "play";
+    harness.onPhase("play");
     runStart = performance.now();
     emit(true);
   }
