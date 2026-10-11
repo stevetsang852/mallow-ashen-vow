@@ -38,6 +38,7 @@ import {
   harnessWanted,
   type AutoThinkAction,
 } from "@/game/autoHarness";
+import { createPlayerLearner } from "@/game/playerLearner";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -62,6 +63,9 @@ declare global {
       harness?: () => import("@/game/autoHarness").HarnessSummary;
       setHarness?: (on: boolean) => void;
       setAuto?: (on: boolean) => void;
+      /** Learning player policy summary (harness). */
+      learner?: () => import("@/game/playerLearner").LearnerSummary;
+      resetLearner?: () => void;
     };
   }
 }
@@ -558,7 +562,11 @@ export function createGame(
   let staFlash = 0;
   const feel = createCombatFeelBus();
   const harness = createHarnessSession();
-  feel.on((ev) => harness.noteFeel(ev));
+  const learner = createPlayerLearner();
+  feel.on((ev) => {
+    harness.noteFeel(ev);
+    if (harness.enabled) learner.noteFeel(ev);
+  });
   let floaterId = 1;
   const floaters: { id: number; x: number; y: number; z: number; text: string; kind: string; life: number }[] = [];
   const floaterLayer = document.createElement("div");
@@ -904,7 +912,8 @@ export function createGame(
     swingHits = new Set();
   }
 
-  function breakPoise(f: Foe) {
+  /** amount on stance-break = poise damage that triggered the break (unified). */
+  function breakPoise(f: Foe, poiseHit = 22) {
     f.poise += 0;
     if (f.poise < f.poiseMax || f.state === "dead") return;
     f.poise = 0;
@@ -920,7 +929,7 @@ export function createGame(
     slash(f.x, 1.05, f.z, f.yaw, true);
     clang(true);
     tone(70, 0.22, "sawtooth", 0.06);
-    feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: 16 });
+    feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: poiseHit });
   }
 
   function strikeCamera(from: Foe | undefined, amount: number, blocked = false) {
@@ -1002,6 +1011,7 @@ export function createGame(
     phase = "dead";
     lockId = null;
     harness.onPhase("dead");
+    if (harness.enabled) learner.endEpisode("loss");
     save();
     burst(player.x, 0.7, player.z, 1.4, 0, 0, "ash");
     say("灰燼留在原地");
@@ -1615,6 +1625,7 @@ export function createGame(
       if (winArm <= 0) {
         phase = "win";
         harness.onPhase("win");
+        if (harness.enabled) learner.endEpisode("win");
         clears += 1;
         frozenRun = performance.now() - runStart;
         if (bestMs == null || frozenRun < bestMs) bestMs = frozenRun;
@@ -2256,8 +2267,9 @@ export function createGame(
     const base = autoOn
       ? `自動中 · ${phase} · HP ${Math.round(player.hp)} · ${foe ? foe.name + " " + foe.state : "無目標"}`
       : "已解鎖。自動戰鬥還沒開。";
+    const L = learner.summary();
     const loop = h.enabled
-      ? ` · 循環 ${h.wins}W/${h.losses}L · feel h${h.feelTotals.hit}/H${h.feelTotals.heavy}/b${h.feelTotals.block}/u${h.feelTotals.hurt}`
+      ? ` · 循環 ${h.wins}W/${h.losses}L · 學 ${L.wins}W/${L.losses}L ε${L.epsilon} · feel h${h.feelTotals.hit}/H${h.feelTotals.heavy}/b${h.feelTotals.block}/u${h.feelTotals.hurt}`
       : "";
     autoStatus.textContent = base + loop;
   }
@@ -2387,34 +2399,32 @@ export function createGame(
 
   function autoThink(dt: number) {
     if (!autoOn || menuOpen) return;
-    const action = decideAutoThink(
-      {
-        phase,
-        menuOpen,
-        autoCd,
-        camYaw,
-        lockId,
-        gateOpen,
-        player: {
-          x: player.x,
-          z: player.z,
-          hp: player.hp,
-          flasks: player.flasks,
-          act: player.act,
-        },
-        foes: foes.map((f) => ({
-          id: f.id,
-          x: f.x,
-          z: f.z,
-          kind: f.kind,
-          state: f.state,
-          move: f.move,
-          aggro: f.aggro,
-          stagger: f.stagger,
-        })),
+    const ctx = {
+      phase,
+      menuOpen,
+      autoCd,
+      camYaw,
+      lockId,
+      gateOpen,
+      player: {
+        x: player.x,
+        z: player.z,
+        hp: player.hp,
+        flasks: player.flasks,
+        act: player.act,
       },
-      dt,
-    );
+      foes: foes.map((f) => ({
+        id: f.id,
+        x: f.x,
+        z: f.z,
+        kind: f.kind,
+        state: f.state,
+        move: f.move,
+        aggro: f.aggro,
+        stagger: f.stagger,
+      })),
+    };
+    const action = harness.enabled ? learner.decide(ctx, dt) : decideAutoThink(ctx, dt);
     applyAutoAction(action);
   }
 
@@ -2467,6 +2477,11 @@ export function createGame(
       unlockAuto();
       autoOn = on;
       if (on && phase === "title") begin();
+      paintAuto();
+    },
+    learner: () => learner.summary(),
+    resetLearner: () => {
+      learner.reset();
       paintAuto();
     },
   };

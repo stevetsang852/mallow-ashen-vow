@@ -12,6 +12,10 @@ export type CombatFeelEvent = {
   kind: CombatFeelKind;
   /** performance.now() when emitted */
   t: number;
+  /**
+   * Optional magnitude. For stance-break this is the **poise damage that triggered
+   * the break** (e.g. light 12 / heavy 34 / block chip 22) — not the bonus HP chip.
+   */
   amount?: number;
   foeId?: number;
   foeKind?: string;
