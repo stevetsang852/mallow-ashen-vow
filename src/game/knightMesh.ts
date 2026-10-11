@@ -30,6 +30,7 @@ function std(color: number, rough: number, metal: number) {
     color,
     roughness: rough,
     metalness: metal,
+    envMapIntensity: 0.4,
   });
 }
 
@@ -60,9 +61,9 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   const legR = new THREE.Group();
   legL.position.set(-0.13, 0.46, 0);
   legR.position.set(0.13, 0.46, 0);
-  const thighGeo = new THREE.CapsuleGeometry(0.085, 0.14, 3, 6);
-  const bootGeo = new THREE.BoxGeometry(0.16, 0.12, 0.22);
-  const greaveGeo = new THREE.BoxGeometry(0.13, 0.16, 0.12);
+  const thighGeo = new THREE.CapsuleGeometry(0.085, 0.14, 6, 10);
+  const bootGeo = new THREE.BoxGeometry(0.16, 0.12, 0.22, 2, 2, 2);
+  const greaveGeo = new THREE.BoxGeometry(0.13, 0.16, 0.12, 2, 2, 2);
   const addLeg = (g: THREE.Group) => {
     const thigh = new THREE.Mesh(thighGeo, furMat);
     thigh.position.y = -0.1;
@@ -88,7 +89,7 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   chain.position.y = 0.42;
   bob.add(chain);
 
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), furMat);
+  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), furMat);
   torso.scale.set(1.08, 0.92, 0.84);
   torso.position.y = 0.8;
   bob.add(torso);
@@ -129,7 +130,7 @@ export function makeKnight(opts: KnightOpts): KnightRig {
 
   const head = new THREE.Group();
   head.position.y = 1.24;
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.29, 18, 14), furMat);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.29, 28, 20), furMat);
   skull.scale.set(1.06, 0.96, 0.98);
   head.add(skull);
 

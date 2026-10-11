@@ -6,6 +6,7 @@ function std(color: number, rough: number, metal: number) {
     color,
     roughness: rough,
     metalness: metal,
+    envMapIntensity: 0.35,
   });
 }
 
