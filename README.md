@@ -1,8 +1,18 @@
 # Mallow: Ashen Vow 粉誓
 
-## 現在給同事（2026-10-11）
+試玩：[https://mallow-ashen-vow.grok.me/](https://mallow-ashen-vow.grok.me/)
 
-目前進度在 `main`。版本 **0.5.0**，標題畫面也會顯示。新功能仍建議開分支再開 PR。
+![粉誓封面](public/og.jpg)
+
+橫幅圖是 `public/x-banner.jpg`。概念圖：
+
+| 灰殼 | 煤灰公爵 | 紅契 |
+| --- | --- | --- |
+| ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
+
+## 現在給同事（2026-10-12）
+
+目前進度在 `main`。版本 **0.5.1**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。新功能仍建議開分支再開 PR。
 
 - 戰鬥數字：`src/game/moves.ts`
 - 鏡頭：`src/game/camera.ts`
@@ -60,7 +70,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.4.1";
+  export const GAME_VERSION = "0.5.1";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
