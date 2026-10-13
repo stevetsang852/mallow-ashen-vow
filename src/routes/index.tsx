@@ -211,13 +211,29 @@ function Home() {
           {!hud.webgl && (
             <p className="mt-3 text-sm text-hp">這台裝置開不了 WebGL，庭院沒有升起。</p>
           )}
+          {hud.phase === "title" && !hud.ready && (
+            <div className="mt-4" aria-live="polite">
+              <div className="flex items-center justify-between text-xs text-steel">
+                <span>正在升起庭院</span>
+                <span>{Math.round(hud.loadPct)}%</span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden border border-line bg-bg">
+                <div
+                  className="h-full bg-ember transition-[width] duration-200"
+                  style={{ width: `${Math.max(8, hud.loadPct)}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted">模型未齊。按 Start 會等載完再開。</p>
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              className="min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              className="min-h-11 bg-ember px-6 font-display tracking-widest text-bg disabled:opacity-60"
+              disabled={!hud.webgl}
               onClick={() => (hud.phase === "title" ? api.current?.begin() : api.current?.closeMenu())}
             >
-              {hud.phase === "title" ? "Start" : "繼續"}
+              {hud.phase === "title" ? (hud.ready ? "Start" : "Loading") : "繼續"}
             </button>
             <button
               type="button"

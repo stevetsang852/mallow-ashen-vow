@@ -32,6 +32,8 @@ export type HudSnap = {
   muted: boolean;
   gateOpen: boolean;
   menuOpen: boolean;
+  ready: boolean;
+  loadPct: number;
   demonShown: boolean;
   demonName: string;
   demonHp: number | null;
@@ -87,6 +89,8 @@ export const INITIAL_HUD: HudSnap = {
   muted: true,
   gateOpen: false,
   menuOpen: false,
+  ready: false,
+  loadPct: 0,
   demonShown: false,
   demonName: "紅契",
   demonHp: null,

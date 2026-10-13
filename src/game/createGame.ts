@@ -83,7 +83,7 @@ export function createGame(
       powerPreference: "high-performance",
     });
   } catch {
-    hooks.onHud({ ...INITIAL_HUD, webgl: false });
+    hooks.onHud({ ...INITIAL_HUD, webgl: false, ready: true, loadPct: 100 });
     return noop();
   }
 
@@ -398,6 +398,23 @@ export function createGame(
   });
   playerRig.root.rotation.order = "YXZ";
   scene.add(playerRig.root);
+  let loaded = 0;
+  let loadPct = 0;
+  let assetsReady = false;
+  let pendingBegin = false;
+  const loadTotal = 6;
+  function noteLoad() {
+    loaded += 1;
+    loadPct = Math.min(100, Math.round((loaded / loadTotal) * 100));
+    if (loaded >= loadTotal) {
+      assetsReady = true;
+      loadPct = 100;
+      if (pendingBegin) begin();
+      else emit(true);
+      return;
+    }
+    emit(true);
+  }
   loadMallowRig()
     .then((rig) => {
       const prev = playerRig.root;
@@ -408,7 +425,8 @@ export function createGame(
     })
     .catch(() => {
       /* keep the procedural cat if the model fails to load */
-    });
+    })
+    .finally(noteLoad);
 
   const foeRigs: KnightRig[] = [];
   const foes = template();
@@ -434,7 +452,8 @@ export function createGame(
           foeRigs[idx] = rig;
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(noteLoad);
   }
 
   const ringGeo = new THREE.RingGeometry(0.55, 0.72, 24);
@@ -654,6 +673,8 @@ export function createGame(
       muted,
       gateOpen,
       menuOpen,
+      ready: assetsReady,
+      loadPct,
       demonShown: demon.aggro && demon.state !== "dead" && phase === "play",
       demonName: demon.name,
       demonHp: demon.hp,
@@ -681,6 +702,8 @@ export function createGame(
       snap.muted ? 1 : 0,
       snap.gateOpen ? 1 : 0,
       snap.menuOpen ? 1 : 0,
+      snap.ready ? 1 : 0,
+      snap.loadPct,
       snap.demonShown ? Math.round(snap.demonHp ?? 0) : "-",
       snap.clears,
       snap.bestMs ?? "",
@@ -2525,6 +2548,12 @@ export function createGame(
 
   function begin() {
     if (phase === "play") return;
+    if (!assetsReady) {
+      pendingBegin = true;
+      emit(true);
+      return;
+    }
+    pendingBegin = false;
     phase = "play";
     harness.onPhase("play");
     menuOpen = false;
