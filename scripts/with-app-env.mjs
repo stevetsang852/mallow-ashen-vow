@@ -104,6 +104,31 @@ export function isMainModule(moduleUrl) {
   }
 }
 
+/** Quote one token for `cmd.exe /c`. */
+export function quoteCmdArg(value) {
+  if (value.length === 0) return '""';
+  if (!/[\s"&|<>^]/.test(value)) return value;
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+/**
+ * How to launch `command`.
+ *
+ * On Windows, `spawn("vite")` returns ENOENT: npm's shim is `vite.cmd`, and
+ * Node will not run a `.cmd` without a shell. A path to `node.exe` stays a
+ * direct spawn so tests and signal handling are unchanged.
+ */
+export function launchSpec(command, args, platform = process.platform) {
+  const bareName = !/[\\/]/.test(command) && !command.toLowerCase().endsWith(".exe");
+  if (platform === "win32" && bareName) {
+    return {
+      file: process.env.ComSpec || "cmd.exe",
+      args: ["/d", "/s", "/c", [command, ...args].map(quoteCmdArg).join(" ")],
+    };
+  }
+  return { file: command, args };
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (!command) {
@@ -111,7 +136,8 @@ function main(argv) {
     process.exit(2);
   }
   const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  const spec = launchSpec(command, args);
+  const child = spawn(spec.file, spec.args, { stdio: "inherit", env, windowsHide: true });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));
