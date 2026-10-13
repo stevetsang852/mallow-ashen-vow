@@ -9,7 +9,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "node_modules\" (
+if not exist "node_modules\.bin\vite.cmd" (
   echo Installing dependencies...
   call npm install
   if errorlevel 1 (
@@ -17,6 +17,12 @@ if not exist "node_modules\" (
     pause
     exit /b 1
   )
+)
+
+if not exist "node_modules\.bin\vite.cmd" (
+  echo ERROR: vite is still missing after npm install.
+  pause
+  exit /b 1
 )
 
 echo Starting Mallow at http://127.0.0.1:8080/
