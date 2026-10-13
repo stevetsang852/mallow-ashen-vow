@@ -7,6 +7,7 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import {
   APP_ENV_REL_PATH,
+  launchSpec,
   mergeAppEnv,
   parseAppEnv,
   projectRoot,
@@ -64,13 +65,22 @@ test("the template ships auth off", () => {
 });
 
 test("vite loadEnv resolves the wrapped value", () => {
-  // What `import.meta.env.VITE_AUTH_ENABLED` becomes: loadEnv prefix-matches
-  // process.env, so the wrapper's merge has to land before Vite starts.
-  // Do not `import { loadEnv } from "vite"` here — Vite 8 loads rolldown
-  // native bindings that SIGSEGV the test worker under qemu-user.
   const root = makeWorkspace('{"VITE_AUTH_ENABLED":"false"}');
   const merged = mergeAppEnv(readAppEnv(root), { PATH: "/usr/bin" });
   assert.equal(merged.VITE_AUTH_ENABLED, "false");
+});
+
+test("windows launches a bare command through cmd so the .cmd shim is found", () => {
+  const spec = launchSpec("vite", ["dev", "--host", "0.0.0.0", "--port", "8080"], "win32");
+  assert.equal(spec.args.at(-1), "vite dev --host 0.0.0.0 --port 8080");
+  assert.match(spec.file, /cmd\.exe$/i);
+});
+
+test("windows still spawns node.exe directly", () => {
+  const node = "C:\\Program Files\\nodejs\\node.exe";
+  const spec = launchSpec(node, ["-e", "process.exit(3)"], "win32");
+  assert.equal(spec.file, node);
+  assert.deepEqual(spec.args, ["-e", "process.exit(3)"]);
 });
 
 test("the wrapped command runs with the app env applied", async () => {
@@ -100,8 +110,6 @@ test("the wrapper propagates the command's exit code", async () => {
 });
 
 test("a signal-killed command is never reported as success", async () => {
-  // The wrapper's own SIGTERM handler must not swallow the re-raised signal:
-  // a cancelled build reporting exit 0 is a silently passing gate.
   await assert.rejects(
     execFileAsync(process.execPath, [
       WRAPPER,
@@ -114,8 +122,6 @@ test("a signal-killed command is never reported as success", async () => {
 });
 
 test("the CLI still runs when invoked through a symlinked path", async () => {
-  // node realpaths import.meta.url but not process.argv[1], so a raw comparison
-  // turns the wrapper into a no-op that exits 0 without starting anything.
   const link = join(mkdtempSync(join(tmpdir(), "app-env-link-")), "scripts");
   symlinkSync(join(projectRoot(), "scripts"), link);
   const { stdout } = await execFileAsync(process.execPath, [
