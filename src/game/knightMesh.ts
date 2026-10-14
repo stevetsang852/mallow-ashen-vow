@@ -90,8 +90,8 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   bob.add(chain);
 
   const torso = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), furMat);
-  torso.scale.set(1.08, 0.92, 0.84);
-  torso.position.y = 0.8;
+  torso.scale.set(1.15, 0.88, 0.82);  // 頭身比例再拉開
+  torso.position.y = 0.78;
   bob.add(torso);
 
   const plate = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.26), armorMat);
@@ -229,22 +229,23 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   grip.position.y = 0.02;
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.035, 0.05), gold);
   guard.position.y = 0.14;
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.048, 1.48, 0.012), steel);
-  blade.position.y = 0.9;
-  const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.12, 0.014), darkArmor);
-  fuller.position.y = 0.92;
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.2, 4), steel);
-  tip.position.y = 1.72;
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.048, 1.58, 0.012), steel);  // 劍再長一點
+  blade.position.y = 0.95;
+  const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.22, 0.014), darkArmor);  // 劍脊也加長
+  fuller.position.y = 0.97;
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.22, 4), steel);  // 劍尖也加長
+  tip.position.y = 1.82;
   const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 6), gold);
   pommel.position.y = -0.12;
+  // Simple gauntlet + thumb instead of two spheres.
   const hand = new THREE.Group();
-  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.08), armorMat);
-  const thumb = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.07, 5), armorMat);
-  thumb.position.set(0.07, 0.02, 0.02);
-  thumb.rotation.z = -1.1;
-  const fingers = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.05), armorMat);
-  fingers.position.set(0, -0.02, 0.03);
-  hand.add(palm, thumb, fingers);
+  const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.09), armorMat);
+  const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.03, 0.045), darkArmor);
+  knuckle.position.set(0, 0.055, 0.02);
+  const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.016, 0.05, 4, 6), armorMat);
+  thumb.position.set(0.065, 0.03, 0.045);
+  thumb.rotation.z = -0.9;
+  hand.add(gauntlet, knuckle, thumb);
   hand.position.set(0.01, 0.02, 0);
   weapon.add(grip, guard, blade, fuller, tip, pommel, hand);
   bob.add(weapon);
