@@ -1,105 +1,78 @@
 # Development Plan - Mallow: Ashen Vow
 
-Based on README.md Planning (Updated: 2026-10-14)
+**Based on README.md Planning**  
+**Updated: 2026-10-14**
 
-## Version: 0.5.3
+## Current Status
 
-## Development Progress
+**Branch:** `feature/model-improvements-0.6`  
+**Version:** `0.5.4` → Will bump to `0.6.0` after completing this phase
 
-### ✅ 已實裝 (Implemented)
+---
 
-#### 1. 公爵招式微調完成
-**修改了 `src/game/moves.ts` 中的 `MOVE.duke` 數值：**
+## Completed Changes (0.5.4)
 
-```typescript
-duke: {
-  overheadTell: 1.42,    // 重擊前搖 +0.08秒
-  shockTell: 1.18,       // 震地前搖 +0.06秒  
-  rushTell: 1.14,        // 衝鋒前搖 +0.06秒
-  cleaveTell: 1.12,      // 橫斬前搖 +0.06秒
-  phase2Slow: 0.88,      // 第二階段速度 -0.02
-  rushRecover: 0.98,     // 衝鋒恢復 +0.06秒
-  rushRecoverP2: 1.34,   // 第二階段衝鋒恢復 +0.06秒
-  shockRecover: 1.28,    // 震地恢復 +0.06秒
-  overheadRecover: 1.18,  // 重擊恢復 +0.06秒
-}
-```
+### ✅ Phase 1: Knight Model Improvements
+| Item | File | Status | Notes |
+|------|------|--------|-------|
+| Head-body ratio | `knightMesh.ts` | ✅ Done | `1.08,0.92,0.84` → `1.15,0.88,0.82` |
+| Sword length | `knightMesh.ts` | ✅ Done | `1.48` → `1.58` (blade), `1.12` → `1.22` (fuller), `0.2` → `0.22` (tip) |
 
-**改進理由：**
-- 所有前搖增加 0.06-0.08 秒，讓玩家有更多時間反應
-- 第二階段速度降低 0.02，保持難度但提高可讀性
-- 恢復時間適度增加，提供懲罰窗口
+---
 
-#### 2. 模型優化開始
-**修改了 `src/game/mallowRig.ts` 中的騎士貓比例：**
-- 頭身比例從 1:6.5 調整為 1:7.2
-- 蝴蝶結固定在耳側位置
-- 斗篷改為兩片式設計
+## Next Plan (Phase 2: 0.6.0)
 
-#### 3. 架勢條顯示優化
-**修改了 `src/game/hud.ts` 中的 UI 顯示邏輯：**
-- 架勢條在崩潰時會閃爍紅色
-- 收招「可打」提示的骨白圈現在會隨時間縮小
-- 格擋白弧在體力低下時透明度增加
+Following README.md Planning order, the remaining tasks are:
 
-### 📋 待處理 (Pending)
+### 🎯 Priority 1: Hand & Armor
+1. **Hand redesign** (`knightMesh.ts`) - No two spheres, change to simple gauntlet + thumb
+2. **Armor refinements** - Shoulder pads adjustment
 
-#### 1. 公爵模型進一步調整
-- 煤灰公爵再高半個頭
-- 肩甲加大 20%
-- 第二階段眼睛和胸口發光效果
+### 🎯 Priority 2: Duke Model
+3. **Duke height** (`enemyMesh.ts`) - Add 0.5 units height
+4. **Shoulder pads** - Increase by 20%
+5. **Phase 2 glow** - Eyes and chest emit light
 
-#### 2. 灰殼區分更明顯
-- 路中灰殼更瘦，武器長度增加
-- 側翼灰殼增加盾牌裝飾
+### 🎯 Priority 3: Hollow Enemies
+6. **Road hollow** (`enemyMesh.ts`) - Thinner body, shorter weapon
+7. **Flank hollow** - Wider body, add shield
 
-#### 3. 紅契優化
-- 披風更尖銳
-- 角部增加細節
+### 🎯 Priority 4: Demon
+8. **Red Contract** (`enemyMesh.ts`) - Keep thin & red, sharper cape and horns
 
-### 📋 已完成 (Earlier Completed)
-- 傷害數字、受擊紅邊、氣力條閃爍
-- 敵人頭上前搖條
-- 鎖定菱形
-- 火芯和拱門
-- 前搖提示（頭上顏色條、地面圈）
-- 受擊介面（紅邊/白邊）
-- 暖瓶空了變暗
-- 公爵第二階段血條變紅
-- 手機斬和重分開、滾和鎖加大
-- 倒下黑屏、通關結算延遲
+### 🎯 Priority 5: Scene
+9. **Bonfire** (`createGame.ts`) - Stone circle, charcoal, fire cluster
+10. **Gate** - Keep cloth, add cracks to pillars, cloth falls when opens
+11. **Ground** - Add footprints from bonfire to gate
 
-## 下一階段工作
+---
 
-### 1. 立即進行：模型優化
-按照 README 的 Planning 第2輪順序：
-1. 煤灰公爵高度調整（+0.8單位）
-2. 第二階段發光效果
-3. 灰殼差異化
-
-### 2. 次要：音效微調
-- 保持 WebAudio 合成
-- 確認第一刀刀聲正常
-
-### 3. 規則遵守
-- 不要加新敵人
-- 不要加地圖
-- 不要加第二主角
-- 先完成介面手感，再精雕模型
-
-## 版本更新
-完成模型優化後，版本將從 `0.5.3` 升級到 `0.6.0`（MINOR 版本變更）。
-
-## 開發指令
+## Git Workflow
 
 ```bash
-# 本地開發
-npm install
-npm run dev
+# Current: feature/model-improvements-0.6
+# After completing all tasks:
+1. Update version.ts to 0.6.0
+2. Merge to main via PR
+```
 
-# Docker 部署  
+## Commands
+
+```bash
+# Local dev
+npm install && npm run dev
+
+# Docker
 docker compose up -d
 
-# 測試 QA 通道
-在遊戲頁面輸入：vowdebug
+# QA test (in-game)
+vowdebug
 ```
+
+---
+
+## Rule Reminder (from README)
+
+> Do not add new maps, new protagonists, or weapon trees.  
+> Do not merge GPL Saga source into this repo.  
+> Do not add Hero Forge or unverified Unity Asset Store models.
