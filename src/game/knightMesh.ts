@@ -237,14 +237,15 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   tip.position.y = 1.82;
   const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 6), gold);
   pommel.position.y = -0.12;
+  // Simple gauntlet + thumb instead of two spheres.
   const hand = new THREE.Group();
-  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.08), armorMat);
-  const thumb = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.07, 5), armorMat);
-  thumb.position.set(0.07, 0.02, 0.02);
-  thumb.rotation.z = -1.1;
-  const fingers = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.05), armorMat);
-  fingers.position.set(0, -0.02, 0.03);
-  hand.add(palm, thumb, fingers);
+  const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.09), armorMat);
+  const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.03, 0.045), darkArmor);
+  knuckle.position.set(0, 0.055, 0.02);
+  const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.016, 0.05, 4, 6), armorMat);
+  thumb.position.set(0.065, 0.03, 0.045);
+  thumb.rotation.z = -0.9;
+  hand.add(gauntlet, knuckle, thumb);
   hand.position.set(0.01, 0.02, 0);
   weapon.add(grip, guard, blade, fuller, tip, pommel, hand);
   bob.add(weapon);

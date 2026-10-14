@@ -116,11 +116,28 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   skull.scale.set(1.15, 0.95, 1.1);
   rig.head.add(skull);
 
-  // Scale for chibi proportions
+  // Road hollow: thinner + shorter weapon (distinct silhouette).
   if (role === "road") {
-    rig.root.scale.set(0.9, 0.85, 0.9);
+    rig.root.scale.set(0.85, 0.82, 0.85);
+    const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
+    if (blade) blade.scale.set(0.6, 0.55, 0.7);
+    // No shield on road hollow.
   } else {
-    rig.root.scale.set(1.15, 0.9, 1.1);
+    // Side hollow: wider body + round tower shield.
+    rig.root.scale.set(1.18, 0.9, 1.14);
+    const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
+    if (blade) blade.scale.set(0.9, 0.9, 0.9);
+    const shield = new THREE.Mesh(
+      new THREE.CircleGeometry(0.42, 22),
+      std(0x4a3a2c, 0.7, 0.25),
+    );
+    shield.material.side = THREE.DoubleSide;
+    shield.position.set(-0.34, 0.86, 0.22);
+    shield.rotation.y = 0.5;
+    const boss = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), std(0x2a1f18, 0.5, 0.5));
+    boss.position.set(0, 0, 0.03);
+    shield.add(boss);
+    rig.bob.add(shield);
   }
   return rig;
 }
@@ -145,12 +162,27 @@ export function makeDuke(): KnightRig {
     }
   });
 
-  const bulk = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), std(0x1c1410, 0.75, 0.15));
+  // Duke height increase: +0.5 units (was 0.42, now 0.92)
+  const bulk = new THREE.Mesh(new THREE.SphereGeometry(0.92, 14, 10), std(0x1c1410, 0.75, 0.15));
   bulk.scale.set(1.15, 0.95, 1.05);
   bulk.position.y = 0.82;
   bulk.material.emissive.setHex(0xe85d04);
   bulk.material.emissiveIntensity = 0.45;
   rig.bob.add(bulk);
+
+  // Duke shoulder pads increase: 20% larger
+  // Add shoulder pads as separate boxes
+  const shoulderMat = std(0x1c1410, 0.75, 0.15);
+  shoulderMat.emissive.setHex(0xe85d04);
+  shoulderMat.emissiveIntensity = 0.45;
+  
+  const leftShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.14), shoulderMat);
+  leftShoulder.position.set(-0.25, 0.95, 0.05);
+  rig.bob.add(leftShoulder);
+  
+  const rightShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.14), shoulderMat);
+  rightShoulder.position.set(0.25, 0.95, 0.05);
+  rig.bob.add(rightShoulder);
 
   // Large horns and spikes
   for (const sx of [-1, 1]) {
@@ -170,6 +202,9 @@ export function makeDuke(): KnightRig {
     blade.material.emissive.setHex(0xff7a32);
     blade.material.emissiveIntensity = 0.85;
   }
+
+  // Phase 2 glow: eyes and chest emit light (handled in poseKnight when phase2=true)
+  // The eye material already has emissive set above
 
   rig.root.scale.set(1.7, 2.05, 1.7);
   return rig;
