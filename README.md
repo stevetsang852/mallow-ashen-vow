@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.13**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.14**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.13";
+  export const GAME_VERSION = "0.8.14";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.13（Fullstack：createGame hit-path → `hitPath.ts`；feel 數字不變）
+- **版本**：0.8.14（Graphics：HUD 輕擊連擊數 plate；idle／0 隱藏）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.13)
+### 已完成 (0.5.x - 0.8.14)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -324,6 +324,11 @@ npm run dev
 - [x] 單元測試 `hitPath.test.ts`；**唔改** moves 傷害／Save／Graphics HUD
 - [x] 合併序：已 rebase 到 main（含 **0.8.12** 恢復藥草）後再開／合
 
+#### 0.8.14 - HUD light-combo counter plate（Graphics）
+- [x] `HudSnap.lightCombo`：輕擊 swing／連擊窗口顯示 1..3；idle／0 隱藏
+- [x] `createGame.lightComboHudCount` 薄接線；index CSS pop plate（`hud-combo-plate`）
+- [x] **唔改** moves feel／Save／audio／AI；合併序：rebase 到 main（含 **0.8.13** hitPath）後再開／合
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -380,7 +385,7 @@ npm run dev
    - 動態戰鬥 BGM — 尚未做
 
 8. **UI/UX** (`hud.ts`)
-   - 連擊數顯示
+   - ~~連擊數顯示~~ **已完成（0.8.14）**
    - 道具快捷欄 UI
    - 任務提示
    - 統計數據（殺敵數、拾取數）
@@ -455,3 +460,4 @@ feature/* → 新功能開發
 | 0.8.11 | 2026-10-15 | Graphics P2-K：win-phase quiet lighting — 色溫偏冷＋ambient 粒子減速 |
 | 0.8.12 | 2026-10-15 | P1 恢復藥草：世界拾取＋即時回血（+40；無 shop） |
 | 0.8.13 | 2026-10-15 | Fullstack：hit-path extract → hitPath.ts（feel 數字鎖定；唔改 moves） |
+| 0.8.14 | 2026-10-15 | Graphics：HUD light-combo counter plate（×1–3；0 隱藏；唔改 moves） |

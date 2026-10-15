@@ -789,6 +789,14 @@ export function createGame(
     emit(true);
   }
 
+  /** HUD light-combo count (1..3). 0 hides plate for normal play. */
+  function lightComboHudCount(): number {
+    if (phase !== "play") return 0;
+    if (player.act === "attack" && player.atk === "light") return player.combo + 1;
+    if (lightCombo.phase === "window" && lightCombo.completedHits > 0) return lightCombo.completedHits;
+    return 0;
+  }
+
   function makeSnap(): HudSnap {
     const duke = foes[3]!;
     const demon = foes[4]!;
@@ -844,6 +852,7 @@ export function createGame(
               return n ? ITEM_LABEL[n.id] : "";
             })()
           : "",
+      lightCombo: lightComboHudCount(),
     };
   }
 
@@ -878,6 +887,7 @@ export function createGame(
       snap.hasExplosive ? 1 : 0,
       snap.hasHealHerb ? 1 : 0,
       snap.nearItem,
+      snap.lightCombo,
     ].join("|");
     if (!force && key === lastKey) return;
     lastKey = key;
