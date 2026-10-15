@@ -119,6 +119,10 @@ export function createGame(
   const bonfireLight = new THREE.PointLight(0xff7a32, 22, 11, 2);
   bonfireLight.position.set(FIRE.x, 1.1, FIRE.z);
   scene.add(bonfireLight);
+  
+  // Enhanced ambient light for better illumination
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+  scene.add(ambientLight);
   const rim = new THREE.DirectionalLight(0xffc9a0, 0.7);
   rim.position.set(-2, 6, -10);
   scene.add(rim);
@@ -2120,7 +2124,11 @@ export function createGame(
     flame.scale.set(1, flick, 1);
     core.scale.set(1, 0.85 + Math.sin(time * 11) * 0.1, 1);
     tongue.scale.set(1, 0.7 + Math.sin(time * 13) * 0.2, 1);
-    bonfireLight.intensity = 16 + Math.sin(time * 9) * 3;
+    
+    // Enhanced dynamic lighting
+    const lightFlicker = 18 + Math.sin(time * 9) * 4 + Math.sin(time * 23) * 2;
+    bonfireLight.intensity = lightFlicker;
+    bonfireLight.color.setHSL(0.07, 0.9, 0.5 + Math.sin(time * 5) * 0.05);
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
 
     for (let i = 0; i < 18; i++) {

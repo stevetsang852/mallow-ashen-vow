@@ -127,16 +127,39 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
     rig.root.scale.set(1.18, 0.9, 1.14);
     const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
     if (blade) blade.scale.set(0.9, 0.9, 0.9);
+    
+    // Enhanced shield with damage details
+    const shieldMat = std(0x4a3a2c, 0.65, 0.35); // More metallic
     const shield = new THREE.Mesh(
-      new THREE.CircleGeometry(0.42, 22),
-      std(0x4a3a2c, 0.7, 0.25),
+      new THREE.CircleGeometry(0.45, 24), // Slightly larger
+      shieldMat,
     );
     shield.material.side = THREE.DoubleSide;
-    shield.position.set(-0.34, 0.86, 0.22);
+    shield.position.set(-0.36, 0.88, 0.24);
     shield.rotation.y = 0.5;
-    const boss = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), std(0x2a1f18, 0.5, 0.5));
-    boss.position.set(0, 0, 0.03);
+    
+    // Shield boss (center bump)
+    const boss = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 12, 8), 
+      std(0x2a1f18, 0.45, 0.55) // More metallic
+    );
+    boss.position.set(0, 0, 0.04);
     shield.add(boss);
+    
+    // Damage scratches on shield
+    for (let i = 0; i < 4; i++) {
+      const scratch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.12 + hash(i + 20) * 0.08, 0.01),
+        new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.9 }),
+      );
+      scratch.position.set(
+        (hash(i + 30) - 0.5) * 0.25,
+        (hash(i + 40) - 0.5) * 0.3,
+        0.05
+      );
+      scratch.rotation.z = hash(i + 50) * 0.5;
+      shield.add(scratch);
+    }
     rig.bob.add(shield);
   }
   return rig;
@@ -261,16 +284,49 @@ export function makeDemon(): KnightRig {
     rig.head.add(horn);
   }
 
-  // Bat-like wings
+  // Bat-like wings with more detail
   for (const sx of [-1, 1]) {
-    const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85, 2, 3), std(0x3a1018, 0.9, 0.04));
-    wing.position.set(sx * 0.38, 0.95, -0.08);
-    wing.rotation.y = sx * 0.7;
-    wing.rotation.z = sx * -0.25;
+    // Main wing
+    const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.95, 3, 4), std(0x3a1018, 0.85, 0.04));
+    wing.position.set(sx * 0.4, 0.98, -0.1);
+    wing.rotation.y = sx * 0.75;
+    wing.rotation.z = sx * -0.28;
     wing.material.side = THREE.DoubleSide;
     wing.material.emissive.setHex(0xff2430);
-    wing.material.emissiveIntensity = 0.2;
+    wing.material.emissiveIntensity = 0.25;
     rig.bob.add(wing);
+    
+    // Wing membrane (inner part)
+    const membrane = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.55, 0.75, 2, 3),
+      new THREE.MeshStandardMaterial({
+        color: 0x2a0c12,
+        roughness: 0.95,
+        metalness: 0.02,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85,
+      }),
+    );
+    membrane.position.set(sx * 0.38, 0.95, -0.06);
+    membrane.rotation.y = sx * 0.65;
+    membrane.rotation.z = sx * -0.2;
+    rig.bob.add(membrane);
+    
+    // Wing bones (structural detail)
+    for (let i = 0; i < 3; i++) {
+      const bone = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.006, 0.5 + i * 0.1, 4),
+        std(0x1a080c, 0.7, 0.1),
+      );
+      bone.position.set(
+        sx * (0.25 + i * 0.12),
+        0.85 + i * 0.15,
+        -0.08
+      );
+      bone.rotation.z = sx * (0.3 + i * 0.15);
+      rig.bob.add(bone);
+    }
   }
 
   addClaws(rig.bob, -1);
