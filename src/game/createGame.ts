@@ -4,7 +4,14 @@ import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
-import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
+import {
+  chooseDemonIntent,
+  chooseDukeMove,
+  chooseHollowIntent,
+  dukeRecoverSpan,
+  dukeSwingSpan,
+  shouldDukeCommit,
+} from "@/game/ai";
 import { actionEnd, hitWindow, inIFrame, inRecover, inWindup } from "@/game/player";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
@@ -195,7 +202,7 @@ export function createGame(
     // Main crack
     const crack = new THREE.Mesh(
       new THREE.BoxGeometry(0.08, 1.5, 0.1),
-      new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1, transparent: true, opacity: 0 }),
     );
     crack.position.set(sx * 2.15, 1.1, GATE_Z + 0.28);
     crack.rotation.z = sx * 0.18;
@@ -206,7 +213,7 @@ export function createGame(
     for (let j = 0; j < 3; j++) {
       const branch = new THREE.Mesh(
         new THREE.BoxGeometry(0.04, 0.4 + hash(j + 10) * 0.3, 0.08),
-        new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+        new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1, transparent: true, opacity: 0 }),
       );
       branch.position.set(
         sx * 2.15 + (j % 2 === 0 ? 0.1 : -0.1) * (1 + j * 0.3),
@@ -1359,7 +1366,7 @@ export function createGame(
       return;
     }
 
-    if (f.cd <= 0 && (dist < 2.65 || dist > 4.55)) {
+    if (shouldDukeCommit(dist, f.cd)) {
       startDukeMove(f, dist, p2);
       return;
     }
@@ -1470,35 +1477,35 @@ export function createGame(
 
     f.t += dt;
     const threatened = player.act === "attack" && player.actT > 0.06 && player.actT < 0.22 && dist < 2.55;
-    if (threatened && f.cd <= 0) {
-      const side = f.t * 3 > Math.PI ? 1 : -1;
-      f.aimX = (-dz / dist) * side;
-      f.aimZ = (dx / dist) * side;
+    const intent = chooseDemonIntent({
+      dist,
+      cd: f.cd,
+      hp: f.hp,
+      hpMax: f.hpMax,
+      chain: f.chain,
+      threatened,
+      t: f.t,
+    });
+    if (intent.type === "dodge") {
+      f.aimX = (-dz / dist) * intent.side;
+      f.aimZ = (dx / dist) * intent.side;
       f.state = "dodge";
       f.t = 0;
       f.span = 0.28;
       return;
     }
-    if (f.chain > 0 && f.hp < f.hpMax * 0.42 && dist > 2.15 && f.cd <= 0) {
+    if (intent.type === "drink") {
       f.chain = 0;
       f.state = "drink";
       f.t = 0;
       f.swung = false;
       return;
     }
-    if (f.cd <= 0 && dist < 2.05) {
-      f.move = "cleave";
+    if (intent.type === "telegraph") {
+      f.move = intent.move;
       f.state = "telegraph";
       f.t = 0;
-      f.span = 0.38;
-      f.swung = false;
-      return;
-    }
-    if (f.cd <= 0 && dist > 3.15 && dist < 6.5) {
-      f.move = "rush";
-      f.state = "telegraph";
-      f.t = 0;
-      f.span = 0.42;
+      f.span = intent.span;
       f.swung = false;
       return;
     }
@@ -1641,14 +1648,15 @@ export function createGame(
       return;
     }
 
-    if (dist <= f.range && f.cd <= 0) {
+    const hollowIntent = chooseHollowIntent(dist, f.range, f.cd);
+    if (hollowIntent === "telegraph") {
       f.state = "telegraph";
       f.t = 0;
       f.span = f.windup;
       f.move = "cleave";
       return;
     }
-    if (dist > f.range * 0.82) {
+    if (hollowIntent === "chase") {
       const nx = f.x + (dx / dist) * f.speed * dt;
       const nz = f.z + (dz / dist) * f.speed * dt;
       const c = clampWorld(nx, nz, f.r, "north");
@@ -2131,7 +2139,7 @@ export function createGame(
       if (gateOpen) {
         const expand = Math.sin(time * 2 + i) * 0.02 + 0.02;
         crack.scale.x = 1 + expand * clothDrop;
-        (crack.material as THREE.Material).opacity = Math.min(1, clothDrop * 1.5);
+        (crack.material as THREE.MeshStandardMaterial).opacity = Math.min(1, clothDrop * 1.5);
       }
     });
 
