@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.16**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.17**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.16";
+  export const GAME_VERSION = "0.8.17";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.16（Fullstack：武器揮砍 light／heavy SFX；mute 有效）
+- **版本**：0.8.17（Graphics：道具快捷欄 4-slot HUD plate；空槽／無物隱藏）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.16)
+### 已完成 (0.5.x - 0.8.17)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -342,6 +342,12 @@ npm run dev
 - [x] 命中仍用既有 `clang`；**唔改** moves／Graphics HUD／items hotbar
 - [x] 合併序：hold／rebase 到 main（含 **0.8.15** item hotbar）後再開／合
 
+#### 0.8.17 - Item hotbar HUD plate（Graphics）
+- [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
+- [x] 接線沿用 GD `hotbarSelected`／`hotbarFilledFlags`；index／CSS `hud-hotbar-plate`／`--selected` ember 邊（取代薄「欄N」）
+- [x] **唔改** moves feel／Save／audio／AI／Key1–4 邏輯
+- [x] 合併序：rebase after **0.8.16**（序 **0.8.15 → 0.8.16 → 0.8.17**）
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -363,6 +369,7 @@ npm run dev
    - ~~炸藥（範圍傷害）~~ **已完成（0.8.9）**
    - ~~恢復藥草（即時回血）~~ **已完成（0.8.12）**
    - ~~快捷欄 1-4 鍵切換／使用~~ **已完成（0.8.15）**
+   - ~~快捷欄 HUD plate（4-slot）~~ **已完成（0.8.17）**
    - shop UI
 
 4. **環境敘事** (`createGame.ts`)
@@ -477,3 +484,4 @@ feature/* → 新功能開發
 | 0.8.14 | 2026-10-15 | Graphics：HUD light-combo counter plate（×1–3；0 隱藏；唔改 moves） |
 | 0.8.15 | 2026-10-15 | P1 Item hotbar：Key1–4 選格＋使用（炬／炸／藥／片；無 shop） |
 | 0.8.16 | 2026-10-15 | Fullstack：武器揮砍 light／heavy SFX（tone／noise；mute；唔改 moves） |
+| 0.8.17 | 2026-10-15 | Graphics：道具快捷欄 4-slot HUD plate（空槽隱藏；唔改 moves／Key 邏輯） |
