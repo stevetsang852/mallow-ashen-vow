@@ -46,6 +46,7 @@ import {
 } from "@/game/autoHarness";
 import { createPlayerLearner } from "@/game/playerLearner";
 import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
+import { createAudio } from "@/game/audio";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -634,19 +635,18 @@ export function createGame(
   let heardSteel = false;
   let runStart = 0;
   let frozenRun = 0;
-  let muted = true;
   let warnedHollow = false;
   let stickX = 0;
   let stickY = 0;
   let qa: Set<string> | null = null;
   let sparkCursor = 0;
-  let audioCtx: AudioContext | null = null;
   let emitAcc = 0;
   let lastKey = "";
   let simError = "";
   let disposed = false;
 
   const saveMgr = createSaveManager();
+  const audio = createAudio();
   {
     const s = saveMgr.load();
     deaths = s.deaths;
@@ -712,7 +712,7 @@ export function createGame(
       hurt: hurtV,
       guard: guardV,
       staFlash,
-      muted,
+      muted: audio.isMuted(),
       gateOpen,
       menuOpen,
       ready: assetsReady,
@@ -861,45 +861,6 @@ export function createGame(
     mat.opacity = 0.9;
   }
 
-  function tone(freq: number, dur: number, type: OscillatorType, gain: number) {
-    if (muted || !audioCtx) return;
-    const t0 = audioCtx.currentTime;
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, t0);
-    o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.45), t0 + dur);
-    g.gain.setValueAtTime(gain, t0);
-    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-    o.connect(g).connect(audioCtx.destination);
-    o.start(t0);
-    o.stop(t0 + dur + 0.02);
-  }
-
-  function noise(dur: number, gain: number) {
-    if (muted || !audioCtx) return;
-    const t0 = audioCtx.currentTime;
-    const n = Math.floor(audioCtx.sampleRate * dur);
-    const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.value = 900;
-    const g = audioCtx.createGain();
-    g.gain.setValueAtTime(gain, t0);
-    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-    src.connect(filter).connect(g).connect(audioCtx.destination);
-    src.start(t0);
-  }
-
-  function clang(heavy: boolean) {
-    noise(heavy ? 0.09 : 0.05, heavy ? 0.2 : 0.12);
-    tone(heavy ? 168 : 246, heavy ? 0.14 : 0.08, "square", heavy ? 0.07 : 0.05);
-    tone(heavy ? 92 : 140, 0.16, "triangle", 0.05);
-  }
 
   function clampWorld(x: number, z: number, r: number, side: "north" | "south" | "any") {
     let nx = Math.max(MIN_X + r, Math.min(MAX_X - r, x));
@@ -983,8 +944,8 @@ export function createGame(
     hitFlash = 1;
     burst(f.x, 1.1, f.z, HIT_SPARK_MUL["stance-break"], 0, 0, "pink", HIT_SPARK_MUL["stance-break"]);
     slash(f.x, 1.05, f.z, f.yaw, true);
-    clang(true);
-    tone(70, 0.22, "sawtooth", 0.06);
+    audio.clang(true);
+    audio.tone(70, 0.22, "sawtooth", 0.06);
     feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: poiseHit });
   }
 
@@ -1024,8 +985,8 @@ export function createGame(
         guardV = 1;
         feel.emit({ kind: "block", amount, foeId: from.id, foeKind: from.kind });
         burst((player.x + from.x) * 0.5, 1.05, (player.z + from.z) * 0.5, 1.1, 0, 0, "steel");
-        noise(0.04, 0.1);
-        tone(210, 0.07, "square", 0.05);
+        audio.noise(0.04, 0.1);
+        audio.tone(210, 0.07, "square", 0.05);
         if (player.hp <= 0) die();
         else if (player.sta <= 0) {
           player.act = "hurt";
@@ -1046,7 +1007,7 @@ export function createGame(
       foeKind: from?.kind,
     });
     strikeCamera(from, amount, false);
-    tone(90, 0.2, "sawtooth", 0.05);
+    audio.tone(90, 0.2, "sawtooth", 0.05);
     if (player.hp <= 0) {
       die();
       return;
@@ -1129,8 +1090,8 @@ export function createGame(
     player.atk = kind;
     player.combo = 0;
     swingHits = new Set();
-    tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
-    noise(0.04, kind === "heavy" ? 0.06 : 0.035);
+    audio.tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
+    audio.noise(0.04, kind === "heavy" ? 0.06 : 0.035);
   }
 
   function tryDodge() {
@@ -1149,8 +1110,8 @@ export function createGame(
     burst(player.x, 0.2, player.z, 0.6, -player.dodgeX, -player.dodgeZ, "dust");
     const face = Math.atan2(-player.dodgeX, -player.dodgeZ);
     player.yaw = face;
-    noise(0.06, 0.05);
-    tone(180, 0.07, "sine", 0.03);
+    audio.noise(0.06, 0.05);
+    audio.tone(180, 0.07, "sine", 0.03);
   }
 
   function tryFlask() {
@@ -1160,7 +1121,7 @@ export function createGame(
     player.act = "drink";
     player.actT = 0;
     player.healed = false;
-    tone(320, 0.18, "sine", 0.04);
+    audio.tone(320, 0.18, "sine", 0.04);
   }
 
   function tryLock() {
@@ -1190,7 +1151,7 @@ export function createGame(
     player.hp = player.hpMax;
     player.flasks = FLASK_MAX;
     player.sta = STA_MAX;
-    tone(180, 0.3, "sine", 0.05);
+    audio.tone(180, 0.3, "sine", 0.05);
     say("火芯承認你了");
   }
 
@@ -1208,7 +1169,7 @@ export function createGame(
     player.hpMax += 12;
     player.hp = player.hpMax;
     save();
-    tone(240, 0.22, "triangle", 0.05);
+    audio.tone(240, 0.22, "triangle", 0.05);
     say("誓約更厚了一層");
   }
 
@@ -1259,7 +1220,7 @@ export function createGame(
       banner = "第二階段";
       bannerT = 1.8;
       say("第二階段。連段，還有震地");
-      tone(70, 0.4, "sawtooth", 0.06);
+      audio.tone(70, 0.4, "sawtooth", 0.06);
       shake = Math.max(shake, 0.4);
     }
     const turn = f.state === "telegraph" || f.state === "swing" ? 1.35 : p2 ? 3.3 : 2.5;
@@ -1317,7 +1278,7 @@ export function createGame(
             hurtPlayer(32, f);
             shake = Math.max(shake, 0.48);
             hitstop = Math.max(hitstop, 0.08);
-            tone(52, 0.3, "square", 0.06);
+            audio.tone(52, 0.3, "square", 0.06);
           }
         }
       } else {
@@ -1544,7 +1505,7 @@ export function createGame(
     demon.swung = false;
     burst(demon.x, 1.2, demon.z, 1.7, 0, 0, "demon");
     say("線上惡魔 紅契 侵入了");
-    tone(78, 0.4, "sawtooth", 0.06);
+    audio.tone(78, 0.4, "sawtooth", 0.06);
     shake = Math.max(shake, 0.22);
   }
 
@@ -1561,7 +1522,7 @@ export function createGame(
       ash += f.kind === "duke" ? 420 : f.kind === "demon" ? 200 : 80;
       burst(f.x, 0.8, f.z);
       if (lockId === f.id) lockId = null;
-      tone(70, 0.25, "square", 0.04);
+      audio.tone(70, 0.25, "square", 0.04);
       if (f.kind === "duke") winArm = 1.6;
       if (f.kind === "demon") say("紅契被逐回線上");
       return;
@@ -1768,8 +1729,8 @@ export function createGame(
           }
           if (any && !player.hitDone) {
             player.hitDone = true;
-            if (muted && !heardSteel) {
-              muted = false;
+            if (audio.isMuted() && !heardSteel) {
+              audio.setMuted(false);
               say("刀聲開了");
             }
             heardSteel = true;
@@ -1779,7 +1740,7 @@ export function createGame(
             camKick = Math.max(camKick, heavy ? 0.72 : 0.4);
             fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
             camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
-            clang(heavy);
+            audio.clang(heavy);
           }
         }
       }
@@ -1909,8 +1870,8 @@ export function createGame(
       pickupRing.scale.setScalar(0.4);
       (pickupRing.material as THREE.MeshBasicMaterial).opacity = 0.8;
       pickupT = 0.45;
-      tone(420, 0.12, "sine", 0.05);
-      tone(640, 0.18, "triangle", 0.04);
+      audio.tone(420, 0.12, "sine", 0.05);
+      audio.tone(640, 0.18, "triangle", 0.04);
       dropped = null;
       say("取回灰燼");
     }
@@ -2673,13 +2634,7 @@ export function createGame(
   }
 
   function toggleMute() {
-    muted = !muted;
-    if (!muted) {
-      const AC = window.AudioContext;
-      audioCtx ??= new AC();
-      void audioCtx.resume();
-      tone(220, 0.12, "sine", 0.04);
-    }
+    audio.toggleMute();
     emit(true);
   }
 
