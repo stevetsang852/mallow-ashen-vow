@@ -61,6 +61,9 @@ import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
 
+/** P1-H: shared bow-pink (#e8a0b8) — matches CSS --color-bow; do not use for ember primary. */
+const COLOR_BOW = 0xe8a0b8;
+
 declare global {
   interface Window {
     __controlsTest?: {
@@ -456,13 +459,13 @@ export function createGame(
   // P1-G: lock diamond = thin pink outline + center pink dot (visual only; no hit blocking)
   const gem = new THREE.Mesh(
     new THREE.SphereGeometry(0.04, 10, 8),
-    new THREE.MeshBasicMaterial({ color: 0xe8a0b8, transparent: true, opacity: 0.95, depthTest: false }),
+    new THREE.MeshBasicMaterial({ color: COLOR_BOW, transparent: true, opacity: 0.95, depthTest: false }),
   );
   gem.raycast = () => {};
   const lockRing = new THREE.Mesh(
     new THREE.RingGeometry(0.5, 0.52, 4),
     new THREE.MeshBasicMaterial({
-      color: 0xe7a0b0,
+      color: COLOR_BOW,
       transparent: true,
       opacity: 0.88,
       side: THREE.DoubleSide,
@@ -477,7 +480,7 @@ export function createGame(
   const lockPulse = new THREE.Mesh(
     new THREE.RingGeometry(0.58, 0.6, 4),
     new THREE.MeshBasicMaterial({
-      color: 0xe8a0b8,
+      color: COLOR_BOW,
       transparent: true,
       opacity: 0.55,
       side: THREE.DoubleSide,
@@ -526,7 +529,7 @@ export function createGame(
   scene.add(iframeRing);
   const recoverRing = new THREE.Mesh(
     new THREE.RingGeometry(0.5, 0.58, 12),
-    new THREE.MeshBasicMaterial({ color: 0xe7a0b0, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: COLOR_BOW, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false }),
   );
   recoverRing.rotation.x = -Math.PI / 2;
   recoverRing.visible = false;
@@ -2110,7 +2113,8 @@ export function createGame(
     bonfireLight.color.setHSL(0.07, 0.9, 0.5 + Math.sin(time * 5) * 0.05);
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
 
-    particles.updateAmbient(time);
+    // P1-H: title/menu breath via particles.updateAmbient (spark API untouched)
+    particles.updateAmbient(time, phase === "title" || menuOpen ? 0.12 : 0);
     shafts.forEach((mesh, i) => {
       const mat = mesh.material as THREE.MeshBasicMaterial;
       mat.opacity = 0.035 + Math.sin(time * 0.6 + i) * 0.02;
