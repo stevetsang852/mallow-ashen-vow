@@ -54,6 +54,7 @@ import {
   type AutoThinkAction,
 } from "@/game/autoHarness";
 import { createPlayerLearner } from "@/game/playerLearner";
+import { GAME_VERSION } from "@/game/version";
 import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 import { createAudio } from "@/game/audio";
 import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
@@ -103,6 +104,9 @@ declare global {
       /** Learning player policy summary (harness). */
       learner?: () => import("@/game/playerLearner").LearnerSummary;
       resetLearner?: () => void;
+      /** Export / import learner Q + ε schedule snapshot (0.8.10). */
+      learnerSnapshot?: () => import("@/game/playerLearner").LearnerSnapshot;
+      importLearnerSnapshot?: (raw: unknown) => void;
     };
   }
 }
@@ -696,7 +700,7 @@ export function createGame(
   let staFlash = 0;
   const feel = createCombatFeelBus();
   const harness = createHarnessSession();
-  const learner = createPlayerLearner();
+  const learner = createPlayerLearner({ gameVersion: GAME_VERSION });
   feel.on((ev) => {
     harness.noteFeel(ev);
     if (harness.enabled) learner.noteFeel(ev);
@@ -2687,6 +2691,11 @@ export function createGame(
     learner: () => learner.summary(),
     resetLearner: () => {
       learner.reset();
+      paintAuto();
+    },
+    learnerSnapshot: () => learner.exportSnapshot({ gameVersion: GAME_VERSION }),
+    importLearnerSnapshot: (raw: unknown) => {
+      learner.importSnapshot(raw);
       paintAuto();
     },
   };

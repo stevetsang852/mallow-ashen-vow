@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.9**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.10**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.9";
+  export const GAME_VERSION = "0.8.10";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -114,11 +114,16 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 window.__controlsTest.setAuto(true)
 window.__controlsTest.setHarness(true)
 window.__controlsTest.harness()      // { wins, losses, winRate, recentWinRate (24), avgMs, feelTotals, recentRuns, ... }
-window.__controlsTest.learner()      // { wins, losses, epsilon, qStates, topPrefs, ... }
+window.__controlsTest.learner()      // { wins, losses, epsilon, scheduleMode, qStates, topPrefs, ... }
 window.__controlsTest.resetLearner() // 清 Q 表／勝敗（會重新種 dodge／punish prior）
+window.__controlsTest.learnerSnapshot() // JSON 可序列化 Q＋ε schedule（0.8.10）
+window.__controlsTest.importLearnerSnapshot(snap) // 還原 snapshot
 window.__controlsTest.feelCounts()   // 本局 feel 計數
 window.__controlsTest.feelRecent()   // 最近 feel 事件
 ```
+
+**ε-decay（0.8.10）**：預設 **linear** schedule（`DEFAULT_EPSILON_SCHEDULE`：start **0.28** → floor **0.06**，window **80** 場）。純函式 `epsilonAtEpisode(episode, schedule)`；傳 `epsilonDecay` 而無 `epsilonSchedule.mode` 時仍走歷史 **exponential**（`start * decay^ep`）。固定種子只影響 action RNG，ε 由 episode 計數決定，回歸可重現。
+
 
 CombatFeel 只係適配層：喺現有 FX 呼叫旁 emit，**唔改** `moves.ts`／Graphics 手感數值。模組喺 `src/game/combatFeel.ts`，自動決策喺 `src/game/autoHarness.ts`，學習政策喺 `src/game/playerLearner.ts`。`stance-break.amount` = 觸發崩架嘅 poise 傷害（統一語意）。
 
@@ -139,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.9（P1 炸藥 stub：世界拾取＋AoE 爆炸；inventory flag；無 shop）
+- **版本**：0.8.10（Fullstack：ε-decay schedule＋learner snapshot export；固定種子回歸保留；0.8.9 炸藥已合）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.9)
+### 已完成 (0.5.x - 0.8.10)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -292,6 +297,13 @@ npm run dev
 - [x] HUD：炸 flag＋引爆提示；`begin`／`again` reset；`rise` 保留（同其他道具）；**暫無 shop UI**／唔擴 SaveManager
 - [x] 單元測試 `items.test.ts`（collect／consume／AoE hit／miss／reset）
 
+#### 0.8.10 - Harness／learner：ε-decay＋snapshot（Fullstack）
+- [x] `epsilonAtEpisode`／`DEFAULT_EPSILON_SCHEDULE`（預設 linear 0.28→0.06／80 場；legacy `epsilonDecay` → exponential）
+- [x] `exportSnapshot`／`importSnapshot`／`buildLearnerSnapshot`／`parseLearnerSnapshot`（Q＋ε＋schedule＋seed／version meta）
+- [x] `createGame` 薄接線：`learnerSnapshot`／`importLearnerSnapshot`；固定種子回歸路徑不變
+- [x] 單元測試：schedule＋snapshot round-trip；**唔改** moves 傷害／Save／Graphics／items／audio
+- [x] 合併序：已 rebase 到 main（含 **0.8.9** 炸藥）後再開／合
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -329,6 +341,7 @@ npm run dev
 
 #### Fullstack 後續（AI／自動遊玩）
 - ~~更長局數觀測／公爵／紅契細 bucket／固定種子回歸~~ **已完成（0.8.7）**；唔改招式傷害。
+- ~~ε-decay schedule＋learner snapshot export~~ **已完成（0.8.10）**；唔改招式傷害。
 - SaveManager 屬 Game developer，Fullstack 唔動。
 
 6. **性能優化**
@@ -416,3 +429,4 @@ feature/* → 新功能開發
 | 0.8.7 | 2026-10-15 | Fullstack：Harness polish（固定種子回歸、duke／demon 細 bucket、recentWindow 24） |
 | 0.8.8 | 2026-10-15 | Graphics P2-J：soft dust ring — 外圈更淡更短震地暈（主環可讀性保留） |
 | 0.8.9 | 2026-10-15 | P1 炸藥 stub：世界拾取＋腳下 AoE（radius 3／dmg 50；無 shop） |
+| 0.8.10 | 2026-10-15 | Fullstack：ε-decay schedule＋learner snapshot export（固定種子回歸保留；唔改 moves） |
