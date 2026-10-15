@@ -1,7 +1,7 @@
-/** Combat spark Points pool for Mallow. Ambient embers/motes stay in createGame. */
+/** Particle systems for Mallow: combat sparks + ambient ember/mote. */
 
 import * as THREE from "three";
-import { hash } from "@/game/moves";
+import { FIRE, hash } from "@/game/moves";
 
 /** Hit VFX hierarchy multipliers (count / size / life). Does not change moves.ts damage. */
 export const HIT_SPARK_MUL = {
@@ -14,6 +14,20 @@ export const SPARK_BASE_SIZE = 0.11;
 export const SPARK_BASE_COUNT = 12;
 export const SPARKS = 96;
 
+/** Bonfire ember Points count (buffer size). */
+export const EMBER_COUNT = 28;
+/**
+ * Legacy update loop bound — only this many embers are animated each frame
+ * (was hardcoded `i < 18` while EMBER_COUNT grew to 28). Preserve exactly.
+ */
+export const EMBER_UPDATE_COUNT = 18;
+
+export const MOTES = 96;
+export const EMBER_COLOR = 0xe85d04;
+export const EMBER_SIZE = 0.065;
+export const MOTE_SIZE = 0.07;
+export const MOTE_OPACITY = 0.55;
+
 export type SparkKind = "steel" | "pink" | "ash" | "dust" | "demon";
 
 const SPARK_RGB: Record<SparkKind, [number, number, number]> = {
@@ -24,9 +38,20 @@ const SPARK_RGB: Record<SparkKind, [number, number, number]> = {
   demon: [1, 0.22, 0.24],
 };
 
+export type FireAnchor = { x: number; z: number };
+
+export type GameParticlesOptions = {
+  /** Bonfire anchor for rising embers (default: moves.FIRE). */
+  fire?: FireAnchor;
+};
+
 export type GameParticles = {
-  /** THREE.Points — caller adds to scene once. */
+  /** Combat spark Points — caller adds to scene. */
   points: THREE.Points;
+  /** Bonfire ember Points. */
+  embers: THREE.Points;
+  /** Atmospheric mote Points. */
+  motes: THREE.Points;
   burst: (
     x: number,
     y: number,
@@ -39,12 +64,17 @@ export type GameParticles = {
   ) => void;
   /** Ring of dust sparks for shockwave; dustRing mesh stays in createGame. */
   ringDust: (x: number, z: number) => void;
-  /** Advance pool one fixed step (legacy 0.016). */
+  /** Advance spark pool one fixed step (legacy 0.016). */
   update: () => void;
+  /** Advance ember + mote ambience from scene clock `time`. */
+  updateAmbient: (time: number) => void;
   dispose: () => void;
 };
 
-export function createParticles(): GameParticles {
+export function createParticles(opts: GameParticlesOptions = {}): GameParticles {
+  const fire = opts.fire ?? FIRE;
+
+  // --- combat sparks ---
   const sparkPos = new Float32Array(SPARKS * 3);
   const sparkVel = new Float32Array(SPARKS * 3);
   const sparkLife = new Float32Array(SPARKS);
@@ -65,6 +95,50 @@ export function createParticles(): GameParticles {
   );
 
   let sparkCursor = 0;
+
+  // --- bonfire embers ---
+  const emberPos = new Float32Array(EMBER_COUNT * 3);
+  const emberGeo = new THREE.BufferGeometry();
+  emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
+  const embers = new THREE.Points(
+    emberGeo,
+    new THREE.PointsMaterial({
+      color: EMBER_COLOR,
+      size: EMBER_SIZE,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+
+  // --- atmospheric motes ---
+  const motePos = new Float32Array(MOTES * 3);
+  const moteCol = new Float32Array(MOTES * 3);
+  const moteSeed = new Float32Array(MOTES);
+  for (let i = 0; i < MOTES; i++) {
+    motePos[i * 3] = -10 + hash(i) * 20;
+    motePos[i * 3 + 1] = 0.3 + hash(i + 3) * 3.4;
+    motePos[i * 3 + 2] = -16 + hash(i + 7) * 22;
+    moteSeed[i] = hash(i + 11) * Math.PI * 2;
+    const warm = hash(i + 13) > 0.45;
+    moteCol[i * 3] = warm ? 1 : 0.78;
+    moteCol[i * 3 + 1] = warm ? 0.62 : 0.7;
+    moteCol[i * 3 + 2] = warm ? 0.28 : 0.62;
+  }
+  const moteGeo = new THREE.BufferGeometry();
+  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+  moteGeo.setAttribute("color", new THREE.BufferAttribute(moteCol, 3));
+  const motes = new THREE.Points(
+    moteGeo,
+    new THREE.PointsMaterial({
+      size: MOTE_SIZE,
+      vertexColors: true,
+      transparent: true,
+      opacity: MOTE_OPACITY,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
 
   function burst(
     x: number,
@@ -145,10 +219,34 @@ export function createParticles(): GameParticles {
     }
   }
 
+  function updateAmbient(time: number) {
+    for (let i = 0; i < EMBER_UPDATE_COUNT; i++) {
+      const y = (time * 0.33 + hash(i)) % 1;
+      const ang = hash(i + 2) * Math.PI * 2;
+      const rad = (0.08 + hash(i + 4) * 0.32) * (1 - y);
+      emberPos[i * 3] = fire.x + Math.cos(ang) * rad;
+      emberPos[i * 3 + 1] = 0.2 + y * 1.25;
+      emberPos[i * 3 + 2] = fire.z + Math.sin(ang) * rad;
+    }
+    emberGeo.attributes.position!.needsUpdate = true;
+
+    for (let i = 0; i < MOTES; i++) {
+      const drift = time * (0.12 + hash(i) * 0.08);
+      motePos[i * 3] = -10 + ((hash(i) * 20 + Math.sin(drift + moteSeed[i]!) * 0.8) % 20);
+      motePos[i * 3 + 1] = 0.25 + ((hash(i + 3) * 3.4 + drift * 0.35) % 3.6);
+      motePos[i * 3 + 2] = -16 + ((hash(i + 7) * 22 + Math.cos(drift * 0.7) * 0.6) % 22);
+    }
+    moteGeo.attributes.position!.needsUpdate = true;
+  }
+
   function dispose() {
     sparkGeo.dispose();
     (points.material as THREE.Material).dispose();
+    emberGeo.dispose();
+    (embers.material as THREE.Material).dispose();
+    moteGeo.dispose();
+    (motes.material as THREE.Material).dispose();
   }
 
-  return { points, burst, ringDust, update, dispose };
+  return { points, embers, motes, burst, ringDust, update, updateAmbient, dispose };
 }
