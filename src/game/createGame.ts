@@ -357,6 +357,20 @@ export function createGame(
   dustRing.rotation.x = -Math.PI / 2;
   dustRing.visible = false;
   scene.add(dustRing);
+  /** Research P2-J: outer softer shorter dust halo (mesh-only). */
+  const dustRingSoft = new THREE.Mesh(
+    new THREE.RingGeometry(0.62, 0.88, 36),
+    new THREE.MeshBasicMaterial({
+      color: 0xcbb89a,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  dustRingSoft.rotation.x = -Math.PI / 2;
+  dustRingSoft.visible = false;
+  scene.add(dustRingSoft);
   const pickupRing = new THREE.Mesh(
     new THREE.RingGeometry(0.2, 0.32, 20),
     new THREE.MeshBasicMaterial({ color: 0xe85d04, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }),
@@ -426,6 +440,7 @@ export function createGame(
   }
 
   let dustT = 0;
+  let dustSoftT = 0;
 
   const slashMat = new THREE.MeshBasicMaterial({
     color: 0xffe7c2,
@@ -843,6 +858,11 @@ export function createGame(
     dustRing.position.set(x, 0.05, z);
     dustRing.scale.setScalar(0.4);
     (dustRing.material as THREE.MeshBasicMaterial).opacity = 0.62;
+    dustSoftT = 0.3;
+    dustRingSoft.visible = true;
+    dustRingSoft.position.set(x, 0.05, z);
+    dustRingSoft.scale.setScalar(0.55);
+    (dustRingSoft.material as THREE.MeshBasicMaterial).opacity = 0.32;
     particles.ringDust(x, z);
   }
 
@@ -2250,6 +2270,13 @@ export function createGame(
       dustRing.scale.setScalar(0.4 + u * 6.2);
       (dustRing.material as THREE.MeshBasicMaterial).opacity = 0.62 * (1 - u);
       dustRing.visible = dustT > 0;
+    }
+    if (dustSoftT > 0) {
+      dustSoftT = Math.max(0, dustSoftT - 0.016);
+      const uSoft = 1 - dustSoftT / 0.3;
+      dustRingSoft.scale.setScalar(0.55 + uSoft * 7.5);
+      (dustRingSoft.material as THREE.MeshBasicMaterial).opacity = 0.32 * (1 - uSoft);
+      dustRingSoft.visible = dustSoftT > 0;
     }
     particles.update();
 

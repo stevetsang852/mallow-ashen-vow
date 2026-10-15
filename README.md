@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.7**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.8**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -48,7 +48,7 @@
 - 第一下打中會打開刀聲。
 - 角色和場景仍是程序化建模。騎士貓有腿甲、臂甲、護手和拇指、兩片斗篷、較長的劍。敵人現在有專屬程序化模型（`src/game/enemyMesh.ts`）：灰殼有裂痕甲和短劍、公爵有角盔與發光裂縫、紅契有小翼與紅刃。概念圖放在 `public/concepts/`。火芯是石圈、炭和火簇。拱門有裂縫，打開時布會落下。地面有從火芯到拱門的踏痕。沒有用 Hero Forge 或其他人的模型檔。
 - 場景氛圍參考雲海和光塵：庭院有暖霧、緩慢漂浮的光點，以及兩道很淡的光柱。不是複製別人的 shader。
-- 粒子用 `THREE.Points`：鋼色是打中，粉色是重擊和架勢崩壞，灰塵是翻滾和震地，灰焰是死亡與撿灰，紅焰是紅契侵入。震地另有一圈向外擴的塵環。
+- 粒子用 `THREE.Points`：鋼色是打中，粉色是重擊和架勢崩壞，灰塵是翻滾和震地，灰焰是死亡與撿灰，紅焰是紅契侵入。震地另有一圈向外擴的塵環，外加一圈更淡更短的 soft dust ring（P2-J）。
 PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - 打中有刀光、火花、短暫停頓和金屬加噪聲。格擋和架勢崩解也有獨立音效。
 - 死亡掉灰，走回去撿。火芯回血、回瓶。200 灰可鍛誓 +12 生命，上限 180。
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.7";
+  export const GAME_VERSION = "0.8.8";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.7（Fullstack：Harness polish — 固定種子回歸＋公爵／紅契細 bucket＋近 24 場 winRate）
+- **版本**：0.8.8（Graphics P2-J：震地 soft dust ring — 外圈更淡更短；主塵環對比不變）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.7)
+### 已完成 (0.5.x - 0.8.8)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -279,6 +279,11 @@ npm run dev
 - [x] 公爵／紅契更細 state bucket（tell／swing／roar／…＋melee／near／mid／far＋p1／p2）；hollow 粗分不變
 - [x] 固定種子回歸：`runFixedSeedRegression`／`mulberry32`＋`scripts/harness-regression.mjs`
 - [x] 單元測試更新；**唔改** moves 傷害／deflect／Graphics／Save／items／audio
+#### 0.8.8 - Soft dust ring（Research P2-J）
+- [x] `createGame`：`dustRingSoft` 外圈更淡更短（RingGeometry 0.62–0.88；peak opacity 0.32；life 0.3s）
+- [x] 與既有 `dustRing`（0.48s／0.62 opacity）同觸發於 `shockDust`；主環對比／particles.ringDust 不變
+- [x] 擴張更快更外（start scale 0.55 → +7.5）；mesh-only；唔動 moves／Save／audio／AI／items／harness／touch／HIT_SPARK_MUL
+- [x] 合併序：main 上 **0.8.6 → 0.8.7** 先落地，再 rebase／合本刀
 
 ### 下一步開發（按優先順序）
 
@@ -402,3 +407,4 @@ feature/* → 新功能開發
 | 0.8.5 | 2026-10-15 | Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96 |
 | 0.8.6 | 2026-10-15 | P1 火炬：世界拾取＋held light＋vs demon ×1.35（無 shop） |
 | 0.8.7 | 2026-10-15 | Fullstack：Harness polish（固定種子回歸、duke／demon 細 bucket、recentWindow 24） |
+| 0.8.8 | 2026-10-15 | Graphics P2-J：soft dust ring — 外圈更淡更短震地暈（主環可讀性保留） |
