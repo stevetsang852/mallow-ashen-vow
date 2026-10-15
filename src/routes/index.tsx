@@ -389,7 +389,7 @@ function TouchBtn({
     <button
       type="button"
       aria-label={label}
-      className={`grid place-items-center border border-line bg-surface/95 text-fg touch-none ${big ? "h-20 w-20" : "h-16 w-16"}`}
+      className={`touch-btn touch-none ${big ? "touch-btn--lg" : "touch-btn--md"}`}
       onPointerDown={(e) => {
         e.preventDefault();
         e.stopPropagation();

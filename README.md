@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.4**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.5**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.4";
+  export const GAME_VERSION = "0.8.5";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.4（Fullstack P3：ambient wind／fire beds＋腳步；mute 仍有效；無 BGM）
+- **版本**：0.8.5（Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.4)
+### 已完成 (0.5.x - 0.8.5)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -261,6 +261,11 @@ npm run dev
 - [x] 移動腳步（material-agnostic cadence；`footstep(moving01, dt)`）
 - [x] `createGame` 薄接線：進 play 開 ambient；draw 打 footstep
 - [x] 單元測試擴充；**無 BGM**；唔動 moves／deflect／particles／Save／Graphics／items
+
+#### 0.8.5 - 右側 touch skin（Research P2-I）
+- [x] 右側觸控鍵改半透明圓＋ember 邊（`.touch-btn`）；hit target 維持 80／64px
+- [x] 按下 `scale(0.96)`（`:active`）；左搖桿唔改
+- [x] 唔動 moves／Deflect／Save／audio／AI／particles／createGame
 
 ### 下一步開發（按優先順序）
 
@@ -381,3 +386,4 @@ feature/* → 新功能開發
 | 0.8.2 | 2026-10-15 | Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse |
 | 0.8.3 | 2026-10-15 | P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag（無 shop） |
 | 0.8.4 | 2026-10-15 | Fullstack P3：ambient wind／fire beds＋腳步（mute 有效；無 BGM） |
+| 0.8.5 | 2026-10-15 | Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96 |
