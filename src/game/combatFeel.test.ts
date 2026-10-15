@@ -18,6 +18,7 @@ describe("combatFeel bus", () => {
     bus.emit({ kind: "hit", amount: 18, foeId: 1 });
     bus.emit({ kind: "heavy", amount: 36, foeId: 1, heavy: true });
     bus.emit({ kind: "block", amount: 24, foeId: 2 });
+    bus.emit({ kind: "deflect", amount: 24, foeId: 2 });
     bus.emit({ kind: "stance-break", foeId: 1 });
     bus.emit({ kind: "stamina", amount: 12 });
     bus.emit({ kind: "hurt", amount: 28 });
@@ -25,6 +26,7 @@ describe("combatFeel bus", () => {
       "hit",
       "heavy",
       "block",
+      "deflect",
       "stance-break",
       "stamina",
       "hurt",
@@ -33,6 +35,7 @@ describe("combatFeel bus", () => {
     assert.equal(c.hit, 1);
     assert.equal(c.heavy, 1);
     assert.equal(c.block, 1);
+    assert.equal(c.deflect, 1);
     assert.equal(c["stance-break"], 1);
     assert.equal(c.stamina, 1);
     assert.equal(c.hurt, 1);
@@ -47,6 +50,7 @@ describe("combatFeel bus", () => {
       stamina: 0,
       hurt: 0,
       block: 0,
+      deflect: 0,
     });
   });
 });

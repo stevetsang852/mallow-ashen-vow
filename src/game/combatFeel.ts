@@ -6,7 +6,8 @@ export type CombatFeelKind =
   | "stance-break"
   | "stamina"
   | "hurt"
-  | "block";
+  | "block"
+  | "deflect";
 
 export type CombatFeelEvent = {
   kind: CombatFeelKind;
@@ -34,6 +35,7 @@ export function emptyFeelCounts(): CombatFeelCounts {
     stamina: 0,
     hurt: 0,
     block: 0,
+    deflect: 0,
   };
 }
 
