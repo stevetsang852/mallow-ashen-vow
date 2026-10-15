@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.6**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.7**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.6";
+  export const GAME_VERSION = "0.7.7";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.6（Graphics P1-F：Boss 橫幅／二階段 pulldown）
+- **版本**：0.7.7（P0 輕擊三連：20→25→35、窗口 0.8s、結束 short recovery）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.6)
+### 已完成 (0.5.x - 0.7.7)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -213,14 +213,21 @@ npm run dev
 - [x] 二階段血條底極淡紅脈動（CSS）；**唔**加全屏閃白
 - [x] 唔動 moves feel／SaveManager／audio API／AI／particles spark 倍數
 
+#### 0.7.7 - 輕擊連擊（P0）
+- [x] 輕擊 3 段傷害 20 → 25 → 35（`moves.ts` 純函式＋createGame 薄接線）
+- [x] 連擊窗口 0.8s；超時或打完第 3 段 → short recovery（0.22s）
+- [x] 單元測試 `moves.combo.test.ts`（chain／window／damage／recover）
+- [x] 唔改 Graphics／audio API／SaveManager／AI／粒子
+
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
-1. **連擊系統** (`moves.ts`)
-   - 添加輕擊連擊（3段）
-   - 每段傷害遞增（20 → 25 → 35）
-   - 連擊窗口時間 0.8s
-   - 連擊結束後有 short recovery
+1. ~~**連擊系統** (`moves.ts`)~~ **已完成（0.7.7）**
+   - ~~添加輕擊連擊（3段）~~
+   - ~~每段傷害遞增（20 → 25 → 35）~~
+   - ~~連擊窗口時間 0.8s~~
+   - ~~連擊結束後有 short recovery~~
 
 2. **招架/Deflect** (`player.ts`, `foes.ts`)
    - 精準格擋時機（敵人攻擊前 0.2s）
@@ -258,9 +265,9 @@ npm run dev
    - LOD 系統
 
 #### P3 - 體驗提升
-7. **音效優化** (`audio.ts`；戰鬥合成已於 0.7.5 抽取)
-   - 環境音（風聲、火焰聲）
-   - 腳步聲（地面材質）
+7. **音效優化** (`audio.ts`；戰鬥合成已於 0.7.5 抽取；**環境／腳步仍待做**)
+   - 環境音（風聲、火焰聲）— 尚未實作
+   - 腳步聲（地面材質）— 尚未實作
    - 武器揮舞聲（可擴充現有 tone／noise）
    - 動態戰鬥 BGM
 
@@ -323,3 +330,4 @@ feature/* → 新功能開發
 | 0.7.4 | 2026-10-15 | Graphics P1-E：死亡／通關卡片電影感（ember sweep、深灰／微金、clears／best） |
 | 0.7.5 | 2026-10-15 | Audio 抽取（WebAudio 戰鬥合成音 → audio.ts） |
 | 0.7.6 | 2026-10-15 | Graphics P1-F：Boss 橫幅／二階段 pulldown（字距＋opacity、條底紅脈動） |
+| 0.7.7 | 2026-10-15 | P0 輕擊三連（20→25→35、窗口 0.8s、short recovery） |

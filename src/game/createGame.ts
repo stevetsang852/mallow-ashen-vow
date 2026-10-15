@@ -29,13 +29,21 @@ import {
   STA_MAX,
   STEP,
   WALK,
+  beginLightComboHit,
+  breakLightCombo,
+  canStartLightCombo,
+  createLightComboState,
   dampAngle,
   dukeTell,
+  finishLightComboHit,
   hash,
+  lightComboDamage,
   template,
+  tickLightCombo,
   type Act,
   type DukeMove,
   type Foe,
+  type LightComboState,
 } from "@/game/moves";
 import { createCombatFeelBus } from "@/game/combatFeel";
 import {
@@ -586,6 +594,7 @@ export function createGame(
     combo: 0,
   };
 
+  let lightCombo: LightComboState = createLightComboState();
   let ash = 0;
   let deaths = 0;
   let bestMs: number | null = null;
@@ -915,6 +924,8 @@ export function createGame(
     player.sta = STA_MAX;
     player.flasks = FLASK_MAX;
     player.invuln = 1;
+    player.combo = 0;
+    lightCombo = createLightComboState();
     camYaw = 0;
   }
 
@@ -989,6 +1000,8 @@ export function createGame(
         audio.tone(210, 0.07, "square", 0.05);
         if (player.hp <= 0) die();
         else if (player.sta <= 0) {
+          lightCombo = breakLightCombo();
+          player.combo = 0;
           player.act = "hurt";
           player.actT = 0;
           say("架勢破了");
@@ -1012,6 +1025,8 @@ export function createGame(
       die();
       return;
     }
+    lightCombo = breakLightCombo();
+    player.combo = 0;
     player.act = "hurt";
     player.actT = 0;
     emit(true);
@@ -1077,6 +1092,7 @@ export function createGame(
   function tryAttack(kind: "light" | "heavy" = "light") {
     if (phase !== "play") return;
     if (player.act !== "free" && player.act !== "block") return;
+    if (!canStartLightCombo(lightCombo)) return;
     const cost = kind === "heavy" ? MOVE.heavyCost : MOVE.lightCost;
     if (!spendSta(cost)) {
       say("氣力不夠");
@@ -1088,7 +1104,14 @@ export function createGame(
     player.actT = 0;
     player.hitDone = false;
     player.atk = kind;
-    player.combo = 0;
+    if (kind === "light") {
+      const started = beginLightComboHit(lightCombo);
+      lightCombo = started.state;
+      player.combo = started.hitIndex;
+    } else {
+      lightCombo = breakLightCombo();
+      player.combo = 0;
+    }
     swingHits = new Set();
     audio.tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
     audio.noise(0.04, kind === "heavy" ? 0.06 : 0.035);
@@ -1097,6 +1120,8 @@ export function createGame(
   function tryDodge() {
     if (phase !== "play" || (player.act !== "free" && player.act !== "block")) return;
     if (!spendSta(MOVE.dodgeCost)) return;
+    lightCombo = breakLightCombo();
+    player.combo = 0;
     const { ix, iz, mag } = wishDir();
     if (mag > 0.2) {
       player.dodgeX = ix / mag;
@@ -1667,7 +1692,7 @@ export function createGame(
         if (player.actT > open && player.actT < shut) {
           const fx = -Math.sin(player.yaw);
           const fz = -Math.cos(player.yaw);
-          const dmg = heavy ? MOVE.heavyDmg : MOVE.lightDmg;
+          const dmg = heavy ? MOVE.heavyDmg : lightComboDamage(player.combo);
           let any = false;
           for (const f of foes) {
             if (!livingFoe(f) || swingHits.has(f.id)) continue;
@@ -1746,22 +1771,34 @@ export function createGame(
       }
       const end = actionEnd(player.act, player.atk === "heavy");
       if (player.actT >= end) {
+        if (player.act === "attack" && player.atk === "light") {
+          lightCombo = finishLightComboHit(lightCombo);
+        } else if (player.act === "attack") {
+          lightCombo = breakLightCombo();
+          player.combo = 0;
+        }
         player.act = "free";
         player.actT = 0;
       }
-    } else if (player.act === "block") {
-      player.sta = Math.max(0, player.sta - 12 * dt);
-      player.staDelay = 0.2;
-      if (player.sta <= 0) {
-        player.act = "free";
-        say("氣力空了");
-        shake = Math.max(shake, 0.18);
-        camPush = Math.max(camPush, 0.25);
-      }
-    } else if (player.staDelay > 0) {
-      player.staDelay -= dt;
     } else {
-      player.sta = Math.min(STA_MAX, player.sta + 36 * dt);
+      if (lightCombo.phase === "window" || lightCombo.phase === "recover") {
+        lightCombo = tickLightCombo(lightCombo, dt);
+        if (lightCombo.phase === "idle") player.combo = 0;
+      }
+      if (player.act === "block") {
+        player.sta = Math.max(0, player.sta - 12 * dt);
+        player.staDelay = 0.2;
+        if (player.sta <= 0) {
+          player.act = "free";
+          say("氣力空了");
+          shake = Math.max(shake, 0.18);
+          camPush = Math.max(camPush, 0.25);
+        }
+      } else if (player.staDelay > 0) {
+        player.staDelay -= dt;
+      } else {
+        player.sta = Math.min(STA_MAX, player.sta + 36 * dt);
+      }
     }
 
     const locked = lockFoe();
