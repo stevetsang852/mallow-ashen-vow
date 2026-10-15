@@ -154,6 +154,46 @@
   }
 }
 
+@layer components {
+  /* P2-I: right-side touch buttons — translucent circles + ember rim; press scale 0.96 */
+  .touch-btn {
+    display: grid;
+    place-items: center;
+    border-radius: 9999px;
+    border: 1.5px solid color-mix(in srgb, var(--color-ember) 72%, var(--color-line));
+    background-color: color-mix(in srgb, var(--color-surface) 55%, transparent);
+    color: var(--color-fg);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-ember) 28%, transparent),
+      0 0 10px color-mix(in srgb, var(--color-ember) 22%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 18%, transparent);
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 80ms ease-out, background-color 80ms ease-out, box-shadow 80ms ease-out;
+    will-change: transform;
+  }
+
+  .touch-btn--lg {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .touch-btn--md {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .touch-btn:active {
+    transform: scale(0.96);
+    background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-ember) 45%, transparent),
+      0 0 14px color-mix(in srgb, var(--color-ember) 35%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 28%, transparent);
+  }
+
+}
+
 @media (hover: hover) and (pointer: fine) and (min-width: 900px) {
   .touch-controls {
     display: none;
