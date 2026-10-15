@@ -17,6 +17,8 @@ export type AutoFoeSnap = {
   move?: string;
   aggro?: boolean;
   stagger: number;
+  /** Duke phase-2 / demon frenzy flag for finer learner buckets (0.8.7). */
+  phase2?: boolean;
 };
 
 export type AutoThinkCtx = {
@@ -199,6 +201,172 @@ export function setHarnessWanted(on: boolean) {
   }
 }
 
+/** Longer recent win-rate window (was 8 in 0.7.3). */
+export const HARNESS_RECENT_WINDOW = 24;
+
+/** Default seed for fixed harness regression (0.8.7). */
+export const HARNESS_REGRESSION_SEED = 0x8719_8701;
+
+/** Mulberry32 — deterministic [0,1) for regression / tests. Does not touch moves damage. */
+export function mulberry32(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+}
+
+export type FixedSeedRegressionReport = {
+  seed: number;
+  runs: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  recentWinRate: number | null;
+  recentWindow: number;
+  /** Stable fingerprint of decideAutoThink on fixed duke/demon/hollow cues. */
+  decideFingerprint: string;
+};
+
+/** Fixed duke/demon/hollow cues — outputs must stay stable across refactors. */
+export function regressionDecideCases(): AutoThinkCtx[] {
+  const basePlayer = { x: 0, z: 0, hp: 80, flasks: 2, act: "free" as const };
+  return [
+    {
+      phase: "play",
+      menuOpen: false,
+      autoCd: 0,
+      camYaw: 0,
+      lockId: 1,
+      gateOpen: true,
+      player: { ...basePlayer },
+      foes: [
+        {
+          id: 1,
+          x: 2.0,
+          z: 0,
+          kind: "duke",
+          state: "telegraph",
+          move: "overhead",
+          stagger: 0,
+          aggro: true,
+          phase2: false,
+        },
+      ],
+    },
+    {
+      phase: "play",
+      menuOpen: false,
+      autoCd: 0,
+      camYaw: 0,
+      lockId: 2,
+      gateOpen: true,
+      player: { ...basePlayer, hp: 36 },
+      foes: [
+        {
+          id: 2,
+          x: 1.5,
+          z: 0.2,
+          kind: "duke",
+          state: "swing",
+          move: "shock",
+          stagger: 0,
+          aggro: true,
+          phase2: true,
+        },
+      ],
+    },
+    {
+      phase: "play",
+      menuOpen: false,
+      autoCd: 0,
+      camYaw: 0.4,
+      lockId: 3,
+      gateOpen: true,
+      player: { ...basePlayer },
+      foes: [
+        {
+          id: 3,
+          x: 2.8,
+          z: -0.5,
+          kind: "demon",
+          state: "telegraph",
+          move: "cleave",
+          stagger: 0,
+          aggro: true,
+          phase2: false,
+        },
+      ],
+    },
+    {
+      phase: "play",
+      menuOpen: false,
+      autoCd: 0,
+      camYaw: 0,
+      lockId: 4,
+      gateOpen: true,
+      player: { ...basePlayer },
+      foes: [
+        {
+          id: 4,
+          x: 1.4,
+          z: 0,
+          kind: "hollow",
+          state: "recover",
+          stagger: 0.2,
+          aggro: true,
+        },
+      ],
+    },
+  ];
+}
+
+function fingerprintDecide(): string {
+  return regressionDecideCases()
+    .map((ctx) => {
+      const a = decideAutoThink(ctx, 0.016);
+      if (a.type === "dodge") return `dodge:${a.side}`;
+      if (a.type === "attack") return `atk:${a.heavy ? "h" : "l"}`;
+      if (a.type === "move") return `move:${a.keys.join("+") || "-"}`;
+      if (a.type === "flask") return "flask";
+      return a.type;
+    })
+    .join("|");
+}
+
+/**
+ * Fixed-seed harness regression: synthetic win/loss stream + decide fingerprint.
+ * Does not simulate combat damage / moves tables.
+ */
+export function runFixedSeedRegression(
+  seed: number = HARNESS_REGRESSION_SEED,
+  runs = 48,
+): FixedSeedRegressionReport {
+  const rnd = mulberry32(seed);
+  const h = createHarnessSession();
+  h.setEnabled(true);
+  let wins = 0;
+  let losses = 0;
+  for (let i = 0; i < runs; i++) {
+    // ~58% win bias — stable under fixed seed for gate assertions
+    const win = rnd() < 0.58;
+    if (win) wins += 1;
+    else losses += 1;
+    h.endRun(win ? "win" : "loss", 1000 + i * 120);
+  }
+  const s = h.summary();
+  return {
+    seed,
+    runs,
+    wins,
+    losses,
+    winRate: s.winRate ?? 0,
+    recentWinRate: s.recentWinRate,
+    recentWindow: s.recentWindow,
+    decideFingerprint: fingerprintDecide(),
+  };
+}
+
 export function createHarnessSession() {
   let enabled = false;
   let nextId = 1;
@@ -235,7 +403,7 @@ export function createHarnessSession() {
     return finished;
   }
 
-  const RECENT_WINDOW = 8;
+  const recentWindow = HARNESS_RECENT_WINDOW;
 
   function rate(w: number, l: number): number | null {
     const n = w + l;
@@ -255,7 +423,7 @@ export function createHarnessSession() {
         msN += 1;
       }
     }
-    const recent = runs.slice(-RECENT_WINDOW);
+    const recent = runs.slice(-recentWindow);
     let rw = 0;
     let rl = 0;
     for (const r of recent) {
@@ -269,7 +437,7 @@ export function createHarnessSession() {
       losses,
       winRate: rate(wins, losses),
       recentWinRate: rate(rw, rl),
-      recentWindow: RECENT_WINDOW,
+      recentWindow,
       avgMs: msN > 0 ? Math.round(msSum / msN) : null,
       currentId: current?.id ?? null,
       lastResult: runs.length ? runs[runs.length - 1]!.result : null,

@@ -22,10 +22,14 @@ export const PILLARS = [
   { x: 8.6, z: -13.2, r: 0.48 },
 ];
 
+export const LIGHT_COMBO_DMGS = [20, 25, 35] as const;
+export const LIGHT_COMBO_MAX = LIGHT_COMBO_DMGS.length;
+
 export const MOVE = {
   lightCost: 16,
   heavyCost: 34,
   dodgeCost: 28,
+  /** First-hit light damage (same as LIGHT_COMBO_DMGS[0]). */
   lightDmg: 20,
   heavyDmg: 46,
   lightOpen: 0.12,
@@ -34,14 +38,10 @@ export const MOVE = {
   heavyOpen: 0.32,
   heavyShut: 0.5,
   heavyEnd: 0.78,
-  // Combo system
-  comboMax: 3,
-  comboWindow: 0.8,
-  comboDmgMultiplier: [1.0, 1.25, 1.5],
-  comboRecovery: 0.15,
-  // Parry/Deflect system
-  parryWindow: 0.2,
-  deflectStaggerTime: 0.8,
+  /** Seconds after a light hit ends to chain the next (must press again). */
+  lightComboWindow: 0.8,
+  /** Short recovery after combo ends (3rd hit or window timeout). */
+  lightComboRecover: 0.22,
   duke: {
     overheadTell: 1.34,
     shockTell: 1.12,
@@ -55,37 +55,98 @@ export const MOVE = {
   },
 } as const;
 
-export type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block" | "parry";
-export type PlayerState = {
-  x: number;
-  z: number;
-  vx: number;
-  vz: number;
-  yaw: number;
-  hp: number;
-  hpMax: number;
-  sta: number;
-  flasks: number;
-  act: Act;
-  actT: number;
-  atk: "light" | "heavy" | null;
-  hitDone: boolean;
-  invuln: number;
-  nearFire: boolean;
-  healed: boolean;
-  dropped: Foe | null;
-  ash: number;
-  runMs: number;
-  clears: number;
-  wind: number;
-  stun: number;
-  combo: number;
-  comboTimer: number;
-  lastAttackTime: number;
-  parryActive: boolean;
-  parryTimer: number;
-  parryCooldown: number;
+/** Damage for light hit index 0..2 (clamped). */
+export function lightComboDamage(hitIndex: number): number {
+  const i = Math.max(0, Math.min(LIGHT_COMBO_MAX - 1, hitIndex | 0));
+  return LIGHT_COMBO_DMGS[i]!;
+}
+
+/**
+ * Next 0-based light hit index when the player presses light.
+ * `completedHits` is how many lights already landed in this chain (0..3);
+ * `inWindow` is true while the post-hit chain window is open.
+ */
+export function nextLightHitIndex(completedHits: number, inWindow: boolean): number {
+  if (inWindow && completedHits > 0 && completedHits < LIGHT_COMBO_MAX) return completedHits;
+  return 0;
+}
+
+/** After light swing `hitIndex` (0..2) finishes: open window or enter recover. */
+export function afterLightHitEnd(hitIndex: number): {
+  completedHits: number;
+  kind: "window" | "recover";
+  duration: number;
+} {
+  const completed = hitIndex + 1;
+  if (completed >= LIGHT_COMBO_MAX) {
+    return { completedHits: 0, kind: "recover", duration: MOVE.lightComboRecover };
+  }
+  return { completedHits: completed, kind: "window", duration: MOVE.lightComboWindow };
+}
+
+export type LightComboPhase = "idle" | "window" | "recover";
+
+export type LightComboState = {
+  /** Completed hits in the open chain (0..2 while window; 0 when idle/recover). */
+  completedHits: number;
+  phase: LightComboPhase;
+  /** Time left in window or recover. */
+  timer: number;
 };
+
+export function createLightComboState(): LightComboState {
+  return { completedHits: 0, phase: "idle", timer: 0 };
+}
+
+export function canStartLightCombo(state: LightComboState): boolean {
+  return state.phase !== "recover";
+}
+
+/** Commit a light press: returns hit index and updated state (attacking — timers cleared). */
+export function beginLightComboHit(state: LightComboState): { hitIndex: number; state: LightComboState } {
+  const inWindow = state.phase === "window" && state.timer > 0;
+  const hitIndex = nextLightHitIndex(state.completedHits, inWindow);
+  return {
+    hitIndex,
+    state: { completedHits: hitIndex, phase: "idle", timer: 0 },
+  };
+}
+
+/** Light attack animation ended. */
+export function finishLightComboHit(state: LightComboState): LightComboState {
+  const result = afterLightHitEnd(state.completedHits);
+  return {
+    completedHits: result.completedHits,
+    phase: result.kind,
+    timer: result.duration,
+  };
+}
+
+/** Tick window / recover timers. Call only while not mid-attack. */
+export function tickLightCombo(state: LightComboState, dt: number): LightComboState {
+  if (state.phase === "idle" || state.timer <= 0) {
+    if (state.phase === "window") {
+      return { completedHits: 0, phase: "recover", timer: MOVE.lightComboRecover };
+    }
+    if (state.phase === "recover") {
+      return createLightComboState();
+    }
+    return state;
+  }
+  const timer = state.timer - dt;
+  if (timer > 0) return { ...state, timer };
+  if (state.phase === "window") {
+    return { completedHits: 0, phase: "recover", timer: MOVE.lightComboRecover };
+  }
+  return createLightComboState();
+}
+
+/** Break the chain (heavy, hurt, dodge, etc.). */
+export function breakLightCombo(_state?: LightComboState): LightComboState {
+  return createLightComboState();
+}
+
+export type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block";
 export type FoeState = "idle" | "chase" | "roar" | "telegraph" | "swing" | "recover" | "hurt" | "dodge" | "drink" | "dead";
 export type DukeMove = "cleave" | "overhead" | "shock" | "rush";
 
