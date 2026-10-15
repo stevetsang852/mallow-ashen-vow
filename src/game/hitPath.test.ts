@@ -37,7 +37,7 @@ describe("hitPath feel lock (0.8.13)", () => {
     assert.equal(CONNECT_FEEDBACK.heavy.shake, 0.56);
     assert.equal(CONNECT_FEEDBACK.heavy.hitstop, 0.15);
     assert.equal(STANCE_BREAK_FEEDBACK.hitstop, 0.18);
-    assert.equal(STANCE_BREAK_FEEDBACK.shake, 0.55);
+    assert.equal(STANCE_BREAK_FEEDBACK.shake, 0.62);
     assert.equal(HIT_SPARK_MUL.light, 1);
     assert.equal(HIT_SPARK_MUL.heavy, 1.6);
     assert.equal(HIT_SPARK_MUL["stance-break"], 2.2);

@@ -8,6 +8,7 @@ import {
   HOTBAR_SLOTS,
   ITEM_INTERACT_RANGE,
   ITEM_LABEL,
+  ITEMS_ENABLED,
   TORCH_DEMON_DAMAGE_MUL,
   applyExplosiveAoe,
   applyHealHerb,
@@ -29,9 +30,19 @@ import {
   tryConsumeHealHerb,
 } from "./items.ts";
 
+/**
+ * 0.8.18 disabled items (ITEMS_ENABLED = false).
+ * Tests assert the disabled contract AND keep the enabled-path assertions
+ * gated behind `ITEMS_ENABLED` so they automatically re-engage when items turn back on.
+ */
 describe("defaultWorldPickups", () => {
   it("places ash-token, flask-shard, torch, explosive, and healHerb as active stubs", () => {
     const list = defaultWorldPickups();
+    if (!ITEMS_ENABLED) {
+      // disabled: no world markers
+      assert.deepEqual(list, []);
+      return;
+    }
     assert.equal(list.length, 5);
     assert.equal(list[0]!.id, "ash-token");
     assert.equal(list[1]!.id, "flask-shard");
@@ -68,6 +79,12 @@ describe("tryCollectNearest / inventory flags", () => {
   it("collects, sets flag, and deactivates the world marker", () => {
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
+    if (!ITEMS_ENABLED) {
+      // disabled: collect is gated, returns null, inventory untouched
+      assert.equal(tryCollectNearest(0, 0, pickups, inv), null);
+      assert.deepEqual(inv, emptyInventory());
+      return;
+    }
     const target = pickups[0]!;
     const got = tryCollectNearest(target.x, target.z, pickups, inv);
     assert.equal(got, "ash-token");
@@ -81,6 +98,12 @@ describe("tryCollectNearest / inventory flags", () => {
   });
 
   it("collects torch into inventory", () => {
+    if (!ITEMS_ENABLED) {
+      const inv = emptyInventory();
+      assert.equal(tryCollectNearest(-3.1, 0.2, defaultWorldPickups(), inv), null);
+      assert.equal(hasItem(inv, "torch"), false);
+      return;
+    }
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
     const torch = pickups.find((p) => p.id === "torch")!;
@@ -92,6 +115,12 @@ describe("tryCollectNearest / inventory flags", () => {
   });
 
   it("collects explosive into inventory", () => {
+    if (!ITEMS_ENABLED) {
+      const inv = emptyInventory();
+      assert.equal(tryCollectNearest(0.35, 3.55, defaultWorldPickups(), inv), null);
+      assert.equal(hasItem(inv, "explosive"), false);
+      return;
+    }
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
     const bomb = pickups.find((p) => p.id === "explosive")!;
@@ -103,6 +132,12 @@ describe("tryCollectNearest / inventory flags", () => {
   });
 
   it("collects healHerb into inventory", () => {
+    if (!ITEMS_ENABLED) {
+      const inv = emptyInventory();
+      assert.equal(tryCollectNearest(0.35, 3.55, defaultWorldPickups(), inv), null);
+      assert.equal(hasItem(inv, "healHerb"), false);
+      return;
+    }
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
     const herb = pickups.find((p) => p.id === "healHerb")!;
@@ -116,6 +151,22 @@ describe("tryCollectNearest / inventory flags", () => {
   it("resetItems restores markers and clears flags including torch, explosive, and healHerb", () => {
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
+    if (!ITEMS_ENABLED) {
+      // disabled: reset still clears inventory flags; marker list stays empty
+      inv["ash-token"] = true;
+      inv["flask-shard"] = true;
+      inv.torch = true;
+      inv.explosive = true;
+      inv.healHerb = true;
+      resetItems(pickups, inv);
+      assert.ok(pickups.length === 0);
+      assert.equal(hasItem(inv, "ash-token"), false);
+      assert.equal(hasItem(inv, "flask-shard"), false);
+      assert.equal(hasItem(inv, "torch"), false);
+      assert.equal(hasItem(inv, "explosive"), false);
+      assert.equal(hasItem(inv, "healHerb"), false);
+      return;
+    }
     for (const p of pickups) {
       tryCollectNearest(p.x, p.z, pickups, inv);
     }
@@ -162,6 +213,12 @@ describe("tryConsumeExplosive / applyExplosiveAoe", () => {
     const inv = emptyInventory();
     assert.equal(tryConsumeExplosive(inv), false);
     inv.explosive = true;
+    if (!ITEMS_ENABLED) {
+      // disabled: consume is gated, flag stays set but cannot be consumed
+      assert.equal(tryConsumeExplosive(inv), false);
+      assert.equal(inv.explosive, true);
+      return;
+    }
     assert.equal(tryConsumeExplosive(inv), true);
     assert.equal(inv.explosive, false);
     assert.equal(tryConsumeExplosive(inv), false);
@@ -198,6 +255,12 @@ describe("tryConsumeHealHerb / applyHealHerb", () => {
     const inv = emptyInventory();
     assert.equal(tryConsumeHealHerb(inv), false);
     inv.healHerb = true;
+    if (!ITEMS_ENABLED) {
+      // disabled: consume is gated, flag stays set but cannot be consumed
+      assert.equal(tryConsumeHealHerb(inv), false);
+      assert.equal(inv.healHerb, true);
+      return;
+    }
     assert.equal(tryConsumeHealHerb(inv), true);
     assert.equal(inv.healHerb, false);
     assert.equal(tryConsumeHealHerb(inv), false);
@@ -230,17 +293,34 @@ describe("hotbar 0.8.15", () => {
     assert.equal(clampHotbarSelected(99), 3);
     const inv = emptyInventory();
     assert.deepEqual(hotbarFilledFlags(inv), [false, false, false, false]);
-    assert.equal(hotbarUseKind(inv, 0), null);
-    inv.torch = true;
-    inv.explosive = true;
-    inv.healHerb = true;
-    inv["flask-shard"] = true;
-    assert.equal(isHotbarSlotFilled(inv, 0), true);
-    assert.equal(isHotbarSlotFilled(inv, 3), true);
-    assert.deepEqual(hotbarFilledFlags(inv), [true, true, true, true]);
-    assert.equal(hotbarUseKind(inv, 0), "torch");
-    assert.equal(hotbarUseKind(inv, 1), "explosive");
-    assert.equal(hotbarUseKind(inv, 2), "healHerb");
-    assert.equal(hotbarUseKind(inv, 3), null); // reserved stub — select only
+    // hotbarUseKind returns null when ITEMS_ENABLED=false (0.8.18) — re-enable items to unlock these assertions
+    if (ITEMS_ENABLED) {
+      assert.equal(hotbarUseKind(inv, 0), null);
+      inv.torch = true;
+      inv.explosive = true;
+      inv.healHerb = true;
+      inv["flask-shard"] = true;
+      assert.equal(isHotbarSlotFilled(inv, 0), true);
+      assert.equal(isHotbarSlotFilled(inv, 3), true);
+      assert.deepEqual(hotbarFilledFlags(inv), [true, true, true, true]);
+      assert.equal(hotbarUseKind(inv, 0), "torch");
+      assert.equal(hotbarUseKind(inv, 1), "explosive");
+      assert.equal(hotbarUseKind(inv, 2), "healHerb");
+      assert.equal(hotbarUseKind(inv, 3), null); // reserved stub — select only
+    } else {
+      // items disabled — use-kind gated, all slots report null
+      inv.torch = true;
+      inv.explosive = true;
+      inv.healHerb = true;
+      inv["flask-shard"] = true;
+      assert.equal(hotbarUseKind(inv, 0), null);
+      assert.equal(hotbarUseKind(inv, 1), null);
+      assert.equal(hotbarUseKind(inv, 2), null);
+      assert.equal(hotbarUseKind(inv, 3), null);
+      // filled flags still reflect inventory state (independent of ITEMS_ENABLED)
+      assert.equal(isHotbarSlotFilled(inv, 0), true);
+      assert.equal(isHotbarSlotFilled(inv, 3), true);
+      assert.deepEqual(hotbarFilledFlags(inv), [true, true, true, true]);
+    }
   });
 });
