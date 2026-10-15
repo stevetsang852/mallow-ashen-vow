@@ -10,13 +10,16 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-15 下午）
+## 現在給同事（2026-10-16 晨）
 
-目前進度在 `main`。版本 **0.8.19**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.22**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
-**重點更新**：
-- **敵人骨骼動畫修復**（`enemyRig.ts`）：外部 GLB 模型載入後 `baked` flag 會跳過骨骼動畫，已修正。現在敵人（Hollow/Duke/Demon）會正常顯示手腳移動動畫。
-- **Dark Souls 風格armor**（0.8.19）：敵人模型加入weathered armor美學，公爵/灰殼/紅契配色調整。
+**狀態**：2026-10-15 休息令仍有效——**等 YIN 通知再開下一波**。Graphics／Fullstack／Research 待命；不開新功能 PR。
+
+**重點更新（至 0.8.21）**：
+- **0.8.15–0.8.17 波次已合 main**：item hotbar Key1–4 → swing SFX → hotbar HUD plate。
+- **0.8.18**：`ITEMS_ENABLED = false`（道具隱藏；E 只食水）；打擊手感加長（重擊／崩架 hitstop）。
+- **0.8.19–0.8.21（Game developer）**：敵人骨骼動畫修復；Dark Souls weathered armor；灰殼／公爵／紅契模型升級；cute + dark contrast；3D 模型風格指引入 README。
 - **連擊系統整合**：`moves.ts` 保留 `comboDmgMultiplier` 和 `parryWindow`，與 `DEFLECT` 系統並存。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
@@ -98,7 +101,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.21";
+  export const GAME_VERSION = "0.8.22";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -166,15 +169,23 @@ npm run dev
 
 ## Planning
 
-更新日期：2026-10-15。同事照這個順序做。先不要加新地圖、新主角、武器樹。
+更新日期：2026-10-16。同事照這個順序做。先不要加新地圖、新主角、武器樹。
 
 ### 當前版本
 
-- **版本**：0.8.17（Graphics：道具快捷欄 4-slot HUD plate；空槽／無物隱藏）
+- **版本**：0.8.22（docs：daily progress／休息令／下一刀待命；tip after merge）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
+- **休息令**：2026-10-15 起仍有效，等 YIN 通知再開下一波
 
-### 已完成 (0.5.x - 0.8.17)
+### 今日下一刀（一人一項；休息中）
+
+- **Game developer**：待命 — 等 YIN／總管家開下一波；可自評庭院打擊手感（不開 PR 亦可）
+- **Fullstack**：待命 — 等通知；不開新 harness／extract PR
+- **Graphics**：待命 — 等通知；不開新 HUD／VFX PR
+- **Research**：待命 — 無主動 mallow 研究，除非指派
+
+### 已完成 (0.5.x - 0.8.22)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -374,7 +385,28 @@ npm run dev
 - [x] `ITEMS_ENABLED = false`：世界標記、快捷欄、拾取／引爆／藥草提示全部隱藏
 - [x] E 只食水。1–4 不作用
 - [x] 重擊 hitstop 0.12 → 0.15，鏡頭推近 0.72 → 0.86；架勢崩 hitstop 0.16 → 0.18
-- [ ] 下一刀只做打擊感和戰鬥：前搖可讀、收招可罰、被打鏡頭、輕擊三連手感。先不要再開道具
+- [x] 方向：下一刀重心打回打擊感（前搖可讀、收招可罰）；道具暫關
+
+#### 0.8.19 - 敵人骨骼動畫＋Dark Souls armor（Game developer）
+
+- [x] `enemyRig.ts`：移除 baked 跳過；Hollow／Duke／Demon 骨骼動畫恢復
+- [x] weathered ash armor 美學（粗糙度／emissive 裂縫／灰燼色板）
+
+#### 0.8.20 - cute + dark contrast 敵模（Game developer）
+
+- [x] chibi／圓潤比例＋暗沉盔甲＋ember 裂縫反差（`enemyMesh.ts`）
+- [x] 灰殼／公爵／紅契程序化模型升級（Dark Souls 層甲／翼／骨飾等）
+
+#### 0.8.21 - 3D 模型風格指引（docs）
+
+- [x] README 新增「3D 模型風格指引」（cute + dark contrast；程序化優先；授權）
+- [x] `GAME_VERSION` → 0.8.21
+
+#### 0.8.22 - Daily progress docs（Project Mannger）
+
+- [x] Planning／同事區同步至 tip；標註 2026-10-15 休息令
+- [x] 一人一項下一刀：待命至 YIN 通知
+- [x] `GAME_VERSION` → 0.8.22
 
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
@@ -519,3 +551,8 @@ feature/* → 新功能開發
 | 0.8.15 | 2026-10-15 | P1 Item hotbar：Key1–4 選格＋使用（炬／炸／藥／片；無 shop） |
 | 0.8.16 | 2026-10-15 | Fullstack：武器揮砍 light／heavy SFX（tone／noise；mute；唔改 moves） |
 | 0.8.17 | 2026-10-15 | Graphics：道具快捷欄 4-slot HUD plate（空槽隱藏；唔改 moves／Key 邏輯） |
+| 0.8.18 | 2026-10-15 | 關閉道具系統；打擊手感加長（重擊／崩架） |
+| 0.8.19 | 2026-10-15 | 敵人骨骼動畫修復＋Dark Souls weathered armor |
+| 0.8.20 | 2026-10-15 | cute + dark contrast 敵模升級 |
+| 0.8.21 | 2026-10-15 | 3D 模型風格指引入 README；版本 0.8.21 |
+| 0.8.22 | 2026-10-16 | Daily progress docs：休息令＋下一刀待命 |
