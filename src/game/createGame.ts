@@ -4,6 +4,7 @@ import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
+import { ITEMS_ENABLED } from "@/game/items";
 import {
   chooseDemonIntent,
   chooseDukeMove,
@@ -375,6 +376,7 @@ export function createGame(
     mesh.position.set(i === 0 ? -4.2 : 3.6, 3.4, i === 0 ? -6.5 : -11);
     mesh.rotation.y = i === 0 ? 0.4 : -0.55;
     mesh.rotation.z = i === 0 ? 0.18 : -0.12;
+    mesh.visible = ITEMS_ENABLED;
     scene.add(mesh);
     return mesh;
   });
@@ -460,6 +462,7 @@ export function createGame(
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(p.x, 0.04, p.z);
+    ring.visible = ITEMS_ENABLED;
     scene.add(ring);
     mesh.userData.ring = ring;
     return mesh;
@@ -468,7 +471,7 @@ export function createGame(
     for (let i = 0; i < itemMeshes.length; i++) {
       const mesh = itemMeshes[i]!;
       const p = worldPickups[i]!;
-      const on = p.active && !inventory[p.id];
+      const on = ITEMS_ENABLED && p.active && !inventory[p.id];
       mesh.visible = on;
       const ring = mesh.userData.ring as THREE.Mesh | undefined;
       if (ring) ring.visible = on;
@@ -481,7 +484,7 @@ export function createGame(
   torchLight.position.set(0, 1.35, 0);
   scene.add(torchLight);
   function syncTorchLight() {
-    const on = !!inventory.torch && phase === "play";
+    const on = ITEMS_ENABLED && !!inventory.torch && phase === "play";
     torchLight.intensity = on ? 7.5 : 0;
     if (on) {
       torchLight.position.set(player.x + 0.15, 1.35, player.z + 0.1);
@@ -2567,12 +2570,14 @@ export function createGame(
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
       if (e.code === "KeyE") {
-        if (!tryInteract() && !tryDetonateExplosive() && !tryUseHealHerb()) tryFlask();
+        if (!ITEMS_ENABLED || (!tryInteract() && !tryDetonateExplosive() && !tryUseHealHerb())) tryFlask();
       }
-      if (e.code === "Digit1" || e.code === "Numpad1") tryHotbar(0);
-      if (e.code === "Digit2" || e.code === "Numpad2") tryHotbar(1);
-      if (e.code === "Digit3" || e.code === "Numpad3") tryHotbar(2);
-      if (e.code === "Digit4" || e.code === "Numpad4") tryHotbar(3);
+      if (ITEMS_ENABLED) {
+        if (e.code === "Digit1" || e.code === "Numpad1") tryHotbar(0);
+        if (e.code === "Digit2" || e.code === "Numpad2") tryHotbar(1);
+        if (e.code === "Digit3" || e.code === "Numpad3") tryHotbar(2);
+        if (e.code === "Digit4" || e.code === "Numpad4") tryHotbar(3);
+      }
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
     },

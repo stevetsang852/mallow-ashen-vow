@@ -131,7 +131,7 @@ function Home() {
                   />
                 ))}
                 <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
-                {(hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch || hud.hasExplosive || hud.hasHealHerb) && (
+                {false && (hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch || hud.hasExplosive || hud.hasHealHerb) && (
                   <span className="ml-2 text-[10px] tracking-wider text-ember/80">
                     {[
                       hud.hasAshToken ? "徽" : "",
@@ -215,7 +215,7 @@ function Home() {
               <p className="hud-combo-count font-display text-lg leading-none tracking-wider">×{hud.lightCombo}</p>
             </div>
           )}
-          {hud.nearItem && hud.phase === "play" && (
+          {false && hud.nearItem && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
@@ -226,7 +226,7 @@ function Home() {
               </button>
             </div>
           )}
-          {hud.hasExplosive && !hud.nearItem && hud.phase === "play" && (
+          {false && hud.hasExplosive && !hud.nearItem && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
@@ -237,7 +237,7 @@ function Home() {
               </button>
             </div>
           )}
-          {hud.hasHealHerb && !hud.nearItem && !hud.hasExplosive && hud.phase === "play" && (
+          {false && hud.hasHealHerb && !hud.nearItem && !hud.hasExplosive && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
@@ -385,7 +385,7 @@ function Home() {
         </section>
       )}
 
-      {hud.phase === "play" && hud.hotbarFilled.some(Boolean) && (
+      {false && hud.phase === "play" && hud.hotbarFilled.some(Boolean) && (
         <div
           className="hud-plate hud-hotbar-plate pointer-events-none absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.75rem))] left-1/2 z-10 flex -translate-x-1/2 items-end gap-1.5 rounded-sm bg-cinematic/75 px-2 py-1.5 backdrop-blur-[1px]"
           role="status"

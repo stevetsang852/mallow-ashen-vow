@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.17**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.18**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -61,7 +61,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **按住 C** 格擋。腳下會出現朝前的白弧，體力低時弧會變淡。體力空了會破防。敵擊命中前 **0.2s 內舉起** 可 **招架／Deflect**（抵銷傷害、彈開敵人）。
 - **Space** 翻滾。有方向就朝方向滾，約 0.04–0.34 秒無敵，腳下會有一圈淡白環。出刀後的收刀期間有粉紅環，這時不能再出下一刀。
 - **Q** 鎖定，再按切下一個近處目標。
-- **E** 靠近世界道具時拾取；否則引爆炸藥／使用藥草／食水回血。**1–4** 快捷欄選格並使用（1 火炬／2 炸藥／3 藥草／4 瓶碎片）。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
+- **E** 食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。道具系統已關閉並隱藏（`ITEMS_ENABLED = false`）。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
 ## 版本規則（必須遵守）
@@ -341,6 +341,14 @@ npm run dev
 - [x] mute 有效（同 clang／footstep）；`createGame.tryAttack` 薄接線
 - [x] 命中仍用既有 `clang`；**唔改** moves／Graphics HUD／items hotbar
 - [x] 合併序：hold／rebase 到 main（含 **0.8.15** item hotbar）後再開／合
+
+
+#### 0.8.18 - 關閉道具，重心打回戰鬥
+
+- [x] `ITEMS_ENABLED = false`：世界標記、快捷欄、拾取／引爆／藥草提示全部隱藏
+- [x] E 只食水。1–4 不作用
+- [x] 重擊 hitstop 0.12 → 0.15，鏡頭推近 0.72 → 0.86；架勢崩 hitstop 0.16 → 0.18
+- [ ] 下一刀只做打擊感和戰鬥：前搖可讀、收招可罰、被打鏡頭、輕擊三連手感。先不要再開道具
 
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate

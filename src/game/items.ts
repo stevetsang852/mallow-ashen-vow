@@ -6,6 +6,9 @@
 
 import { FIRE, SPAWN } from "./moves.ts";
 
+/** Off while combat feel is the focus. World markers, hotbar, and item HUD stay hidden. */
+export const ITEMS_ENABLED = false;
+
 export type ItemId = "ash-token" | "flask-shard" | "torch" | "explosive" | "healHerb";
 
 export const ITEM_IDS: readonly ItemId[] = [
@@ -65,6 +68,7 @@ export type ExplosiveTarget = {
 
 /** Courtyard stubs near FIRE / SPAWN — north of the gate. */
 export function defaultWorldPickups(): WorldPickup[] {
+  if (!ITEMS_ENABLED) return [];
   return [
     { id: "ash-token", x: FIRE.x + 2.4, z: FIRE.z - 1.2, active: true },
     { id: "flask-shard", x: SPAWN.x + 1.8, z: SPAWN.z - 0.6, active: true },
@@ -127,6 +131,7 @@ export function tryCollectNearest(
   inv: InventoryFlags,
   range = ITEM_INTERACT_RANGE,
 ): ItemId | null {
+  if (!ITEMS_ENABLED) return null;
   const hit = findNearestPickup(px, pz, pickups, range);
   if (!hit) return null;
   hit.active = false;
@@ -139,6 +144,7 @@ export function tryCollectNearest(
  * Pure — createGame applies AoE + feel after this succeeds.
  */
 export function tryConsumeExplosive(inv: InventoryFlags): boolean {
+  if (!ITEMS_ENABLED) return false;
   if (!inv.explosive) return false;
   inv.explosive = false;
   return true;
@@ -149,6 +155,7 @@ export function tryConsumeExplosive(inv: InventoryFlags): boolean {
  * Pure — createGame applies HP after this succeeds.
  */
 export function tryConsumeHealHerb(inv: InventoryFlags): boolean {
+  if (!ITEMS_ENABLED) return false;
   if (!inv.healHerb) return false;
   inv.healHerb = false;
   return true;
@@ -257,6 +264,7 @@ export function hotbarFilledFlags(inv: InventoryFlags): [boolean, boolean, boole
 export type HotbarUseKind = "torch" | "explosive" | "healHerb";
 
 export function hotbarUseKind(inv: InventoryFlags, slot: number): HotbarUseKind | null {
+  if (!ITEMS_ENABLED) return null;
   const id = hotbarItemAt(slot);
   if (!id || !inv[id]) return null;
   if (id === "torch" || id === "explosive" || id === "healHerb") return id;

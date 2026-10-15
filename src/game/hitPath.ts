@@ -35,10 +35,10 @@ export const CONNECT_FEEDBACK = {
     camRoll: 0.022,
   },
   heavy: {
-    shake: 0.48,
-    hitstop: 0.12,
-    hitFlash: 0.85,
-    camKick: 0.72,
+    shake: 0.56,
+    hitstop: 0.15,
+    hitFlash: 0.95,
+    camKick: 0.86,
     fovKick: 3.4,
     camRoll: 0.04,
   },
@@ -46,8 +46,8 @@ export const CONNECT_FEEDBACK = {
 
 /** Stance-break VFX impulse from breakPoise() (locked). */
 export const STANCE_BREAK_FEEDBACK = {
-  hitstop: 0.16,
-  shake: 0.55,
+  hitstop: 0.18,
+  shake: 0.62,
 } as const;
 
 export function swingReach(heavy: boolean, foeRadius: number): number {
