@@ -1,6 +1,6 @@
 /** 招式數字表。調前搖、傷害、體力都改這裡，不要散落在模擬裡。 */
 
-export const SAVE_KEY = "mallow-ashen-vow-v1";
+export { SAVE_KEY } from "@/game/saveManager";
 export const STEP = 1 / 60;
 export const STA_MAX = 100;
 export const FLASK_MAX = 4;

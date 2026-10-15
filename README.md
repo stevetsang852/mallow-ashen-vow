@@ -10,9 +10,9 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-12）
+## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.0**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。新功能仍建議開分支再開 PR。
+目前進度在 `main`。版本 **0.7.2**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。新功能仍建議開分支再開 PR。
 
 - 戰鬥數字：`src/game/moves.ts`
 - 鏡頭：`src/game/camera.ts`
@@ -69,7 +69,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.0";
+  export const GAME_VERSION = "0.7.2";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -136,7 +136,7 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.0
+- **版本**：0.7.2
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
@@ -169,6 +169,12 @@ npm run dev
 - [x] 灰殼盾牌（更大尺寸, 損壞劃痕, 金屬材質）
 - [x] 紅契披風（翼膜細節, 骨骼結構, 高 emissive）
 - [x] 燈光效果（環境光, 動態色溫, 強脈動）
+
+#### 0.7.2 - SaveManager
+- [x] 持久化抽成 `src/game/saveManager.ts`（deaths／hpMax／bestMs／clears）
+- [x] 相容舊 `mallow-ashen-vow-v1` 無 `v` 存檔
+- [x] 單元測試 `saveManager.test.ts`
+- [x] `createGame.ts` 改走 SaveManager；唔改 moves／音效／Graphics
 
 ### 下一步開發（按優先順序）
 
@@ -247,6 +253,7 @@ npm run dev
    - 鏡頭邏輯在 `camera.ts`
    - 玩家動作在 `player.ts`
    - 敵人邏輯在 `foes.ts`、`enemyMesh.ts`
+   - 持久化在 `saveManager.ts`
 
 ### 分支策略
 
@@ -268,3 +275,4 @@ feature/* → 新功能開發
 | 0.5.4 | 2026-10-14 | Loading bar, routeTree gen |
 | 0.6.0 | 2026-10-14 | 模型優化（頭身比例、劍長度）|
 | 0.7.0 | 2026-10-15 | 火焰/拱門/公爵/盾牌/披風/燈光優化 |
+| 0.7.2 | 2026-10-15 | SaveManager 抽取（localStorage 持久化） |
