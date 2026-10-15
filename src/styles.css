@@ -376,3 +376,25 @@
     opacity: 0.55;
   }
 }
+
+/* P1-G: lock plate + punish「可打」cue (CSS only; world diamond in createGame) */
+.hud-lock-plate--punish {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-bow) 55%, transparent),
+    0 0 10px color-mix(in srgb, var(--color-bow) 28%, transparent);
+}
+.hud-lock-punish {
+  color: var(--color-bow);
+  letter-spacing: 0.04em;
+  animation: hud-lock-punish-pulse 0.9s ease-in-out infinite;
+}
+@keyframes hud-lock-punish-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
