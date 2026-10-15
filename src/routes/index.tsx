@@ -393,15 +393,15 @@ function Home() {
         >
           {hud.hotbarFilled.map((filled, i) => {
             if (!filled) return null;
-            const slot = i + 1;
-            const selected = hud.hotbarSelected === slot;
+            const keyNum = i + 1;
+            const selected = hud.hotbarSelected === i;
             return (
               <div
-                key={slot}
+                key={i}
                 className={`hud-hotbar-slot${selected ? " hud-hotbar-slot--selected" : ""}`}
-                aria-label={`${slot} ${HOTBAR_SLOT_NAMES[i]}${selected ? " · 已選" : ""}`}
+                aria-label={`${keyNum} ${HOTBAR_SLOT_NAMES[i]}${selected ? " · 已選" : ""}`}
               >
-                <span className="hud-hotbar-key font-display">{slot}</span>
+                <span className="hud-hotbar-key font-display">{keyNum}</span>
                 <span className="hud-hotbar-glyph font-display">{HOTBAR_SLOT_GLYPHS[i]}</span>
               </div>
             );
