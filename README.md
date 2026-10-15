@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.2**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.3**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -61,7 +61,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **按住 C** 格擋。腳下會出現朝前的白弧，體力低時弧會變淡。體力空了會破防。敵擊命中前 **0.2s 內舉起** 可 **招架／Deflect**（抵銷傷害、彈開敵人）。
 - **Space** 翻滾。有方向就朝方向滾，約 0.04–0.34 秒無敵，腳下會有一圈淡白環。出刀後的收刀期間有粉紅環，這時不能再出下一刀。
 - **Q** 鎖定，再按切下一個近處目標。
-- **E** 食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
+- **E** 靠近世界道具時拾取；否則食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
 ## 版本規則（必須遵守）
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.2";
+  export const GAME_VERSION = "0.8.3";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.2（Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse）
+- **版本**：0.8.3（P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.2)
+### 已完成 (0.5.x - 0.8.3)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -250,6 +250,12 @@ npm run dev
 - [x] title／選單開時 ember「呼吸」經 `updateAmbient(time, breathAmp)`（約 +12% size）；庭院繼續動；唔閃
 - [x] 唔動 moves／Deflect／Save／audio／AI／spark API／HIT_SPARK_MUL
 
+#### 0.8.3 - 道具 stub（P1）
+- [x] `src/game/items.ts`：`ash-token`／`flask-shard` 世界標記＋interact range＋in-memory inventory flags
+- [x] `createGame`：庭院兩顆 stub mesh；**E** 靠近優先拾取（否則仍食水）；`GameApi.interact`
+- [x] HUD：徽／片 flag＋靠近提示；**暫無 shop UI**；唔擴 SaveManager schema
+- [x] 單元測試 `items.test.ts`（collect／flag／range／reset）
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -265,11 +271,12 @@ npm run dev
    - ~~失敗仍正常格擋~~
 
 #### P1 - 遊戲深度
-3. **道具系統** (`createGame.ts`)
+3. **道具系統** (`items.ts`／`createGame.ts`)
+   - ~~灰徽／瓶碎片 stub（世界拾取＋inventory flag）~~ **已完成（0.8.3）**
    - 火炬（照明範圍 + 對特定敵人傷害）
    - 炸藥（範圍傷害）
    - 恢復藥草（即時回血）
-   - 快捷欄 1-4 鍵切換
+   - 快捷欄 1-4 鍵切換／shop UI
 
 4. **環境敘事** (`createGame.ts`)
    - 可拾取物品（灰燼袋、遺物）
@@ -366,3 +373,4 @@ feature/* → 新功能開發
 | 0.8.0 | 2026-10-15 | P0 招架／Deflect（0.2s 精確格擋窗、彈開＋硬直） |
 | 0.8.1 | 2026-10-15 | Fullstack：環境 ember／mote → particles.ts（spark 倍數不變） |
 | 0.8.2 | 2026-10-15 | Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse |
+| 0.8.3 | 2026-10-15 | P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag（無 shop） |

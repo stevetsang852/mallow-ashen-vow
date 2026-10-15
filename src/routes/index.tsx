@@ -127,6 +127,13 @@ function Home() {
                   />
                 ))}
                 <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
+                {(hud.hasAshToken || hud.hasFlaskShard) && (
+                  <span className="ml-2 text-[10px] tracking-wider text-ember/80">
+                    {hud.hasAshToken ? "徽" : ""}
+                    {hud.hasAshToken && hud.hasFlaskShard ? "·" : ""}
+                    {hud.hasFlaskShard ? "片" : ""}
+                  </span>
+                )}
               </div>
             </div>
             <button
@@ -187,6 +194,17 @@ function Home() {
             </p>
           )}
           {hud.toast && <p className="text-center text-xs text-fg/80 drop-shadow">{hud.toast}</p>}
+          {hud.nearItem && hud.phase === "play" && (
+            <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                className="min-h-10 rounded-sm border border-ember/50 bg-cinematic/80 px-3 text-xs text-fg backdrop-blur-sm"
+                onClick={() => api.current?.interact()}
+              >
+                E 拾取 · {hud.nearItem}
+              </button>
+            </div>
+          )}
           {hud.nearFire && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button
