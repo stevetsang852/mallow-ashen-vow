@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.8**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.9**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.8";
+  export const GAME_VERSION = "0.8.9";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.8（Graphics P2-J：震地 soft dust ring — 外圈更淡更短；主塵環對比不變）
+- **版本**：0.8.9（P1 炸藥 stub：世界拾取＋AoE 爆炸；inventory flag；無 shop）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.8)
+### 已完成 (0.5.x - 0.8.9)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -285,6 +285,13 @@ npm run dev
 - [x] 擴張更快更外（start scale 0.55 → +7.5）；mesh-only；唔動 moves／Save／audio／AI／items／harness／touch／HIT_SPARK_MUL
 - [x] 合併序：main 上 **0.8.6 → 0.8.7** 先落地，再 rebase／合本刀
 
+#### 0.8.9 - 炸藥 stub（P1）
+- [x] `items.ts`：`explosive`／炸藥世界標記＋inventory flag；`EXPLOSIVE_AOE_RADIUS` 3.0／`EXPLOSIVE_DAMAGE` 50
+- [x] `createGame`：庭院 stub mesh（紅箱）；**E** 拾取；無附近拾取時 **E** 引爆（腳下 AoE；一用即耗）
+- [x] 命中路徑：對 living foes 平傷；`shockDust`＋既有 burst／shake 感；唔改 MOVE damage tables
+- [x] HUD：炸 flag＋引爆提示；`begin`／`again` reset；`rise` 保留（同其他道具）；**暫無 shop UI**／唔擴 SaveManager
+- [x] 單元測試 `items.test.ts`（collect／consume／AoE hit／miss／reset）
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -303,7 +310,7 @@ npm run dev
 3. **道具系統** (`items.ts`／`createGame.ts`)
    - ~~灰徽／瓶碎片 stub（世界拾取＋inventory flag）~~ **已完成（0.8.3）**
    - ~~火炬（照明範圍 + 對特定敵人傷害）~~ **已完成（0.8.6）**
-   - 炸藥（範圍傷害）
+   - ~~炸藥（範圍傷害）~~ **已完成（0.8.9）**
    - 恢復藥草（即時回血）
    - 快捷欄 1-4 鍵切換／shop UI
 
@@ -408,3 +415,4 @@ feature/* → 新功能開發
 | 0.8.6 | 2026-10-15 | P1 火炬：世界拾取＋held light＋vs demon ×1.35（無 shop） |
 | 0.8.7 | 2026-10-15 | Fullstack：Harness polish（固定種子回歸、duke／demon 細 bucket、recentWindow 24） |
 | 0.8.8 | 2026-10-15 | Graphics P2-J：soft dust ring — 外圈更淡更短震地暈（主環可讀性保留） |
+| 0.8.9 | 2026-10-15 | P1 炸藥 stub：世界拾取＋腳下 AoE（radius 3／dmg 50；無 shop） |

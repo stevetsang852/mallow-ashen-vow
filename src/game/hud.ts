@@ -43,6 +43,8 @@ export type HudSnap = {
   hasFlaskShard: boolean;
   /** P1 torch (0.8.6) — held inventory flag. */
   hasTorch: boolean;
+  /** P1 explosive (0.8.9) — inventory flag; KeyE detonates when no pickup nearby. */
+  hasExplosive: boolean;
   /** Nearest in-range world pickup label, or "". */
   nearItem: string;
 };
@@ -107,5 +109,6 @@ export const INITIAL_HUD: HudSnap = {
   hasAshToken: false,
   hasFlaskShard: false,
   hasTorch: false,
+  hasExplosive: false,
   nearItem: "",
 };
