@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.5**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.6**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.5";
+  export const GAME_VERSION = "0.8.6";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.5（Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96）
+- **版本**：0.8.6（P1 火炬：世界拾取＋held light radius＋vs demon 傷害加成）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.5)
+### 已完成 (0.5.x - 0.8.6)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -267,6 +267,13 @@ npm run dev
 - [x] 按下 `scale(0.96)`（`:active`）；左搖桿唔改
 - [x] 唔動 moves／Deflect／Save／audio／AI／particles／createGame
 
+#### 0.8.6 - 火炬 item（P1）
+- [x] `items.ts`：`torch`／火炬世界標記＋inventory flag；`applyTorchDemonBonus`（×1.35 vs demon only）
+- [x] `createGame`：庭院 stub mesh；**E** 拾取；held `PointLight` 跟玩家（`TORCH_LIGHT_DISTANCE`）
+- [x] 戰鬥命中路徑：torch held 時只對 demon 加傷；唔改 MOVE damage tables
+- [x] HUD：炬 flag；`begin`／`again` reset；`rise` 保留（同 ash-token／flask-shard）
+- [x] 單元測試 `items.test.ts`（torch collect／reset／demon bonus）；**暫無 shop UI**
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -284,7 +291,7 @@ npm run dev
 #### P1 - 遊戲深度
 3. **道具系統** (`items.ts`／`createGame.ts`)
    - ~~灰徽／瓶碎片 stub（世界拾取＋inventory flag）~~ **已完成（0.8.3）**
-   - 火炬（照明範圍 + 對特定敵人傷害）
+   - ~~火炬（照明範圍 + 對特定敵人傷害）~~ **已完成（0.8.6）**
    - 炸藥（範圍傷害）
    - 恢復藥草（即時回血）
    - 快捷欄 1-4 鍵切換／shop UI
@@ -387,3 +394,4 @@ feature/* → 新功能開發
 | 0.8.3 | 2026-10-15 | P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag（無 shop） |
 | 0.8.4 | 2026-10-15 | Fullstack P3：ambient wind／fire beds＋腳步（mute 有效；無 BGM） |
 | 0.8.5 | 2026-10-15 | Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96 |
+| 0.8.6 | 2026-10-15 | P1 火炬：世界拾取＋held light＋vs demon ×1.35（無 shop） |

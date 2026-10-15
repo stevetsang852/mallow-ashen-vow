@@ -1,21 +1,31 @@
 /**
- * P1 items stub (0.8.3) — world pickups + in-memory inventory flags.
- * No shop UI. Pure helpers; createGame owns meshes / KeyE wiring.
+ * P1 items (0.8.3 stub + 0.8.6 torch) — world pickups + in-memory inventory flags.
+ * No shop UI. Pure helpers; createGame owns meshes / KeyE wiring / torch light.
  */
 
 import { FIRE, SPAWN } from "./moves.ts";
 
-export type ItemId = "ash-token" | "flask-shard";
+export type ItemId = "ash-token" | "flask-shard" | "torch";
 
-export const ITEM_IDS: readonly ItemId[] = ["ash-token", "flask-shard"] as const;
+export const ITEM_IDS: readonly ItemId[] = ["ash-token", "flask-shard", "torch"] as const;
 
 export const ITEM_LABEL: Record<ItemId, string> = {
   "ash-token": "灰徽",
   "flask-shard": "瓶碎片",
+  torch: "火炬",
 };
 
 /** Interact reach (m) — slightly tighter than bonfire rest (1.75). */
 export const ITEM_INTERACT_RANGE = 1.4;
+
+/**
+ * Held torch vs demon only — clear multiplier on the existing hit damage
+ * (before stance-break 1.5). Does not rewrite MOVE damage tables.
+ */
+export const TORCH_DEMON_DAMAGE_MUL = 1.35;
+
+/** Torch PointLight distance (m) when held — small personal radius. */
+export const TORCH_LIGHT_DISTANCE = 6.5;
 
 export type WorldPickup = {
   id: ItemId;
@@ -27,16 +37,17 @@ export type WorldPickup = {
 
 export type InventoryFlags = Record<ItemId, boolean>;
 
-/** Courtyard stubs near FIRE / SPAWN — both north of the gate. */
+/** Courtyard stubs near FIRE / SPAWN — north of the gate. */
 export function defaultWorldPickups(): WorldPickup[] {
   return [
     { id: "ash-token", x: FIRE.x + 2.4, z: FIRE.z - 1.2, active: true },
     { id: "flask-shard", x: SPAWN.x + 1.8, z: SPAWN.z - 0.6, active: true },
+    { id: "torch", x: FIRE.x - 1.6, z: FIRE.z + 1.4, active: true },
   ];
 }
 
 export function emptyInventory(): InventoryFlags {
-  return { "ash-token": false, "flask-shard": false };
+  return { "ash-token": false, "flask-shard": false, torch: false };
 }
 
 export function hasItem(inv: InventoryFlags, id: ItemId): boolean {
@@ -109,8 +120,22 @@ export function resetItems(pickups: WorldPickup[], inv: InventoryFlags): void {
   }
   inv["ash-token"] = false;
   inv["flask-shard"] = false;
+  inv.torch = false;
 }
 
 export function ownedLabels(inv: InventoryFlags): string[] {
   return ITEM_IDS.filter((id) => inv[id]).map((id) => ITEM_LABEL[id]);
+}
+
+/**
+ * Apply held-torch bonus vs demon only. Pure — safe for unit tests without Three.js.
+ * Non-demon / no torch → base unchanged. Stance-break mul stays outside this helper.
+ */
+export function applyTorchDemonBonus(
+  baseDmg: number,
+  hasTorch: boolean,
+  foeKind: string,
+): number {
+  if (!hasTorch || foeKind !== "demon") return baseDmg;
+  return Math.round(baseDmg * TORCH_DEMON_DAMAGE_MUL);
 }

@@ -41,6 +41,8 @@ export type HudSnap = {
   /** P1 items stub (0.8.3) — in-memory inventory flags. */
   hasAshToken: boolean;
   hasFlaskShard: boolean;
+  /** P1 torch (0.8.6) — held inventory flag. */
+  hasTorch: boolean;
   /** Nearest in-range world pickup label, or "". */
   nearItem: string;
 };
@@ -104,5 +106,6 @@ export const INITIAL_HUD: HudSnap = {
   demonMax: 150,
   hasAshToken: false,
   hasFlaskShard: false,
+  hasTorch: false,
   nearItem: "",
 };
