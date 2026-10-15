@@ -127,13 +127,14 @@ function Home() {
                   />
                 ))}
                 <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
-                {(hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch || hud.hasExplosive) && (
+                {(hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch || hud.hasExplosive || hud.hasHealHerb) && (
                   <span className="ml-2 text-[10px] tracking-wider text-ember/80">
                     {[
                       hud.hasAshToken ? "徽" : "",
                       hud.hasFlaskShard ? "片" : "",
                       hud.hasTorch ? "炬" : "",
                       hud.hasExplosive ? "炸" : "",
+                      hud.hasHealHerb ? "藥" : "",
                     ]
                       .filter(Boolean)
                       .join("·")}
@@ -218,6 +219,17 @@ function Home() {
                 onClick={() => api.current?.interact()}
               >
                 E 引爆 · 炸藥
+              </button>
+            </div>
+          )}
+          {hud.hasHealHerb && !hud.nearItem && !hud.hasExplosive && hud.phase === "play" && (
+            <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                className="min-h-10 rounded-sm border border-ember/40 bg-cinematic/80 px-3 text-xs text-fg backdrop-blur-sm"
+                onClick={() => api.current?.interact()}
+              >
+                E 使用 · 恢復藥草
               </button>
             </div>
           )}

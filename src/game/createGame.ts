@@ -61,9 +61,11 @@ import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
 import {
   EXPLOSIVE_AOE_RADIUS,
   EXPLOSIVE_DAMAGE,
+  HEAL_HERB_AMOUNT,
   ITEM_LABEL,
   TORCH_LIGHT_DISTANCE,
   applyExplosiveAoe,
+  applyHealHerb,
   applyTorchDemonBonus,
   defaultWorldPickups,
   emptyInventory,
@@ -71,6 +73,7 @@ import {
   resetItems,
   tryCollectNearest,
   tryConsumeExplosive,
+  tryConsumeHealHerb,
   type InventoryFlags,
   type WorldPickup,
 } from "@/game/items";
@@ -406,7 +409,7 @@ export function createGame(
   scene.add(pickupRing);
   let pickupT = 0;
 
-  /** P1 world pickup stubs (ash-token / flask-shard / torch / explosive). */
+  /** P1 world pickup stubs (ash-token / flask-shard / torch / explosive / healHerb). */
   const worldPickups: WorldPickup[] = defaultWorldPickups();
   const inventory: InventoryFlags = emptyInventory();
   const itemMeshes: THREE.Mesh[] = worldPickups.map((p) => {
@@ -417,7 +420,9 @@ export function createGame(
           ? 0x7ec8e3
           : p.id === "torch"
             ? 0xffb347
-            : 0xc23b22;
+            : p.id === "healHerb"
+              ? 0x4caf50
+              : 0xc23b22;
     const mesh = new THREE.Mesh(
       p.id === "explosive"
         ? new THREE.BoxGeometry(0.28, 0.28, 0.28)
@@ -826,6 +831,7 @@ export function createGame(
       hasFlaskShard: inventory["flask-shard"],
       hasTorch: inventory.torch,
       hasExplosive: inventory.explosive,
+      hasHealHerb: inventory.healHerb,
       nearItem:
         phase === "play"
           ? (() => {
@@ -865,6 +871,7 @@ export function createGame(
       snap.hasFlaskShard ? 1 : 0,
       snap.hasTorch ? 1 : 0,
       snap.hasExplosive ? 1 : 0,
+      snap.hasHealHerb ? 1 : 0,
       snap.nearItem,
     ].join("|");
     if (!force && key === lastKey) return;
@@ -1250,6 +1257,22 @@ export function createGame(
     audio.tone(90, 0.22, "square", 0.07);
     audio.noise(0.12, 0.08);
     say(hit.length ? `炸藥 · ${hit.length} 命中` : "炸藥 · 空爆");
+    emit(true);
+    return true;
+  }
+
+  /** P1 0.8.12 — use held heal herb for instant HP (one-shot; skip at full HP). */
+  function tryUseHealHerb() {
+    if (phase !== "play") return false;
+    if (!inventory.healHerb) return false;
+    if (player.hp >= player.hpMax) return false;
+    if (!tryConsumeHealHerb(inventory)) return false;
+    const before = player.hp;
+    player.hp = applyHealHerb(player.hp, player.hpMax, HEAL_HERB_AMOUNT);
+    const gained = Math.round(player.hp - before);
+    audio.tone(360, 0.12, "sine", 0.045);
+    audio.tone(480, 0.16, "triangle", 0.035);
+    say(`恢復藥草 · +${gained}`);
     emit(true);
     return true;
   }
@@ -2485,7 +2508,7 @@ export function createGame(
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
       if (e.code === "KeyE") {
-        if (!tryInteract() && !tryDetonateExplosive()) tryFlask();
+        if (!tryInteract() && !tryDetonateExplosive() && !tryUseHealHerb()) tryFlask();
       }
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
@@ -2862,7 +2885,7 @@ export function createGame(
     },
     flask: tryFlask,
     interact: () => {
-      if (!tryInteract()) tryDetonateExplosive();
+      if (!tryInteract() && !tryDetonateExplosive()) tryUseHealHerb();
     },
     toggleMute,
     closeMenu: () => {

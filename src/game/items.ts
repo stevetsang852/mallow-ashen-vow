@@ -1,17 +1,18 @@
 /**
- * P1 items (0.8.3 stub + 0.8.6 torch + 0.8.9 explosive) — world pickups + in-memory inventory flags.
- * No shop UI. Pure helpers; createGame owns meshes / KeyE wiring / torch light / AoE feel.
+ * P1 items (0.8.3 stub + 0.8.6 torch + 0.8.9 explosive + 0.8.12 healHerb) — world pickups + in-memory inventory flags.
+ * No shop UI. Pure helpers; createGame owns meshes / KeyE wiring / torch light / AoE feel / heal.
  */
 
 import { FIRE, SPAWN } from "./moves.ts";
 
-export type ItemId = "ash-token" | "flask-shard" | "torch" | "explosive";
+export type ItemId = "ash-token" | "flask-shard" | "torch" | "explosive" | "healHerb";
 
 export const ITEM_IDS: readonly ItemId[] = [
   "ash-token",
   "flask-shard",
   "torch",
   "explosive",
+  "healHerb",
 ] as const;
 
 export const ITEM_LABEL: Record<ItemId, string> = {
@@ -19,6 +20,7 @@ export const ITEM_LABEL: Record<ItemId, string> = {
   "flask-shard": "瓶碎片",
   torch: "火炬",
   explosive: "炸藥",
+  healHerb: "恢復藥草",
 };
 
 /** Interact reach (m) — slightly tighter than bonfire rest (1.75). */
@@ -38,6 +40,9 @@ export const EXPLOSIVE_AOE_RADIUS = 3.0;
 
 /** P1 0.8.9 explosive stub — flat damage to foes in radius (one-shot consume). */
 export const EXPLOSIVE_DAMAGE = 50;
+
+/** P1 0.8.12 heal herb — flat HP restore on use (clamped to hpMax; one-shot consume). */
+export const HEAL_HERB_AMOUNT = 40;
 
 export type WorldPickup = {
   id: ItemId;
@@ -64,11 +69,12 @@ export function defaultWorldPickups(): WorldPickup[] {
     { id: "flask-shard", x: SPAWN.x + 1.8, z: SPAWN.z - 0.6, active: true },
     { id: "torch", x: FIRE.x - 1.6, z: FIRE.z + 1.4, active: true },
     { id: "explosive", x: SPAWN.x - 1.8, z: SPAWN.z + 0.4, active: true },
+    { id: "healHerb", x: SPAWN.x + 0.4, z: SPAWN.z + 1.6, active: true },
   ];
 }
 
 export function emptyInventory(): InventoryFlags {
-  return { "ash-token": false, "flask-shard": false, torch: false, explosive: false };
+  return { "ash-token": false, "flask-shard": false, torch: false, explosive: false, healHerb: false };
 }
 
 export function hasItem(inv: InventoryFlags, id: ItemId): boolean {
@@ -138,6 +144,23 @@ export function tryConsumeExplosive(inv: InventoryFlags): boolean {
 }
 
 /**
+ * Consume inventory healHerb flag. Returns false if none held.
+ * Pure — createGame applies HP after this succeeds.
+ */
+export function tryConsumeHealHerb(inv: InventoryFlags): boolean {
+  if (!inv.healHerb) return false;
+  inv.healHerb = false;
+  return true;
+}
+
+/**
+ * Restore flat HP, clamped to hpMax. Pure — safe for unit tests.
+ */
+export function applyHealHerb(hp: number, hpMax: number, amount = HEAL_HERB_AMOUNT): number {
+  return Math.min(hpMax, hp + amount);
+}
+
+/**
  * Deal flat AoE damage to living targets in radius. Mutates hp.
  * Skips dead / already-zero. Returns the targets that were hit.
  */
@@ -174,6 +197,7 @@ export function resetItems(pickups: WorldPickup[], inv: InventoryFlags): void {
   inv["flask-shard"] = false;
   inv.torch = false;
   inv.explosive = false;
+  inv.healHerb = false;
 }
 
 export function ownedLabels(inv: InventoryFlags): string[] {
