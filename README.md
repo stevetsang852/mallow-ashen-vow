@@ -21,6 +21,26 @@
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
+## 團隊程式碼風格規範
+
+本專案已發行團隊程式碼風格規範：`CODE_STYLE_GUIDELINE.md`。請在所有貢獻中遵循以下慣例：
+
+- TypeScript/JavaScript：`const` 優先、`let` 次之、`var` 請勿使用；嚴格類型檢查
+- 命名規範：camelCase 用於函數/變數，PascalCase 用於 Component/介面，SCREAMING_SNAKE_CASE 用於常數
+- 縮排：2 空格；最大行長 100 字；尾隨逗號
+- Import/Export：外部函式庫 → 內部模組；字母順序；具名匯出優先
+- 函數：單一職責；預設參數放最後；箭頭函數用於內聯回調
+- 物件/陣列：物件屬性簡寫；解構賦值；`.map()`/`.filter()`/`.reduce()` 優於 `forEach`/`for`
+- 錯誤處理：`try/catch` 捕特定錯誤類型；自定義錯誤類別；永遠不要靜默吞噬錯誤
+- React/Three.js：函數式元件；Prop 類型/介面；`useCallback`/`useMemo`；關於記憶體洩漏進行清理
+- Comment：解釋「為什麼」而非「什麼」；JSDoc 用於公開 API；TODO/FIXME 前綴
+- 測試：`.test.ts` 同層級；純函數高覆蓋率；整合測試處理工作流程
+- Git：慣例性 Commits：`type(scope): description`；功能分支 `feature/desc`；Bug 修復 `fix/desc`；合併前檢查清單
+- 版本控制：`src/game/version.ts` 單一來源；Semantic Versioning 精神（PATCH/MINOR/MAJOR）
+- 禁止：Hero Forge/未驗證的 Asset Store 模型；第二主角；開放世界地圖；武器樹；線上惡魔開場即出
+
+版本歷史與開發規範請參閱 README 中後續章節。
+
 - 戰鬥數字：`src/game/moves.ts`
 - 鏡頭：`src/game/camera.ts`
 - 敵人 AI 決策（灰殼／公爵／紅契）：`src/game/ai.ts`（`foes.ts` 僅 re-export）
