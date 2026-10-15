@@ -3,10 +3,12 @@ import { describe, it } from "node:test";
 import {
   EXPLOSIVE_AOE_RADIUS,
   EXPLOSIVE_DAMAGE,
+  HEAL_HERB_AMOUNT,
   ITEM_INTERACT_RANGE,
   ITEM_LABEL,
   TORCH_DEMON_DAMAGE_MUL,
   applyExplosiveAoe,
+  applyHealHerb,
   applyTorchDemonBonus,
   defaultWorldPickups,
   emptyInventory,
@@ -17,16 +19,18 @@ import {
   resetItems,
   tryCollectNearest,
   tryConsumeExplosive,
+  tryConsumeHealHerb,
 } from "./items.ts";
 
 describe("defaultWorldPickups", () => {
-  it("places ash-token, flask-shard, torch, and explosive as active stubs", () => {
+  it("places ash-token, flask-shard, torch, explosive, and healHerb as active stubs", () => {
     const list = defaultWorldPickups();
-    assert.equal(list.length, 4);
+    assert.equal(list.length, 5);
     assert.equal(list[0]!.id, "ash-token");
     assert.equal(list[1]!.id, "flask-shard");
     assert.equal(list[2]!.id, "torch");
     assert.equal(list[3]!.id, "explosive");
+    assert.equal(list[4]!.id, "healHerb");
     assert.ok(list.every((p) => p.active));
     assert.ok(list.every((p) => Number.isFinite(p.x) && Number.isFinite(p.z)));
   });
@@ -64,6 +68,7 @@ describe("tryCollectNearest / inventory flags", () => {
     assert.equal(hasItem(inv, "flask-shard"), false);
     assert.equal(hasItem(inv, "torch"), false);
     assert.equal(hasItem(inv, "explosive"), false);
+    assert.equal(hasItem(inv, "healHerb"), false);
     assert.equal(target.active, false);
     assert.equal(tryCollectNearest(target.x, target.z, pickups, inv), null);
   });
@@ -90,7 +95,18 @@ describe("tryCollectNearest / inventory flags", () => {
     assert.ok(ownedLabels(inv).includes("炸藥"));
   });
 
-  it("resetItems restores markers and clears flags including torch and explosive", () => {
+  it("collects healHerb into inventory", () => {
+    const pickups = defaultWorldPickups();
+    const inv = emptyInventory();
+    const herb = pickups.find((p) => p.id === "healHerb")!;
+    const got = tryCollectNearest(herb.x, herb.z, pickups, inv);
+    assert.equal(got, "healHerb");
+    assert.equal(hasItem(inv, "healHerb"), true);
+    assert.equal(herb.active, false);
+    assert.ok(ownedLabels(inv).includes("恢復藥草"));
+  });
+
+  it("resetItems restores markers and clears flags including torch, explosive, and healHerb", () => {
     const pickups = defaultWorldPickups();
     const inv = emptyInventory();
     for (const p of pickups) {
@@ -98,7 +114,7 @@ describe("tryCollectNearest / inventory flags", () => {
     }
     assert.deepEqual(
       ownedLabels(inv).sort(),
-      ["灰徽", "瓶碎片", "火炬", "炸藥"].sort(),
+      ["灰徽", "瓶碎片", "火炬", "炸藥", "恢復藥草"].sort(),
     );
     resetItems(pickups, inv);
     assert.ok(pickups.every((p) => p.active));
@@ -106,15 +122,17 @@ describe("tryCollectNearest / inventory flags", () => {
     assert.equal(hasItem(inv, "flask-shard"), false);
     assert.equal(hasItem(inv, "torch"), false);
     assert.equal(hasItem(inv, "explosive"), false);
+    assert.equal(hasItem(inv, "healHerb"), false);
   });
 });
 
 describe("ITEM_LABEL", () => {
-  it("names stub items including torch and explosive", () => {
+  it("names stub items including torch, explosive, and healHerb", () => {
     assert.equal(ITEM_LABEL["ash-token"], "灰徽");
     assert.equal(ITEM_LABEL["flask-shard"], "瓶碎片");
     assert.equal(ITEM_LABEL.torch, "火炬");
     assert.equal(ITEM_LABEL.explosive, "炸藥");
+    assert.equal(ITEM_LABEL.healHerb, "恢復藥草");
   });
 });
 
@@ -165,5 +183,24 @@ describe("tryConsumeExplosive / applyExplosiveAoe", () => {
     assert.equal(hit.length, 1);
     assert.equal(foes[0]!.hp, 0);
     assert.deepEqual(applyExplosiveAoe(10, 10, foes), []);
+  });
+});
+
+describe("tryConsumeHealHerb / applyHealHerb", () => {
+  it("consumes the inventory flag once", () => {
+    const inv = emptyInventory();
+    assert.equal(tryConsumeHealHerb(inv), false);
+    inv.healHerb = true;
+    assert.equal(tryConsumeHealHerb(inv), true);
+    assert.equal(inv.healHerb, false);
+    assert.equal(tryConsumeHealHerb(inv), false);
+  });
+
+  it("restores HEAL_HERB_AMOUNT and clamps to hpMax", () => {
+    assert.equal(HEAL_HERB_AMOUNT, 40);
+    assert.equal(applyHealHerb(50, 100), 90);
+    assert.equal(applyHealHerb(80, 100), 100);
+    assert.equal(applyHealHerb(100, 100), 100);
+    assert.equal(applyHealHerb(10, 100, 25), 35);
   });
 });

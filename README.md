@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.11**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.12**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.11";
+  export const GAME_VERSION = "0.8.12";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.11（Graphics P2-K：通關後庭院 quiet lighting — 色溫偏冷＋粒子減速；戰鬥可讀保留）
+- **版本**：0.8.12（P1 恢復藥草：世界拾取＋即時回血；無 shop）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.11)
+### 已完成 (0.5.x - 0.8.12)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -311,6 +311,12 @@ npm run dev
 - [x] title／menu P1-H breath 仍用 wall time；combat spark `update()`／HIT_SPARK_MUL／soft dust 不變
 - [x] 合併序：已 rebase 到 main（含 **0.8.9 → 0.8.10**）後再開／合
 
+#### 0.8.12 - 恢復藥草（P1）
+- [x] `items.ts`：`healHerb`／恢復藥草世界標記＋inventory flag；`HEAL_HERB_AMOUNT` 40
+- [x] `createGame`：庭院 stub mesh（綠八面體）；**E** 拾取；無附近拾取時 **E** 使用（即時回血；一用即耗；滿血不耗）
+- [x] 純函式 `tryConsumeHealHerb`／`applyHealHerb`（clamp 至 hpMax）；唔改 MOVE damage tables
+- [x] HUD：藥 flag＋「E 使用」提示；`begin`／`again` reset；`rise` 保留（同其他道具）；**暫無 shop UI**／唔擴 SaveManager
+- [x] 單元測試 `items.test.ts`（collect／heal／clamp／consume／reset）
 
 ### 下一步開發（按優先順序）
 
@@ -331,7 +337,7 @@ npm run dev
    - ~~灰徽／瓶碎片 stub（世界拾取＋inventory flag）~~ **已完成（0.8.3）**
    - ~~火炬（照明範圍 + 對特定敵人傷害）~~ **已完成（0.8.6）**
    - ~~炸藥（範圍傷害）~~ **已完成（0.8.9）**
-   - 恢復藥草（即時回血）
+   - ~~恢復藥草（即時回血）~~ **已完成（0.8.12）**
    - 快捷欄 1-4 鍵切換／shop UI
 
 4. **環境敘事** (`createGame.ts`)
@@ -439,3 +445,4 @@ feature/* → 新功能開發
 | 0.8.9 | 2026-10-15 | P1 炸藥 stub：世界拾取＋腳下 AoE（radius 3／dmg 50；無 shop） |
 | 0.8.10 | 2026-10-15 | Fullstack：ε-decay schedule＋learner snapshot export（固定種子回歸保留；唔改 moves） |
 | 0.8.11 | 2026-10-15 | Graphics P2-K：win-phase quiet lighting — 色溫偏冷＋ambient 粒子減速 |
+| 0.8.12 | 2026-10-15 | P1 恢復藥草：世界拾取＋即時回血（+40；無 shop） |
