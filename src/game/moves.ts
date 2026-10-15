@@ -34,6 +34,14 @@ export const MOVE = {
   heavyOpen: 0.32,
   heavyShut: 0.5,
   heavyEnd: 0.78,
+  // Combo system
+  comboMax: 3,
+  comboWindow: 0.8,
+  comboDmgMultiplier: [1.0, 1.25, 1.5],
+  comboRecovery: 0.15,
+  // Parry/Deflect system
+  parryWindow: 0.2,
+  deflectStaggerTime: 0.8,
   duke: {
     overheadTell: 1.34,
     shockTell: 1.12,
@@ -47,7 +55,37 @@ export const MOVE = {
   },
 } as const;
 
-export type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block";
+export type Act = "free" | "attack" | "dodge" | "drink" | "hurt" | "block" | "parry";
+export type PlayerState = {
+  x: number;
+  z: number;
+  vx: number;
+  vz: number;
+  yaw: number;
+  hp: number;
+  hpMax: number;
+  sta: number;
+  flasks: number;
+  act: Act;
+  actT: number;
+  atk: "light" | "heavy" | null;
+  hitDone: boolean;
+  invuln: number;
+  nearFire: boolean;
+  healed: boolean;
+  dropped: Foe | null;
+  ash: number;
+  runMs: number;
+  clears: number;
+  wind: number;
+  stun: number;
+  combo: number;
+  comboTimer: number;
+  lastAttackTime: number;
+  parryActive: boolean;
+  parryTimer: number;
+  parryCooldown: number;
+};
 export type FoeState = "idle" | "chase" | "roar" | "telegraph" | "swing" | "recover" | "hurt" | "dodge" | "drink" | "dead";
 export type DukeMove = "cleave" | "overhead" | "shock" | "rush";
 

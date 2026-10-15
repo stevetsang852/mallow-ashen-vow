@@ -1109,7 +1109,18 @@ export function createGame(
 
   function tryAttack(kind: "light" | "heavy" = "light") {
     if (phase !== "play") return;
-    if (player.act !== "free" && player.act !== "block") return;
+    if (player.act !== "free" && player.act !== "block" && player.act !== "parry") return;
+    // Check parry window first
+    if (kind === "light" && player.act === "block" && player.parryActive && !player.hitDone) {
+      // Try parry
+      const now = performance.now() / 1000;
+      if (now - player.lastAttackTime < MOVE.parryWindow) {
+        player.act = "parry";
+        player.actT = 0;
+        player.parryActive = false;
+        return;
+      }
+    }
     const cost = kind === "heavy" ? MOVE.heavyCost : MOVE.lightCost;
     if (!spendSta(cost)) {
       say("氣力不夠");
@@ -1121,7 +1132,15 @@ export function createGame(
     player.actT = 0;
     player.hitDone = false;
     player.atk = kind;
-    player.combo = 0;
+    // Combo system
+    const now = performance.now();
+    const timeSinceLastAttack = (now - player.lastAttackTime) / 1000;
+    if (kind === "light" && timeSinceLastAttack < MOVE.comboWindow && player.combo > 0 && player.combo < MOVE.comboMax) {
+      player.combo = Math.min(player.combo + 1, MOVE.comboMax);
+    } else {
+      player.combo = 1;
+    }
+    player.lastAttackTime = now;
     swingHits = new Set();
     tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
     noise(0.04, kind === "heavy" ? 0.06 : 0.035);
@@ -1699,7 +1718,9 @@ export function createGame(
         if (player.actT > open && player.actT < shut) {
           const fx = -Math.sin(player.yaw);
           const fz = -Math.cos(player.yaw);
-          const dmg = heavy ? MOVE.heavyDmg : MOVE.lightDmg;
+          // Combo damage multiplier
+          const comboMult = !heavy && player.combo > 0 ? COMBO.dmgMultiplier[Math.min(player.combo - 1, COMBO.dmgMultiplier.length - 1)] : 1.0;
+          const dmg = Math.round((heavy ? MOVE.heavyDmg : MOVE.lightDmg) * comboMult);
           let any = false;
           for (const f of foes) {
             if (!livingFoe(f) || swingHits.has(f.id)) continue;
@@ -1713,7 +1734,10 @@ export function createGame(
               const posture = heavy ? 34 : 12;
               f.poise += posture;
               const broken = f.poise >= f.poiseMax;
-              f.hp = Math.max(0, f.hp - Math.round(dmg * (broken ? 1.5 : 1)));
+              // Apply combo multiplier
+              const comboMult = !heavy && player.combo > 1 ? COMBO.dmgMultiplier[Math.min(player.combo - 1, COMBO.dmgMultiplier.length - 1)] : 1.0;
+              const finalDmg = Math.round(dmg * comboMult);
+              f.hp = Math.max(0, f.hp - Math.round(finalDmg * (broken ? 1.5 : 1)));
               f.flash = 0.12;
               if (broken) {
                 f.poise = 0;
@@ -1801,8 +1825,33 @@ export function createGame(
     }
 
     const wantBlock = held("KeyC") && player.sta > 6;
-    if (player.act === "free" && wantBlock) player.act = "block";
-    else if (player.act === "block" && !held("KeyC")) player.act = "free";
+    // Parry: tap block just before enemy attack
+    const wantParry = held("KeyC") && !player.parryActive && player.sta > MOVE.parryWindow * 40;
+    
+    if (player.act === "free" && wantBlock) {
+      player.act = "block";
+      player.parryActive = true;
+      player.parryTimer = performance.now();
+    } else if (player.act === "block" && !held("KeyC")) {
+      // Release block - check if it was a parry attempt
+      if (player.parryActive) {
+        const parryDuration = (performance.now() - player.parryTimer) / 1000;
+        if (parryDuration < MOVE.parryWindow) {
+          // Successful parry setup - will be checked in tryAttack
+          player.act = "parry";
+          player.actT = 0;
+        }
+      }
+      player.act = "free";
+      player.parryActive = false;
+    }
+    // Parry timer update
+    if (player.act === "parry") {
+      player.parryTimer += dt;
+      if (player.parryTimer > MOVE.parryWindow) {
+        player.parryActive = false; // Missed parry window
+      }
+    }
 
     const running =
       player.act === "free" &&
