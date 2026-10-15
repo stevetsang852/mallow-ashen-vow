@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.15**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.16**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.15";
+  export const GAME_VERSION = "0.8.16";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.15（P1：Item hotbar Key1–4 select／use）
+- **版本**：0.8.16（Fullstack：武器揮砍 light／heavy SFX；mute 有效）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.15)
+### 已完成 (0.5.x - 0.8.16)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -336,6 +336,12 @@ npm run dev
 - [x] `begin`／`again` reset 選格＋inventory；`rise` 保留；**暫無 shop UI**／唔擴 SaveManager／唔改 moves／audio／Graphics plate
 - [x] 單元測試 `items.test.ts`（slot map／filled／use kind／clamp）
 
+#### 0.8.16 - Weapon swing SFX（Fullstack）
+- [x] `audio.swing(heavy)`：出刀 whoosh（tone＋noise）；light 較高較薄、heavy 較低較厚
+- [x] mute 有效（同 clang／footstep）；`createGame.tryAttack` 薄接線
+- [x] 命中仍用既有 `clang`；**唔改** moves／Graphics HUD／items hotbar
+- [x] 合併序：hold／rebase 到 main（含 **0.8.15** item hotbar）後再開／合
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -371,7 +377,7 @@ npm run dev
    - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬仍在 createGame
    - ~~命中／feel apply → `hitPath.ts`~~ **已完成（0.8.13）**
    - ~~粒子系統 → `particles.ts`~~（0.7.8 spark；**0.8.1** 環境 ember／mote 已抽取）
-   - ~~音效系統 → `audio.ts`~~（0.7.5 戰鬥合成；**0.8.4** ambient／腳步 beds）
+   - ~~音效系統 → `audio.ts`~~（0.7.5 戰鬥合成；**0.8.4** ambient／腳步；**0.8.16** swing whoosh）
 
 #### Fullstack 後續（AI／自動遊玩）
 - ~~更長局數觀測／公爵／紅契細 bucket／固定種子回歸~~ **已完成（0.8.7）**；唔改招式傷害。
@@ -470,3 +476,4 @@ feature/* → 新功能開發
 | 0.8.13 | 2026-10-15 | Fullstack：hit-path extract → hitPath.ts（feel 數字鎖定；唔改 moves） |
 | 0.8.14 | 2026-10-15 | Graphics：HUD light-combo counter plate（×1–3；0 隱藏；唔改 moves） |
 | 0.8.15 | 2026-10-15 | P1 Item hotbar：Key1–4 選格＋使用（炬／炸／藥／片；無 shop） |
+| 0.8.16 | 2026-10-15 | Fullstack：武器揮砍 light／heavy SFX（tone／noise；mute；唔改 moves） |

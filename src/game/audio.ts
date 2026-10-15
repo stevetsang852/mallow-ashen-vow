@@ -1,4 +1,4 @@
-/** WebAudio SFX for Mallow: combat one-shots + ambient wind/fire beds + footsteps. No BGM. */
+/** WebAudio SFX for Mallow: combat one-shots (clang/swing) + ambient wind/fire beds + footsteps. No BGM. */
 
 export type ToneType = OscillatorType;
 
@@ -12,6 +12,12 @@ export type GameAudio = {
   tone: (freq: number, dur: number, type: ToneType, gain: number) => void;
   noise: (dur: number, gain: number) => void;
   clang: (heavy: boolean) => void;
+  /**
+   * Weapon swing whoosh at attack start (not hit connect — use clang for that).
+   * Light: higher thin saw + soft noise. Heavy: lower thicker whoosh.
+   * Mute ducks both.
+   */
+  swing: (heavy: boolean) => void;
   /**
    * Start looping wind + fire beds (idempotent). Stays silent while muted;
    * resumes when unmuted. No BGM.
@@ -44,6 +50,18 @@ export const AMBIENT_FIRE_GAIN = 0.022;
 export const FOOTSTEP_WALK_INTERVAL = 0.42;
 export const FOOTSTEP_RUN_INTERVAL = 0.28;
 export const FOOTSTEP_MOVE_THRESHOLD = 0.08;
+/** Light swing whoosh — short thin blade cut. */
+export const SWING_LIGHT_TONE_FREQ = 196;
+export const SWING_LIGHT_TONE_DUR = 0.1;
+export const SWING_LIGHT_TONE_GAIN = 0.035;
+export const SWING_LIGHT_NOISE_DUR = 0.04;
+export const SWING_LIGHT_NOISE_GAIN = 0.035;
+/** Heavy swing whoosh — lower thicker cut. */
+export const SWING_HEAVY_TONE_FREQ = 120;
+export const SWING_HEAVY_TONE_DUR = 0.1;
+export const SWING_HEAVY_TONE_GAIN = 0.035;
+export const SWING_HEAVY_NOISE_DUR = 0.04;
+export const SWING_HEAVY_NOISE_GAIN = 0.06;
 
 type Bed = {
   src: AudioBufferSourceNode;
@@ -135,6 +153,16 @@ export function createAudio(opts: GameAudioOptions = {}): GameAudio {
     noise(heavy ? 0.09 : 0.05, heavy ? 0.2 : 0.12);
     tone(heavy ? 168 : 246, heavy ? 0.14 : 0.08, "square", heavy ? 0.07 : 0.05);
     tone(heavy ? 92 : 140, 0.16, "triangle", 0.05);
+  }
+
+  function swing(heavy: boolean): void {
+    if (heavy) {
+      tone(SWING_HEAVY_TONE_FREQ, SWING_HEAVY_TONE_DUR, "sawtooth", SWING_HEAVY_TONE_GAIN);
+      noise(SWING_HEAVY_NOISE_DUR, SWING_HEAVY_NOISE_GAIN);
+    } else {
+      tone(SWING_LIGHT_TONE_FREQ, SWING_LIGHT_TONE_DUR, "sawtooth", SWING_LIGHT_TONE_GAIN);
+      noise(SWING_LIGHT_NOISE_DUR, SWING_LIGHT_NOISE_GAIN);
+    }
   }
 
   function setBedGain(bed: Bed | null, level: number): void {
@@ -259,6 +287,7 @@ export function createAudio(opts: GameAudioOptions = {}): GameAudio {
     tone,
     noise,
     clang,
+    swing,
     startAmbient,
     stopAmbient,
     isAmbientOn: () => ambientWanted,
