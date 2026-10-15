@@ -66,8 +66,8 @@ export type GameParticles = {
   ringDust: (x: number, z: number) => void;
   /** Advance spark pool one fixed step (legacy 0.016). */
   update: () => void;
-  /** Advance ember + mote ambience from scene clock `time`. */
-  updateAmbient: (time: number) => void;
+  /** Advance ember + mote ambience from scene clock `time`. Optional breathAmp (~0.12) pulses ember size on title/menu. */
+  updateAmbient: (time: number, breathAmp?: number) => void;
   dispose: () => void;
 };
 
@@ -100,16 +100,14 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
   const emberPos = new Float32Array(EMBER_COUNT * 3);
   const emberGeo = new THREE.BufferGeometry();
   emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
-  const embers = new THREE.Points(
-    emberGeo,
-    new THREE.PointsMaterial({
-      color: EMBER_COLOR,
-      size: EMBER_SIZE,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
-  );
+  const emberMat = new THREE.PointsMaterial({
+    color: EMBER_COLOR,
+    size: EMBER_SIZE,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const embers = new THREE.Points(emberGeo, emberMat);
 
   // --- atmospheric motes ---
   const motePos = new Float32Array(MOTES * 3);
@@ -219,7 +217,7 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
     }
   }
 
-  function updateAmbient(time: number) {
+  function updateAmbient(time: number, breathAmp = 0) {
     for (let i = 0; i < EMBER_UPDATE_COUNT; i++) {
       const y = (time * 0.33 + hash(i)) % 1;
       const ang = hash(i + 2) * Math.PI * 2;
@@ -229,6 +227,17 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
       emberPos[i * 3 + 2] = fire.z + Math.sin(ang) * rad;
     }
     emberGeo.attributes.position!.needsUpdate = true;
+
+    // P1-H / Research D: gentle ember breath (+10–15% size). Does not touch spark pool.
+    const amp = Math.max(0, Math.min(0.2, breathAmp));
+    if (amp > 0) {
+      const wave = 0.5 + 0.5 * Math.sin(time * 1.55);
+      emberMat.size = EMBER_SIZE * (1 + amp * wave);
+      emberMat.opacity = 0.88 + amp * wave;
+    } else {
+      emberMat.size = EMBER_SIZE;
+      emberMat.opacity = 1;
+    }
 
     for (let i = 0; i < MOTES; i++) {
       const drift = time * (0.12 + hash(i) * 0.08);

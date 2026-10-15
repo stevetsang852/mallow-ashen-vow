@@ -378,8 +378,13 @@
 }
 
 /* P1-G: lock plate + punish「可打」cue (CSS only; world diamond in createGame) */
+/* P1-H: mild bow hairline on lock plate (name／cue share --color-bow) */
+.hud-lock-plate {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-bow) 24%, transparent);
+}
 .hud-lock-plate--punish {
   box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-bow) 24%, transparent),
     0 0 0 1px color-mix(in srgb, var(--color-bow) 55%, transparent),
     0 0 10px color-mix(in srgb, var(--color-bow) 28%, transparent);
 }
@@ -398,3 +403,27 @@
   }
 }
 
+/* P1-H: --color-bow unify + title／ember「呼吸」pulse (Research D) */
+.hud-lock-name {
+  color: color-mix(in srgb, var(--color-bow) 78%, var(--color-fg));
+  letter-spacing: 0.02em;
+}
+@keyframes title-bow-breath {
+  0%,
+  100% {
+    opacity: 0.82;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.14);
+  }
+}
+.title-panel .title-bow-accent::after,
+.title-panel .title-bow-mark::before,
+.title-panel .title-bow-mark::after {
+  animation: title-bow-breath 2.8s ease-in-out infinite;
+}
+.title-panel .title-bow-mark {
+  animation: title-bow-breath 2.8s ease-in-out infinite;
+}

@@ -169,7 +169,7 @@ function Home() {
             <div
               className={`hud-plate hud-lock-plate mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]${hud.punish ? " hud-lock-plate--punish" : ""}`}
             >
-              <p className="font-display text-[11px] text-fg/85">
+              <p className="hud-lock-name font-display text-[11px]">
                 鎖定 · {hud.lockName}
                 {hud.punish ? <span className="hud-lock-punish"> · 可打</span> : null}
               </p>

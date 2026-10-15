@@ -82,4 +82,21 @@ describe("particles", () => {
     assert.equal(moteMat.opacity, MOTE_OPACITY);
     p.dispose();
   });
+
+  it("updateAmbient breathAmp pulses ember size without changing spark feel locks", () => {
+    const p = createParticles();
+    const emberMat = p.embers.material as unknown as { size: number; opacity: number };
+    p.updateAmbient(0.5, 0);
+    assert.equal(emberMat.size, EMBER_SIZE);
+    assert.equal(emberMat.opacity, 1);
+
+    p.updateAmbient(Math.PI / (2 * 1.55), 0.12); // wave peak ≈ 1
+    assert.ok(emberMat.size > EMBER_SIZE);
+    assert.ok(emberMat.size <= EMBER_SIZE * 1.15 + 1e-9);
+    assert.ok(emberMat.opacity <= 1 + 1e-9);
+
+    // spark hierarchy untouched
+    assert.equal(HIT_SPARK_MUL.heavy, 1.6);
+    p.dispose();
+  });
 });

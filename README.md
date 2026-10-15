@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.1**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.2**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.1";
+  export const GAME_VERSION = "0.8.2";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.1（Fullstack：環境 ember／mote → `particles.ts`）
+- **版本**：0.8.2（Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.1)
+### 已完成 (0.5.x - 0.8.2)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -243,6 +243,12 @@ npm run dev
 - [x] 視覺常數鎖定：EMBER 28／update 18、MOTES 96、色／size／opacity 原數
 - [x] 戰鬥 spark `HIT_SPARK_MUL` 不變；`createGame` 薄接線
 - [x] 單元測試擴充 ambient lock；唔動 moves／Graphics／Save／audio／AI／deflect
+
+#### 0.8.2 - `--color-bow` 統一＋title／ember「呼吸」（Research P1-H）
+- [x] CSS `--color-bow`（`#e8a0b8`）統一 title 粉結＋HUD 鎖定名／「可打」；唔取代 ember 主色
+- [x] 世界鎖定菱形／收招粉環改走 `COLOR_BOW`（同 token）
+- [x] title／選單開時 ember「呼吸」經 `updateAmbient(time, breathAmp)`（約 +12% size）；庭院繼續動；唔閃
+- [x] 唔動 moves／Deflect／Save／audio／AI／spark API／HIT_SPARK_MUL
 
 ### 下一步開發（按優先順序）
 
@@ -359,3 +365,4 @@ feature/* → 新功能開發
 | 0.7.9 | 2026-10-15 | Graphics P1-G：鎖定菱形細線＋中心粉點＋punish 外圈 cue |
 | 0.8.0 | 2026-10-15 | P0 招架／Deflect（0.2s 精確格擋窗、彈開＋硬直） |
 | 0.8.1 | 2026-10-15 | Fullstack：環境 ember／mote → particles.ts（spark 倍數不變） |
+| 0.8.2 | 2026-10-15 | Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse |
