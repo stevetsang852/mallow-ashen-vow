@@ -10,9 +10,14 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-15）
+## 現在給同事（2026-10-15 下午）
 
-目前進度在 `main`。版本 **0.8.18**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.19**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+
+**重點更新**：
+- **敵人骨骼動畫修復**（`enemyRig.ts`）：外部 GLB 模型載入後 `baked` flag 會跳過骨骼動畫，已修正。現在敵人（Hollow/Duke/Demon）會正常顯示手腳移動動畫。
+- **Dark Souls 風格armor**（0.8.19）：敵人模型加入weathered armor美學，公爵/灰殼/紅契配色調整。
+- **連擊系統整合**：`moves.ts` 保留 `comboDmgMultiplier` 和 `parryWindow`，與 `DEFLECT` 系統並存。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -21,6 +26,7 @@
 - 敵人 AI 決策（灰殼／公爵／紅契）：`src/game/ai.ts`（`foes.ts` 僅 re-export）
 - 玩家動作、無敵、收刀：`src/game/player.ts`
 - 敵人外形：`src/game/enemyMesh.ts`
+- 敵人 rig（骨骼綁定）：`src/game/enemyRig.ts`
 - 模擬：`src/game/createGame.ts`
 - CombatFeel／harness／learner／hit-path：`combatFeel.ts`、`autoHarness.ts`、`playerLearner.ts`、`hitPath.ts`
 - 畫面：`src/routes/index.tsx`
