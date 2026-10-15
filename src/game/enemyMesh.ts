@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { makeKnight, type KnightRig, type KnightOpts } from "@/game/knightMesh";
+import { hash } from "@/game/moves";
 
 function std(color: number, rough: number, metal: number) {
   return new THREE.MeshStandardMaterial({
