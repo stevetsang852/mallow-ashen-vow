@@ -127,11 +127,15 @@ function Home() {
                   />
                 ))}
                 <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
-                {(hud.hasAshToken || hud.hasFlaskShard) && (
+                {(hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch) && (
                   <span className="ml-2 text-[10px] tracking-wider text-ember/80">
-                    {hud.hasAshToken ? "徽" : ""}
-                    {hud.hasAshToken && hud.hasFlaskShard ? "·" : ""}
-                    {hud.hasFlaskShard ? "片" : ""}
+                    {[
+                      hud.hasAshToken ? "徽" : "",
+                      hud.hasFlaskShard ? "片" : "",
+                      hud.hasTorch ? "炬" : "",
+                    ]
+                      .filter(Boolean)
+                      .join("·")}
                   </span>
                 )}
               </div>

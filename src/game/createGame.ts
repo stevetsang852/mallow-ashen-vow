@@ -59,6 +59,8 @@ import { createAudio } from "@/game/audio";
 import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
 import {
   ITEM_LABEL,
+  TORCH_LIGHT_DISTANCE,
+  applyTorchDemonBonus,
   defaultWorldPickups,
   emptyInventory,
   findNearestPickup,
@@ -364,11 +366,12 @@ export function createGame(
   scene.add(pickupRing);
   let pickupT = 0;
 
-  /** P1 0.8.3 world pickup stubs (ash-token / flask-shard). */
+  /** P1 world pickup stubs (ash-token / flask-shard / torch). */
   const worldPickups: WorldPickup[] = defaultWorldPickups();
   const inventory: InventoryFlags = emptyInventory();
   const itemMeshes: THREE.Mesh[] = worldPickups.map((p) => {
-    const color = p.id === "ash-token" ? 0xe85d04 : 0x7ec8e3;
+    const color =
+      p.id === "ash-token" ? 0xe85d04 : p.id === "flask-shard" ? 0x7ec8e3 : 0xffb347;
     const mesh = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.16, 0),
       new THREE.MeshStandardMaterial({
@@ -409,6 +412,19 @@ export function createGame(
     }
   }
   syncItemMeshes();
+
+  /** P1 0.8.6 held torch — small PointLight on the player (performant). */
+  const torchLight = new THREE.PointLight(0xff9a3c, 0, TORCH_LIGHT_DISTANCE, 2);
+  torchLight.position.set(0, 1.35, 0);
+  scene.add(torchLight);
+  function syncTorchLight() {
+    const on = !!inventory.torch && phase === "play";
+    torchLight.intensity = on ? 7.5 : 0;
+    if (on) {
+      torchLight.position.set(player.x + 0.15, 1.35, player.z + 0.1);
+    }
+  }
+
   let dustT = 0;
 
   const slashMat = new THREE.MeshBasicMaterial({
@@ -759,6 +775,7 @@ export function createGame(
       demonMax: demon.hpMax,
       hasAshToken: inventory["ash-token"],
       hasFlaskShard: inventory["flask-shard"],
+      hasTorch: inventory.torch,
       nearItem:
         phase === "play"
           ? (() => {
@@ -796,6 +813,7 @@ export function createGame(
       snap.bestMs ?? "",
       snap.hasAshToken ? 1 : 0,
       snap.hasFlaskShard ? 1 : 0,
+      snap.hasTorch ? 1 : 0,
       snap.nearItem,
     ].join("|");
     if (!force && key === lastKey) return;
@@ -1153,6 +1171,7 @@ export function createGame(
     const id = tryCollectNearest(player.x, player.z, worldPickups, inventory);
     if (!id) return false;
     syncItemMeshes();
+    syncTorchLight();
     audio.tone(380, 0.1, "sine", 0.05);
     audio.tone(520, 0.16, "triangle", 0.04);
     say(`拾取 · ${ITEM_LABEL[id]}`);
@@ -1727,7 +1746,8 @@ export function createGame(
               const posture = heavy ? 34 : 12;
               f.poise += posture;
               const broken = f.poise >= f.poiseMax;
-              f.hp = Math.max(0, f.hp - Math.round(dmg * (broken ? 1.5 : 1)));
+              const hitDmg = applyTorchDemonBonus(dmg, inventory.torch, f.kind);
+              f.hp = Math.max(0, f.hp - Math.round(hitDmg * (broken ? 1.5 : 1)));
               f.flash = 0.12;
               if (broken) {
                 f.poise = 0;
@@ -1762,7 +1782,7 @@ export function createGame(
               slash(f.x, 1.05, f.z, player.yaw, heavy);
               feel.emit({
                 kind: heavy ? "heavy" : "hit",
-                amount: dmg,
+                amount: hitDmg,
                 foeId: f.id,
                 foeKind: f.kind,
                 heavy,
@@ -2198,6 +2218,11 @@ export function createGame(
     bonfireLight.intensity = lightFlicker;
     bonfireLight.color.setHSL(0.07, 0.9, 0.5 + Math.sin(time * 5) * 0.05);
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
+    syncTorchLight();
+    if (inventory.torch && phase === "play") {
+      const flick = 7.2 + Math.sin(time * 11) * 0.9 + Math.sin(time * 29) * 0.4;
+      torchLight.intensity = flick;
+    }
 
     // P1-H: title/menu breath via particles.updateAmbient (spark API untouched)
     particles.updateAmbient(time, phase === "title" || menuOpen ? 0.12 : 0);
@@ -2662,6 +2687,7 @@ export function createGame(
     player.act = "free";
     resetItems(worldPickups, inventory);
     syncItemMeshes();
+    syncTorchLight();
     runStart = performance.now();
     audio.startAmbient();
     say("往拱門走。翻滾有短暫無敵。");
@@ -2685,6 +2711,7 @@ export function createGame(
     dropped = null;
     resetItems(worldPickups, inventory);
     syncItemMeshes();
+    syncTorchLight();
     placeAtBonfire();
     phase = "play";
     harness.onPhase("play");
