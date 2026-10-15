@@ -18,7 +18,6 @@ import {
   MOVE,
   PILLARS,
   RUN,
-  SAVE_KEY,
   SPAWN,
   STA_MAX,
   STEP,
@@ -39,6 +38,7 @@ import {
   type AutoThinkAction,
 } from "@/game/autoHarness";
 import { createPlayerLearner } from "@/game/playerLearner";
+import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -639,7 +639,15 @@ export function createGame(
   let simError = "";
   let disposed = false;
 
-  loadSave();
+  const saveMgr = createSaveManager();
+  {
+    const s = saveMgr.load();
+    deaths = s.deaths;
+    clears = s.clears;
+    bestMs = s.bestMs;
+    player.hpMax = s.hpMax;
+    player.hp = player.hpMax;
+  }
 
   const keys = new Set<string>();
   const abort = new AbortController();
@@ -741,39 +749,13 @@ export function createGame(
   }
 
   function save() {
-    try {
-      const data = JSON.stringify({
-        deaths,
-        hpMax: player.hpMax,
-        bestMs,
-        clears,
-      });
-      localStorage.setItem(SAVE_KEY, data);
-    } catch {
-      /* private mode */
-    }
-  }
-
-  function loadSave() {
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        deaths?: number;
-        hpMax?: number;
-        bestMs?: number | null;
-        clears?: number;
-      };
-      if (typeof parsed.deaths === "number") deaths = parsed.deaths;
-      if (typeof parsed.hpMax === "number") {
-        player.hpMax = Math.min(180, Math.max(100, parsed.hpMax));
-        player.hp = player.hpMax;
-      }
-      if (typeof parsed.bestMs === "number") bestMs = parsed.bestMs;
-      if (typeof parsed.clears === "number") clears = parsed.clears;
-    } catch {
-      /* ignore */
-    }
+    saveMgr.write({
+      v: SAVE_SCHEMA,
+      deaths,
+      hpMax: player.hpMax,
+      bestMs,
+      clears,
+    });
   }
 
   /** Hit VFX hierarchy multipliers (count / size / life). Does not change moves.ts damage. */
