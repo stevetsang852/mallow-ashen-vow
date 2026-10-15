@@ -51,6 +51,10 @@ export type HudSnap = {
   nearItem: string;
   /** Light-combo display count 1..3; 0 = hide plate (normal UI). */
   lightCombo: number;
+  /** P1 0.8.15 hotbar — selected slot index 0..3 (Key1–4). */
+  hotbarSelected: number;
+  /** P1 0.8.15 — filled flags for slots 1–4 (torch/explosive/healHerb/flask-shard). */
+  hotbarFilled: [boolean, boolean, boolean, boolean];
 };
 
 export type GameApi = {
@@ -66,6 +70,8 @@ export type GameApi = {
   flask: () => void;
   /** Collect nearest world pickup when in range (KeyE priority). */
   interact: () => void;
+  /** P1 0.8.15 — select hotbar slot 0..3 and attempt use if held. */
+  hotbar: (slot: number) => void;
   toggleMute: () => void;
   closeMenu: () => void;
   setStick: (x: number, y: number) => void;
@@ -117,4 +123,6 @@ export const INITIAL_HUD: HudSnap = {
   hasHealHerb: false,
   nearItem: "",
   lightCombo: 0,
+  hotbarSelected: 0,
+  hotbarFilled: [false, false, false, false],
 };

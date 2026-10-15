@@ -72,9 +72,12 @@ import {
   TORCH_LIGHT_DISTANCE,
   applyExplosiveAoe,
   applyHealHerb,
+  clampHotbarSelected,
   defaultWorldPickups,
   emptyInventory,
   findNearestPickup,
+  hotbarFilledFlags,
+  hotbarUseKind,
   resetItems,
   tryCollectNearest,
   tryConsumeExplosive,
@@ -417,6 +420,8 @@ export function createGame(
   /** P1 world pickup stubs (ash-token / flask-shard / torch / explosive / healHerb). */
   const worldPickups: WorldPickup[] = defaultWorldPickups();
   const inventory: InventoryFlags = emptyInventory();
+  /** P1 0.8.15 hotbar — selected slot 0..3 (Key1–4). */
+  let hotbarSelected = 0;
   const itemMeshes: THREE.Mesh[] = worldPickups.map((p) => {
     const color =
       p.id === "ash-token"
@@ -853,6 +858,8 @@ export function createGame(
             })()
           : "",
       lightCombo: lightComboHudCount(),
+      hotbarSelected,
+      hotbarFilled: hotbarFilledFlags(inventory),
     };
   }
 
@@ -888,6 +895,8 @@ export function createGame(
       snap.hasHealHerb ? 1 : 0,
       snap.nearItem,
       snap.lightCombo,
+      snap.hotbarSelected,
+      snap.hotbarFilled.map((f) => (f ? 1 : 0)).join(""),
     ].join("|");
     if (!force && key === lastKey) return;
     lastKey = key;
@@ -1290,6 +1299,34 @@ export function createGame(
     say(`恢復藥草 · +${gained}`);
     emit(true);
     return true;
+  }
+
+  /**
+   * P1 0.8.15 — Key1–4: select slot, then attempt use if held.
+   * torch → reaffirm equip · explosive → detonate · healHerb → heal · flask-shard → select only.
+   */
+  function tryHotbar(slot: number) {
+    if (phase !== "play") return;
+    hotbarSelected = clampHotbarSelected(slot);
+    const kind = hotbarUseKind(inventory, hotbarSelected);
+    if (kind === "torch") {
+      syncTorchLight();
+      say("火炬 · 已裝備");
+      emit(true);
+      return;
+    }
+    if (kind === "explosive") {
+      if (tryDetonateExplosive()) return;
+      emit(true);
+      return;
+    }
+    if (kind === "healHerb") {
+      if (tryUseHealHerb()) return;
+      // empty use (full HP / already consumed race) — still select
+      emit(true);
+      return;
+    }
+    emit(true);
   }
 
   function tryFlask() {
@@ -2533,6 +2570,10 @@ export function createGame(
       if (e.code === "KeyE") {
         if (!tryInteract() && !tryDetonateExplosive() && !tryUseHealHerb()) tryFlask();
       }
+      if (e.code === "Digit1" || e.code === "Numpad1") tryHotbar(0);
+      if (e.code === "Digit2" || e.code === "Numpad2") tryHotbar(1);
+      if (e.code === "Digit3" || e.code === "Numpad3") tryHotbar(2);
+      if (e.code === "Digit4" || e.code === "Numpad4") tryHotbar(3);
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
     },
@@ -2838,6 +2879,7 @@ export function createGame(
     player.vz = 0;
     player.act = "free";
     resetItems(worldPickups, inventory);
+    hotbarSelected = 0;
     syncItemMeshes();
     syncTorchLight();
     runStart = performance.now();
@@ -2862,6 +2904,7 @@ export function createGame(
     ash = 0;
     dropped = null;
     resetItems(worldPickups, inventory);
+    hotbarSelected = 0;
     syncItemMeshes();
     syncTorchLight();
     placeAtBonfire();
@@ -2910,6 +2953,7 @@ export function createGame(
     interact: () => {
       if (!tryInteract() && !tryDetonateExplosive()) tryUseHealHerb();
     },
+    hotbar: tryHotbar,
     toggleMute,
     closeMenu: () => {
       menuOpen = false;
@@ -2979,6 +3023,7 @@ function noop(): GameApi {
     lock: () => {},
     flask: () => {},
     interact: () => {},
+    hotbar: () => {},
     toggleMute: () => {},
     closeMenu: () => {},
     setStick: () => {},

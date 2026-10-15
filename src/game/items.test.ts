@@ -4,17 +4,24 @@ import {
   EXPLOSIVE_AOE_RADIUS,
   EXPLOSIVE_DAMAGE,
   HEAL_HERB_AMOUNT,
+  HOTBAR_SLOT_COUNT,
+  HOTBAR_SLOTS,
   ITEM_INTERACT_RANGE,
   ITEM_LABEL,
   TORCH_DEMON_DAMAGE_MUL,
   applyExplosiveAoe,
   applyHealHerb,
   applyTorchDemonBonus,
+  clampHotbarSelected,
   defaultWorldPickups,
   emptyInventory,
   findNearestPickup,
   hasItem,
+  hotbarFilledFlags,
+  hotbarItemAt,
+  hotbarUseKind,
   inInteractRange,
+  isHotbarSlotFilled,
   ownedLabels,
   resetItems,
   tryCollectNearest,
@@ -202,5 +209,38 @@ describe("tryConsumeHealHerb / applyHealHerb", () => {
     assert.equal(applyHealHerb(80, 100), 100);
     assert.equal(applyHealHerb(100, 100), 100);
     assert.equal(applyHealHerb(10, 100, 25), 35);
+  });
+});
+
+describe("hotbar 0.8.15", () => {
+  it("maps slots 1–4 to torch / explosive / healHerb / flask-shard", () => {
+    assert.equal(HOTBAR_SLOT_COUNT, 4);
+    assert.deepEqual([...HOTBAR_SLOTS], ["torch", "explosive", "healHerb", "flask-shard"]);
+    assert.equal(hotbarItemAt(0), "torch");
+    assert.equal(hotbarItemAt(1), "explosive");
+    assert.equal(hotbarItemAt(2), "healHerb");
+    assert.equal(hotbarItemAt(3), "flask-shard");
+    assert.equal(hotbarItemAt(-1), null);
+    assert.equal(hotbarItemAt(4), null);
+  });
+
+  it("clamps selection and reports filled / use kinds from inventory", () => {
+    assert.equal(clampHotbarSelected(-2), 0);
+    assert.equal(clampHotbarSelected(1.9), 1);
+    assert.equal(clampHotbarSelected(99), 3);
+    const inv = emptyInventory();
+    assert.deepEqual(hotbarFilledFlags(inv), [false, false, false, false]);
+    assert.equal(hotbarUseKind(inv, 0), null);
+    inv.torch = true;
+    inv.explosive = true;
+    inv.healHerb = true;
+    inv["flask-shard"] = true;
+    assert.equal(isHotbarSlotFilled(inv, 0), true);
+    assert.equal(isHotbarSlotFilled(inv, 3), true);
+    assert.deepEqual(hotbarFilledFlags(inv), [true, true, true, true]);
+    assert.equal(hotbarUseKind(inv, 0), "torch");
+    assert.equal(hotbarUseKind(inv, 1), "explosive");
+    assert.equal(hotbarUseKind(inv, 2), "healHerb");
+    assert.equal(hotbarUseKind(inv, 3), null); // reserved stub — select only
   });
 });
