@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.12**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.13**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -22,7 +22,7 @@
 - 玩家動作、無敵、收刀：`src/game/player.ts`
 - 敵人外形：`src/game/enemyMesh.ts`
 - 模擬：`src/game/createGame.ts`
-- CombatFeel／harness／learner：`combatFeel.ts`、`autoHarness.ts`、`playerLearner.ts`
+- CombatFeel／harness／learner／hit-path：`combatFeel.ts`、`autoHarness.ts`、`playerLearner.ts`、`hitPath.ts`
 - 畫面：`src/routes/index.tsx`
 
 電腦按 E 食水回血，R 已取消。出刀前搖有橘色環，重擊環較大。翻滾無敵有淡白環，收刀期間有粉紅環。普通玩家介面不顯示血量數字、撿灰 +數字、倒下次數和本局時間。撿灰有餘燼、擴環和短音。看不懂公爵哪招，只改 `MOVE.duke`。
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.12";
+  export const GAME_VERSION = "0.8.13";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.12（P1 恢復藥草：世界拾取＋即時回血；無 shop）
+- **版本**：0.8.13（Fullstack：createGame hit-path → `hitPath.ts`；feel 數字不變）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.12)
+### 已完成 (0.5.x - 0.8.13)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -318,6 +318,12 @@ npm run dev
 - [x] HUD：藥 flag＋「E 使用」提示；`begin`／`again` reset；`rise` 保留（同其他道具）；**暫無 shop UI**／唔擴 SaveManager
 - [x] 單元測試 `items.test.ts`（collect／heal／clamp／consume／reset）
 
+#### 0.8.13 - Hit-path extract（Fullstack）
+- [x] 純函式抽出 → `hitPath.ts`：`resolveSwingHitOnFoe`／`strikeCameraImpulse`／`resolveBreakPoise`／`connectSwingFeedback`
+- [x] `createGame` 薄接線（swing 命中、破架、受擊鏡頭）；feel／HIT_SPARK_MUL／posture 數字鎖定不變
+- [x] 單元測試 `hitPath.test.ts`；**唔改** moves 傷害／Save／Graphics HUD
+- [x] 合併序：已 rebase 到 main（含 **0.8.12** 恢復藥草）後再開／合
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -349,13 +355,15 @@ npm run dev
 5. **代碼重構** (`createGame.ts`)
    - 拆分大檔案（持續）
    - 玩家邏輯 → `player.ts`（部分已有）
-   - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
+   - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬仍在 createGame
+   - ~~命中／feel apply → `hitPath.ts`~~ **已完成（0.8.13）**
    - ~~粒子系統 → `particles.ts`~~（0.7.8 spark；**0.8.1** 環境 ember／mote 已抽取）
    - ~~音效系統 → `audio.ts`~~（0.7.5 戰鬥合成；**0.8.4** ambient／腳步 beds）
 
 #### Fullstack 後續（AI／自動遊玩）
 - ~~更長局數觀測／公爵／紅契細 bucket／固定種子回歸~~ **已完成（0.8.7）**；唔改招式傷害。
 - ~~ε-decay schedule＋learner snapshot export~~ **已完成（0.8.10）**；唔改招式傷害。
+- ~~createGame hit-path extract → `hitPath.ts`~~ **已完成（0.8.13）**；唔改招式傷害。
 - SaveManager 屬 Game developer，Fullstack 唔動。
 
 6. **性能優化**
@@ -446,3 +454,4 @@ feature/* → 新功能開發
 | 0.8.10 | 2026-10-15 | Fullstack：ε-decay schedule＋learner snapshot export（固定種子回歸保留；唔改 moves） |
 | 0.8.11 | 2026-10-15 | Graphics P2-K：win-phase quiet lighting — 色溫偏冷＋ambient 粒子減速 |
 | 0.8.12 | 2026-10-15 | P1 恢復藥草：世界拾取＋即時回血（+40；無 shop） |
+| 0.8.13 | 2026-10-15 | Fullstack：hit-path extract → hitPath.ts（feel 數字鎖定；唔改 moves） |

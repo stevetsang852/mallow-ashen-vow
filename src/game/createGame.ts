@@ -57,7 +57,13 @@ import { createPlayerLearner } from "@/game/playerLearner";
 import { GAME_VERSION } from "@/game/version";
 import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 import { createAudio } from "@/game/audio";
-import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
+import { createParticles } from "@/game/particles";
+import {
+  connectSwingFeedback,
+  resolveBreakPoise,
+  resolveSwingHitOnFoe,
+  strikeCameraImpulse,
+} from "@/game/hitPath";
 import {
   EXPLOSIVE_AOE_RADIUS,
   EXPLOSIVE_DAMAGE,
@@ -66,7 +72,6 @@ import {
   TORCH_LIGHT_DISTANCE,
   applyExplosiveAoe,
   applyHealHerb,
-  applyTorchDemonBonus,
   defaultWorldPickups,
   emptyInventory,
   findNearestPickup,
@@ -996,37 +1001,37 @@ export function createGame(
   /** amount on stance-break = poise damage that triggered the break (unified). */
   function breakPoise(f: Foe, poiseHit = 22) {
     f.poise += 0;
-    if (f.poise < f.poiseMax || f.state === "dead") return;
+    const resolved = resolveBreakPoise(f, poiseHit);
+    if (!resolved) return;
     f.poise = 0;
-    f.state = "hurt";
+    f.state = resolved.nextState;
     f.t = 0;
-    f.stagger = 1.05;
-    f.hp = Math.max(0, f.hp - 16);
+    f.stagger = resolved.stagger;
+    f.hp = resolved.nextHp;
     say("架勢崩了");
-    hitstop = Math.max(hitstop, 0.16);
-    shake = Math.max(shake, 0.55);
+    hitstop = Math.max(hitstop, resolved.hitstop);
+    shake = Math.max(shake, resolved.shake);
     hitFlash = 1;
-    burst(f.x, 1.1, f.z, HIT_SPARK_MUL["stance-break"], 0, 0, "pink", HIT_SPARK_MUL["stance-break"]);
+    burst(f.x, 1.1, f.z, resolved.sparkMul, 0, 0, "pink", resolved.sparkMul);
     slash(f.x, 1.05, f.z, f.yaw, true);
     audio.clang(true);
     audio.tone(70, 0.22, "sawtooth", 0.06);
-    feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: poiseHit });
+    feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: resolved.poiseHit });
   }
 
   function strikeCamera(from: Foe | undefined, amount: number, blocked = false) {
-    const power = Math.min(1.4, amount / 28);
-    const scale = blocked ? 0.4 : 1;
-    camPush = Math.max(camPush, (0.9 + power * 0.75) * scale);
-    fovKick = Math.max(fovKick, (blocked ? 1.1 : 2.4 + power * 1.6));
-    shake = Math.max(shake, (blocked ? 0.24 : 0.46 + power * 0.22));
-    hitstop = Math.max(hitstop, blocked ? 0.05 : 0.09 + power * 0.04);
-    hurtDip = Math.max(hurtDip, blocked ? 0.08 : 0.24);
+    const impulse = strikeCameraImpulse(amount, blocked);
+    camPush = Math.max(camPush, impulse.camPush);
+    fovKick = Math.max(fovKick, impulse.fovKick);
+    shake = Math.max(shake, impulse.shake);
+    hitstop = Math.max(hitstop, impulse.hitstop);
+    hurtDip = Math.max(hurtDip, impulse.hurtDip);
     if (from) {
       const side = Math.sin(Math.atan2(from.x - player.x, from.z - player.z) - camYaw);
-      camRoll = (side >= 0 ? 1 : -1) * (blocked ? 0.028 : 0.07) * (0.7 + power);
-      camYaw += side * (blocked ? 0.035 : 0.08);
+      camRoll = (side >= 0 ? 1 : -1) * impulse.camRollAbs;
+      camYaw += side * impulse.camYawKick;
     } else {
-      camRoll = blocked ? 0.02 : 0.05;
+      camRoll = impulse.camRollFallback;
     }
   }
 
@@ -1837,56 +1842,61 @@ export function createGame(
             const dx = f.x - player.x;
             const dz = f.z - player.z;
             const dist = Math.hypot(dx, dz) || 0.0001;
-            const reach = (heavy ? 2.15 : 1.8) + f.r * 0.45;
             const dot = (fx * dx + fz * dz) / dist;
-            if (dist < reach && dot > (heavy ? 0.28 : 0.16)) {
+            const resolved = resolveSwingHitOnFoe({
+              heavy,
+              baseDmg: dmg,
+              torchHeld: inventory.torch,
+              foe: {
+                id: f.id,
+                kind: f.kind,
+                state: f.state,
+                poise: f.poise,
+                poiseMax: f.poiseMax,
+                hp: f.hp,
+                r: f.r,
+              },
+              dist,
+              dot,
+            });
+            if (resolved.hit) {
               swingHits.add(f.id);
-              const posture = heavy ? 34 : 12;
-              f.poise += posture;
-              const broken = f.poise >= f.poiseMax;
-              const hitDmg = applyTorchDemonBonus(dmg, inventory.torch, f.kind);
-              f.hp = Math.max(0, f.hp - Math.round(hitDmg * (broken ? 1.5 : 1)));
+              f.poise = resolved.nextPoise;
+              f.hp = resolved.nextHp;
               f.flash = 0.12;
-              if (broken) {
-                f.poise = 0;
-                f.state = "hurt";
-                f.t = 0;
-                f.stagger = 1.05;
+              if (resolved.nextState !== f.state || resolved.broken) {
+                f.state = resolved.nextState as Foe["state"];
+                if (resolved.broken || resolved.nextState === "hurt") f.t = 0;
+              }
+              if (resolved.broken) {
+                f.stagger = resolved.nextStagger;
                 say("架勢崩了");
-              } else {
-                const armored = f.state === "swing" || f.state === "roar" || (f.state === "telegraph" && !(heavy && f.kind !== "duke"));
-                if (!armored) {
-                  f.state = "hurt";
-                  f.t = 0;
-                }
               }
-              {
-                const sparkMul = broken
-                  ? HIT_SPARK_MUL["stance-break"]
-                  : heavy
-                    ? HIT_SPARK_MUL.heavy
-                    : HIT_SPARK_MUL.light;
-                burst(
-                  f.x,
-                  1.05,
-                  f.z,
-                  sparkMul,
-                  fx,
-                  fz,
-                  broken || heavy ? "pink" : "steel",
-                  sparkMul,
-                );
-              }
+              burst(
+                f.x,
+                1.05,
+                f.z,
+                resolved.sparkMul,
+                fx,
+                fz,
+                resolved.sparkKind,
+                resolved.sparkMul,
+              );
               slash(f.x, 1.05, f.z, player.yaw, heavy);
               feel.emit({
-                kind: heavy ? "heavy" : "hit",
-                amount: hitDmg,
+                kind: resolved.feelKind,
+                amount: resolved.hitDmg,
                 foeId: f.id,
                 foeKind: f.kind,
                 heavy,
               });
-              if (broken) {
-                feel.emit({ kind: "stance-break", foeId: f.id, foeKind: f.kind, amount: posture });
+              if (resolved.broken) {
+                feel.emit({
+                  kind: "stance-break",
+                  foeId: f.id,
+                  foeKind: f.kind,
+                  amount: resolved.posture,
+                });
               }
               any = true;
             }
@@ -1898,12 +1908,15 @@ export function createGame(
               say("刀聲開了");
             }
             heardSteel = true;
-            shake = Math.max(shake, heavy ? 0.48 : 0.28);
-            hitstop = Math.max(hitstop, heavy ? 0.12 : 0.07);
-            hitFlash = heavy ? 0.85 : 0.45;
-            camKick = Math.max(camKick, heavy ? 0.72 : 0.4);
-            fovKick = Math.max(fovKick, heavy ? 3.4 : 1.7);
-            camRoll = (heavy ? 0.04 : 0.022) * (Math.random() < 0.5 ? -1 : 1);
+            {
+              const fb = connectSwingFeedback(heavy);
+              shake = Math.max(shake, fb.shake);
+              hitstop = Math.max(hitstop, fb.hitstop);
+              hitFlash = fb.hitFlash;
+              camKick = Math.max(camKick, fb.camKick);
+              fovKick = Math.max(fovKick, fb.fovKick);
+              camRoll = fb.camRoll * (Math.random() < 0.5 ? -1 : 1);
+            }
             audio.clang(heavy);
           }
         }
