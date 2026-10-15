@@ -255,15 +255,17 @@ function Home() {
 
       {hud.phase === "dead" && (
         <section className="absolute inset-0 z-30 flex items-center justify-center bg-bg p-6">
-          <div className={`max-w-sm text-center transition-opacity duration-300 ${cardOn ? "opacity-100" : "opacity-0"}`}>
-            <p className="font-display text-xs tracking-widest text-ember">FALLEN</p>
-            <h2 className="mt-2 font-display text-4xl text-fg">誓約斷了</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted">
+          <div
+            className={`end-card end-card--dead transition-opacity duration-300 ${cardOn ? "end-card--on opacity-100" : "opacity-0"}`}
+          >
+            <p className="end-card-kicker font-display text-xs tracking-widest">FALLEN</p>
+            <h2 className="end-card-title mt-2 font-display text-4xl">誓約斷了</h2>
+            <p className="end-card-body mt-3 text-sm leading-relaxed">
               灰留在你倒下的地方。火芯還在。
             </p>
             <button
               type="button"
-              className="mt-5 min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              className="mt-5 min-h-11 bg-steel/80 px-6 font-display tracking-widest text-bg"
               onClick={() => api.current?.rise()}
             >
               從火芯再起
@@ -274,15 +276,27 @@ function Home() {
 
       {hud.phase === "win" && (
         <section className={`absolute inset-0 z-30 flex items-center justify-center overflow-y-auto p-6 transition-colors ${cardOn ? "bg-bg/75" : "bg-transparent"}`}>
-          <div className={`max-w-sm text-center transition-opacity duration-300 ${cardOn ? "opacity-100" : "opacity-0"}`}>
-            <p className="font-display text-xs tracking-widest text-ember">STILL</p>
-            <h2 className="mt-2 font-display text-4xl text-fg">庭院安靜了</h2>
+          <div
+            className={`end-card end-card--win transition-opacity duration-300 ${cardOn ? "end-card--on opacity-100" : "opacity-0"}`}
+          >
+            <p className="end-card-kicker font-display text-xs tracking-widest">STILL</p>
+            <h2 className="end-card-title mt-2 font-display text-4xl">庭院安靜了</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
               粉紅的誓約還在。
             </p>
+            <div className="end-card-stats" aria-label="通關紀錄">
+              <span>
+                CLEARS
+                <strong>{hud.clears}</strong>
+              </span>
+              <span>
+                BEST
+                <strong>{hud.bestMs != null ? fmt(hud.bestMs) : "—"}</strong>
+              </span>
+            </div>
             <button
               type="button"
-              className="mt-5 min-h-11 bg-ember px-6 font-display tracking-widest text-bg"
+              className="mt-5 min-h-11 bg-sta/90 px-6 font-display tracking-widest text-bg"
               onClick={() => api.current?.again()}
             >
               再走一次庭院

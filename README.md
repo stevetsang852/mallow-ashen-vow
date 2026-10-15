@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.3**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.4**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.3";
+  export const GAME_VERSION = "0.7.4";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.3（Fullstack：敵人 AI → `ai.ts`＋harness winRate）
+- **版本**：0.7.4（Graphics P1-E：死亡／通關卡片電影感）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.3)
+### 已完成 (0.5.x - 0.7.4)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -195,6 +195,12 @@ npm run dev
 - [x] 相容舊 `mallow-ashen-vow-v1` 無 `v` 存檔
 - [x] 單元測試 `saveManager.test.ts`
 - [x] `createGame.ts` 改走 SaveManager；唔改 moves／音效／Graphics
+
+#### 0.7.4 - 死亡／通關卡片電影感（Research P1-E）
+- [x] 黑屏後 end-card：上緣 ember 細線 sweep（0.4s）
+- [x] 死亡深灰字調；通關 `--sta` 微金
+- [x] 通關卡顯示 clears／best；普通標題／開場不露 QA 數字
+- [x] 唔動 moves／Save／音效／AI
 
 ### 下一步開發（按優先順序）
 
@@ -302,3 +308,4 @@ feature/* → 新功能開發
 | 0.7.1 | 2026-10-15 | UI/VFX：標題粉結、hud-plate、擊中 spark 層級 |
 | 0.7.2 | 2026-10-15 | SaveManager 抽取（localStorage 持久化） |
 | 0.7.3 | 2026-10-15 | Fullstack：敵人 AI → `ai.ts`；harness winRate 觀測；README 進度 |
+| 0.7.4 | 2026-10-15 | Graphics P1-E：死亡／通關卡片電影感（ember sweep、深灰／微金、clears／best） |
