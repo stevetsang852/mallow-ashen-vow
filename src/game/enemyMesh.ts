@@ -12,34 +12,26 @@ function std(color: number, rough: number, metal: number) {
 }
 
 function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe85d04) {
-  const mat = std(baseColor, 0.72, 0.38);
+  const mat = std(baseColor, 0.75, 0.35);
   mat.emissive.setHex(emissive);
-  mat.emissiveIntensity = 0.18;
-  // Layered plates with cracks - more irregular Dark Souls style
-  for (let i = 0; i < 6; i++) {
-    const plate = new THREE.Mesh(
-      new THREE.SphereGeometry(0.26 - i * 0.032, 12, 8),
-      mat,
-    );
-    // Irregular scaling for cracked, decayed look
-    const scaleVar = 0.9 + Math.random() * 0.2;
-    plate.scale.set(1.25 * scaleVar, 0.38 + i * 0.015, 1.05);
-    plate.position.y = 0.45 + i * 0.1;
+  mat.emissiveIntensity = 0.24;
+  // Rounder cute layered plates with slight irregularity (cute + dark contrast)
+  for (let i = 0; i < 4; i++) {
+    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.26 - i * 0.03, 14, 10), mat);
+    const scaleVar = 0.95 + hash(i) * 0.1;
+    plate.scale.set(1.25 * scaleVar, 0.5, 1.15);
+    plate.position.y = 0.42 + i * 0.13;
     group.add(plate);
   }
-  // Cracked helm - half-broken helmet with visible skull
-  const helmMat = std(baseColor, 0.68, 0.42);
+  // Oversized cute helm with glowing cracks
+  const helmMat = std(baseColor, 0.7, 0.4);
   helmMat.emissive.setHex(emissive);
-  helmMat.emissiveIntensity = 0.22;
-  // Half-helmet (open top)
-  const helm = new THREE.Mesh(
-    new THREE.SphereGeometry(0.32, 14, 10, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.5),
-    helmMat,
-  );
-  helm.scale.set(1.1, 0.85, 1.1);
-  helm.position.y = 1.2;
+  helmMat.emissiveIntensity = 0.28;
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 12), helmMat);
+  helm.scale.set(1.1, 0.92, 1.1);
+  helm.position.y = 1.22;
   group.add(helm);
-  // Add crack glow lines
+  // Add crack glow lines on helm
   for (let i = 0; i < 3; i++) {
     const crack = new THREE.Mesh(
       new THREE.BoxGeometry(0.015, 0.15 + hash(i) * 0.1, 0.01),
