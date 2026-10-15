@@ -2149,7 +2149,7 @@ export function createGame(
       if (gateOpen) {
         const expand = Math.sin(time * 2 + i) * 0.02 + 0.02;
         crack.scale.x = 1 + expand * clothDrop;
-        crack.material.opacity = Math.min(1, clothDrop * 1.5);
+        (crack.material as THREE.Material).opacity = Math.min(1, clothDrop * 1.5);
       }
     });
 
