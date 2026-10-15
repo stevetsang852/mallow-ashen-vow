@@ -203,8 +203,24 @@ export function makeDuke(): KnightRig {
     blade.material.emissiveIntensity = 0.85;
   }
 
-  // Phase 2 glow: eyes and chest emit light (handled in poseKnight when phase2=true)
-  // The eye material already has emissive set above
+  // Phase 2 glow: enhanced eyes and chest emission
+  // Increase eye glow intensity for phase 2
+  rig.eyeMat.emissiveIntensity = 1.2; // Increased from default
+  
+  // Add chest glow indicator (visible in phase 2)
+  const chestGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 8, 6),
+    new THREE.MeshStandardMaterial({
+      color: 0xff4d2e,
+      emissive: 0xff4d2e,
+      emissiveIntensity: 0.8,
+      transparent: true,
+      opacity: 0.6,
+    }),
+  );
+  chestGlow.position.set(0, 0.85, 0.25);
+  chestGlow.name = "chestGlow";
+  rig.bob.add(chestGlow);
 
   rig.root.scale.set(1.7, 2.05, 1.7);
   return rig;
