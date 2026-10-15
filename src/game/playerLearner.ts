@@ -79,7 +79,14 @@ function nearest(foes: AutoFoeSnap[], px: number, pz: number, gateOpen: boolean,
   return best;
 }
 
-function distBucket(d: number): "near" | "mid" | "far" {
+function distBucket(d: number, kind?: string): string {
+  if (kind === "duke" || kind === "demon") {
+    // Finer range bands for bosses (0.8.7).
+    if (d < 1.6) return "melee";
+    if (d < 2.4) return "near";
+    if (d < 4.0) return "mid";
+    return "far";
+  }
   if (d < 2.0) return "near";
   if (d < 3.6) return "mid";
   return "far";
@@ -97,6 +104,43 @@ function foePhase(state: string): "danger" | "punish" | "neutral" {
   return "neutral";
 }
 
+/**
+ * Phase label in the feature key.
+ * Hollow keeps coarse danger/punish/neutral; duke/demon use finer tell/swing/roar/…
+ */
+export function foePhaseLabel(kind: string, state: string): string {
+  if (kind === "duke" || kind === "demon") {
+    switch (state) {
+      case "telegraph":
+        return "tell";
+      case "swing":
+        return "swing";
+      case "roar":
+        return "roar";
+      case "recover":
+        return "recover";
+      case "hurt":
+        return "hurt";
+      case "drink":
+        return "drink";
+      case "dodge":
+        return "dodge";
+      case "chase":
+        return "chase";
+      default:
+        return "idle";
+    }
+  }
+  return foePhase(state);
+}
+
+function isDangerPhase(kind: string, state: string): boolean {
+  if (kind === "duke" || kind === "demon") {
+    return state === "telegraph" || state === "swing" || state === "roar";
+  }
+  return foePhase(state) === "danger";
+}
+
 /** Discrete state key from foe telegraph / range / HP. */
 export function featureState(ctx: AutoThinkCtx): { key: string; foe: AutoFoeSnap | null; dist: number } {
   const foe =
@@ -105,16 +149,20 @@ export function featureState(ctx: AutoThinkCtx): { key: string; foe: AutoFoeSnap
     null;
   if (!foe) return { key: "none", foe: null, dist: 99 };
   const dist = Math.hypot(foe.x - ctx.player.x, foe.z - ctx.player.z);
-  const move = foe.move && foePhase(foe.state) === "danger" ? foe.move : "-";
-  const key = [
+  const phase = foePhaseLabel(foe.kind, foe.state);
+  const move = foe.move && isDangerPhase(foe.kind, foe.state) ? foe.move : "-";
+  const parts = [
     foe.kind,
-    foePhase(foe.state),
-    distBucket(dist),
+    phase,
+    distBucket(dist, foe.kind),
     hpBucket(ctx.player.hp),
     move,
     ctx.player.flasks > 0 ? "f1" : "f0",
-  ].join("|");
-  return { key, foe, dist };
+  ];
+  if (foe.kind === "duke" || foe.kind === "demon") {
+    parts.push(foe.phase2 ? "p2" : "p1");
+  }
+  return { key: parts.join("|"), foe, dist };
 }
 
 function emptyRow(): Record<LearnActionId, number> {
@@ -442,32 +490,71 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
   }
 
   function seedPriors() {
-    for (const kind of ["hollow", "duke", "demon"]) {
-      for (const move of ["-", "shock", "cleave", "overhead", "rush"]) {
-        for (const dist of ["near", "mid"] as const) {
-          for (const hp of ["ok", "low", "crit"] as const) {
-            for (const flask of ["f1", "f0"] as const) {
-              const key = `${kind}|danger|${dist}|${hp}|${move}|${flask}`;
-              const r = row(key);
-              r.dodge_l += 0.8;
-              r.dodge_r += 0.8;
-              r.retreat += 0.35;
-              r.attack_l -= 0.5;
-              r.attack_h -= 0.6;
-              r.approach -= 0.3;
+    // Hollow — coarse danger/punish (unchanged shape).
+    for (const move of ["-", "shock", "cleave", "overhead", "rush"]) {
+      for (const dist of ["near", "mid"] as const) {
+        for (const hp of ["ok", "low", "crit"] as const) {
+          for (const flask of ["f1", "f0"] as const) {
+            const key = `hollow|danger|${dist}|${hp}|${move}|${flask}`;
+            const r = row(key);
+            r.dodge_l += 0.8;
+            r.dodge_r += 0.8;
+            r.retreat += 0.35;
+            r.attack_l -= 0.5;
+            r.attack_h -= 0.6;
+            r.approach -= 0.3;
+          }
+        }
+      }
+    }
+    for (const dist of ["near", "mid"] as const) {
+      for (const hp of ["ok", "low", "crit"] as const) {
+        for (const flask of ["f1", "f0"] as const) {
+          const key = `hollow|punish|${dist}|${hp}|-|${flask}`;
+          const r = row(key);
+          r.attack_l += 0.9;
+          r.attack_h += 0.7;
+          r.dodge_l -= 0.2;
+          r.retreat -= 0.3;
+        }
+      }
+    }
+
+    // Duke / demon — finer tell/swing/roar + p1/p2 (0.8.7).
+    for (const kind of ["duke", "demon"]) {
+      for (const phase of ["tell", "swing", "roar"] as const) {
+        for (const move of ["-", "shock", "cleave", "overhead", "rush"]) {
+          for (const dist of ["melee", "near", "mid"] as const) {
+            for (const hp of ["ok", "low", "crit"] as const) {
+              for (const flask of ["f1", "f0"] as const) {
+                for (const p of ["p1", "p2"] as const) {
+                  const key = `${kind}|${phase}|${dist}|${hp}|${move}|${flask}|${p}`;
+                  const r = row(key);
+                  r.dodge_l += 0.85;
+                  r.dodge_r += 0.85;
+                  r.retreat += 0.4;
+                  r.attack_l -= 0.55;
+                  r.attack_h -= 0.65;
+                  r.approach -= 0.35;
+                }
+              }
             }
           }
         }
       }
-      for (const dist of ["near", "mid"] as const) {
-        for (const hp of ["ok", "low", "crit"] as const) {
-          for (const flask of ["f1", "f0"] as const) {
-            const key = `${kind}|punish|${dist}|${hp}|-|${flask}`;
-            const r = row(key);
-            r.attack_l += 0.9;
-            r.attack_h += 0.7;
-            r.dodge_l -= 0.2;
-            r.retreat -= 0.3;
+      for (const phase of ["recover", "hurt"] as const) {
+        for (const dist of ["melee", "near", "mid"] as const) {
+          for (const hp of ["ok", "low", "crit"] as const) {
+            for (const flask of ["f1", "f0"] as const) {
+              for (const p of ["p1", "p2"] as const) {
+                const key = `${kind}|${phase}|${dist}|${hp}|-|${flask}|${p}`;
+                const r = row(key);
+                r.attack_l += 0.95;
+                r.attack_h += 0.75;
+                r.dodge_l -= 0.2;
+                r.retreat -= 0.3;
+              }
+            }
           }
         }
       }

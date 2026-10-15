@@ -4,9 +4,11 @@ import {
   createPlayerLearner,
   evalToyPolicy,
   featureState,
+  foePhaseLabel,
   runToyLearning,
   toyFeatureCtx,
 } from "./playerLearner.ts";
+import type { AutoThinkCtx } from "./autoHarness.ts";
 
 function rng(seed = 0xc0ffee) {
   let s = seed >>> 0;
@@ -115,5 +117,59 @@ describe("runToyLearning", () => {
         attackL - 0.01,
       `defense Q should dominate attack_l (${attackL}); dodge ${dodgeL}/${dodgeR}`,
     );
+  });
+});
+
+describe("finer duke/demon state buckets (0.8.7)", () => {
+  function bossCtx(opts: {
+    kind: "duke" | "demon";
+    state: string;
+    move?: string;
+    dist: number;
+    phase2?: boolean;
+    hp?: number;
+  }): AutoThinkCtx {
+    return {
+      phase: "play",
+      menuOpen: false,
+      autoCd: 0,
+      camYaw: 0,
+      lockId: 1,
+      gateOpen: true,
+      player: { x: 0, z: 0, hp: opts.hp ?? 80, flasks: 2, act: "free" },
+      foes: [
+        {
+          id: 1,
+          x: opts.dist,
+          z: 0,
+          kind: opts.kind,
+          state: opts.state,
+          move: opts.move,
+          stagger: 0,
+          aggro: true,
+          phase2: opts.phase2 ?? false,
+        },
+      ],
+    };
+  }
+
+  it("labels duke telegraph as tell and includes p1/p2", () => {
+    assert.equal(foePhaseLabel("duke", "telegraph"), "tell");
+    assert.equal(foePhaseLabel("hollow", "telegraph"), "danger");
+    const { key } = featureState(
+      bossCtx({ kind: "duke", state: "telegraph", move: "overhead", dist: 2.0, phase2: false }),
+    );
+    assert.match(key, /^duke\|tell\|near\|ok\|overhead\|f1\|p1$/);
+    const p2 = featureState(
+      bossCtx({ kind: "duke", state: "swing", move: "shock", dist: 1.2, phase2: true }),
+    );
+    assert.match(p2.key, /^duke\|swing\|melee\|ok\|shock\|f1\|p2$/);
+  });
+
+  it("keeps hollow coarse danger|punish keys", () => {
+    const { key } = featureState(
+      toyFeatureCtx({ foeState: "telegraph", dist: 1.8, playerHp: 80, playerAct: "free" }),
+    );
+    assert.match(key, /hollow\|danger\|near\|ok\|cleave\|f1/);
   });
 });

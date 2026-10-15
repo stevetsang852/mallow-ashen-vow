@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.6**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.7**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.6";
+  export const GAME_VERSION = "0.8.7";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -113,7 +113,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 ```js
 window.__controlsTest.setAuto(true)
 window.__controlsTest.setHarness(true)
-window.__controlsTest.harness()      // { wins, losses, winRate, recentWinRate, avgMs, feelTotals, recentRuns, ... }
+window.__controlsTest.harness()      // { wins, losses, winRate, recentWinRate (24), avgMs, feelTotals, recentRuns, ... }
 window.__controlsTest.learner()      // { wins, losses, epsilon, qStates, topPrefs, ... }
 window.__controlsTest.resetLearner() // 清 Q 表／勝敗（會重新種 dodge／punish prior）
 window.__controlsTest.feelCounts()   // 本局 feel 計數
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.6（P1 火炬：世界拾取＋held light radius＋vs demon 傷害加成）
+- **版本**：0.8.7（Fullstack：Harness polish — 固定種子回歸＋公爵／紅契細 bucket＋近 24 場 winRate）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.6)
+### 已完成 (0.5.x - 0.8.7)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -161,7 +161,7 @@ npm run dev
 - [x] CombatFeel 適配層（`combatFeel.ts`；唔改 `moves.ts`／Graphics 手感數）
 - [x] AI-vs-AI harness（`autoHarness.ts`；vowdebug「循環」；勝／敗／feel 記錄）
 - [x] Tabular ε-greedy 玩家學習政策（`playerLearner.ts`；toy 測試可測進步）
-- [x] Harness 觀測：`winRate`／`recentWinRate`（近 8 場）／`avgMs`（0.7.3）
+- [x] Harness 觀測：`winRate`／`recentWinRate`（近 **24** 場，0.8.7；原 8 場自 0.7.3）／`avgMs`
 
 #### 0.7.3 - 敵人 AI 抽出
 - [x] 敵人決策純函式 → `src/game/ai.ts`（hollow／duke／demon；createGame 薄接線）
@@ -274,6 +274,12 @@ npm run dev
 - [x] HUD：炬 flag；`begin`／`again` reset；`rise` 保留（同 ash-token／flask-shard）
 - [x] 單元測試 `items.test.ts`（torch collect／reset／demon bonus）；**暫無 shop UI**
 
+#### 0.8.7 - Harness polish
+- [x] `recentWinRate` 窗口 **8 → 24**（`HARNESS_RECENT_WINDOW`）
+- [x] 公爵／紅契更細 state bucket（tell／swing／roar／…＋melee／near／mid／far＋p1／p2）；hollow 粗分不變
+- [x] 固定種子回歸：`runFixedSeedRegression`／`mulberry32`＋`scripts/harness-regression.mjs`
+- [x] 單元測試更新；**唔改** moves 傷害／deflect／Graphics／Save／items／audio
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -310,7 +316,7 @@ npm run dev
    - ~~音效系統 → `audio.ts`~~（0.7.5 戰鬥合成；**0.8.4** ambient／腳步 beds）
 
 #### Fullstack 後續（AI／自動遊玩）
-- Harness／learner 已可開循環；下一步可選：更長局數觀測、對公爵／紅契特徵更細的 state bucket、或固定種子回歸腳本（唔改招式傷害）。
+- ~~更長局數觀測／公爵／紅契細 bucket／固定種子回歸~~ **已完成（0.8.7）**；唔改招式傷害。
 - SaveManager 屬 Game developer，Fullstack 唔動。
 
 6. **性能優化**
@@ -395,3 +401,4 @@ feature/* → 新功能開發
 | 0.8.4 | 2026-10-15 | Fullstack P3：ambient wind／fire beds＋腳步（mute 有效；無 BGM） |
 | 0.8.5 | 2026-10-15 | Graphics P2-I：右側 touch 半透圓＋ember 邊；press scale 0.96 |
 | 0.8.6 | 2026-10-15 | P1 火炬：世界拾取＋held light＋vs demon ×1.35（無 shop） |
+| 0.8.7 | 2026-10-15 | Fullstack：Harness polish（固定種子回歸、duke／demon 細 bucket、recentWindow 24） |
