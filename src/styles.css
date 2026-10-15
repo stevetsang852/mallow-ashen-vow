@@ -493,3 +493,50 @@
     transform: scale(1);
   }
 }
+
+/* 0.8.17: item hotbar 4-slot plate (hide empty slots; hide plate when none filled) */
+.hud-hotbar-plate {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-bow) 22%, transparent),
+    0 0 14px color-mix(in srgb, var(--color-ember) 18%, transparent);
+}
+.hud-hotbar-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 14%, transparent);
+}
+.hud-hotbar-slot--selected {
+  border-color: color-mix(in srgb, var(--color-ember) 75%, var(--color-bow));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 40%, transparent),
+    0 0 10px color-mix(in srgb, var(--color-ember) 45%, transparent);
+}
+.hud-hotbar-key {
+  position: absolute;
+  top: 0.12rem;
+  left: 0.22rem;
+  font-size: 0.55rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--color-muted) 80%, transparent);
+}
+.hud-hotbar-slot--selected .hud-hotbar-key {
+  color: color-mix(in srgb, var(--color-ember) 85%, var(--color-fg));
+}
+.hud-hotbar-glyph {
+  font-size: 0.85rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--color-bow) 55%, var(--color-fg));
+  text-shadow: 0 0 6px color-mix(in srgb, var(--color-ember) 30%, transparent);
+}
+.hud-hotbar-slot--selected .hud-hotbar-glyph {
+  color: color-mix(in srgb, var(--color-ember) 70%, var(--color-bow));
+  text-shadow: 0 0 8px color-mix(in srgb, var(--color-ember) 50%, transparent);
+}

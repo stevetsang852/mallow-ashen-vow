@@ -51,9 +51,9 @@ export type HudSnap = {
   nearItem: string;
   /** Light-combo display count 1..3; 0 = hide plate (normal UI). */
   lightCombo: number;
-  /** P1 0.8.15 hotbar — selected slot index 0..3 (Key1–4). */
+  /** P1 0.8.15/0.8.17 hotbar — selected slot index 0..3 (Key1–4). */
   hotbarSelected: number;
-  /** P1 0.8.15 — filled flags for slots 1–4 (torch/explosive/healHerb/flask-shard). */
+  /** P1 0.8.15/0.8.17 — filled flags for slots 0–3 (torch/explosive/healHerb/flask-shard). */
   hotbarFilled: [boolean, boolean, boolean, boolean];
 };
 

@@ -6,6 +6,10 @@ import {
   createAudio,
   FOOTSTEP_MOVE_THRESHOLD,
   FOOTSTEP_WALK_INTERVAL,
+  SWING_HEAVY_NOISE_GAIN,
+  SWING_HEAVY_TONE_FREQ,
+  SWING_LIGHT_NOISE_GAIN,
+  SWING_LIGHT_TONE_FREQ,
 } from "./audio.ts";
 
 type Call = { name: string; args: unknown[] };
@@ -117,6 +121,8 @@ describe("createAudio", () => {
     a.tone(220, 0.1, "sine", 0.04);
     a.noise(0.05, 0.1);
     a.clang(false);
+    a.swing(false);
+    a.swing(true);
     assert.equal(calls.length, 0);
   });
 
@@ -176,6 +182,7 @@ describe("createAudio", () => {
     a.tone(100, 0.1, "sine", 0.05);
     a.unlock();
     a.clang(true);
+    a.swing(true);
     a.startAmbient();
     a.footstep(1, 1);
     assert.equal(a.isMuted(), false);
@@ -230,5 +237,31 @@ describe("createAudio", () => {
     a.stopAmbient();
     assert.equal(a.isAmbientOn(), false);
     assert.ok(calls.some((c) => c.name === "buf.stop"));
+  });
+
+  it("swing light stacks sawtooth tone + noise; mute ducks", () => {
+    const { ctx, calls } = mockContext();
+    const a = createAudio({ context: ctx, muted: false });
+    a.swing(false);
+    assert.ok(calls.some((c) => c.name === "createOscillator"));
+    assert.ok(calls.some((c) => c.name === "createBufferSource"));
+    const freqs = calls.filter((c) => c.name === "freq.set").map((c) => c.args[0] as number);
+    assert.ok(freqs.includes(SWING_LIGHT_TONE_FREQ));
+    const n = calls.length;
+    a.setMuted(true);
+    a.swing(false);
+    assert.equal(calls.length, n);
+    assert.ok(SWING_LIGHT_NOISE_GAIN < SWING_HEAVY_NOISE_GAIN);
+  });
+
+  it("swing heavy uses lower tone freq and louder noise than light", () => {
+    const { ctx, calls } = mockContext();
+    const a = createAudio({ context: ctx, muted: false });
+    a.swing(true);
+    const freqs = calls.filter((c) => c.name === "freq.set").map((c) => c.args[0] as number);
+    assert.ok(freqs.includes(SWING_HEAVY_TONE_FREQ));
+    assert.ok(SWING_HEAVY_TONE_FREQ < SWING_LIGHT_TONE_FREQ);
+    assert.ok(calls.some((c) => c.name === "createBufferSource"));
+    assert.ok(calls.some((c) => c.name === "osc.start"));
   });
 });

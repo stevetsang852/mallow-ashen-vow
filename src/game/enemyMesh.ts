@@ -7,8 +7,29 @@ function std(color: number, rough: number, metal: number) {
     color,
     roughness: rough,
     metalness: metal,
-    envMapIntensity: 0.35,
+    envMapIntensity: 0.45,
   });
+}
+
+function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe85d04) {
+  const mat = std(baseColor, 0.72, 0.38);
+  mat.emissive.setHex(emissive);
+  mat.emissiveIntensity = 0.18;
+  // Layered plates with cracks
+  for (let i = 0; i < 5; i++) {
+    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.24 - i * 0.028, 12, 8), mat);
+    plate.scale.set(1.2, 0.42 + i * 0.02, 1.08);
+    plate.position.y = 0.48 + i * 0.11;
+    group.add(plate);
+  }
+  // Cracked helm
+  const helmMat = std(baseColor, 0.68, 0.42);
+  helmMat.emissive.setHex(emissive);
+  helmMat.emissiveIntensity = 0.22;
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), helmMat);
+  helm.scale.set(1.08, 0.88, 1.08);
+  helm.position.y = 1.18;
+  group.add(helm);
 }
 
 function addSpikes(group: THREE.Group, count: number, color: number, scale = 1) {
@@ -98,13 +119,16 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
     }
   });
 
-  // Chibi onion armor style (ash-toned)
-  addOnionArmor(rig.bob, 0x5a4a3a);
+  // Weathered ash armor (Dark Souls-inspired: muted, cracked, glowing seams)
+  addWeatheredArmor(rig.bob, 0x4a3a2c, 0xe85d04);
 
-  // Short chibi body
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), std(0x3a2a20, 0.85, 0.1));
-  body.scale.set(1.1, 0.7, 1.0);
-  body.position.y = 0.62;
+  // Shorter, stockier body with exposed bone feel
+  const bodyMat = std(0x2a1a14, 0.88, 0.08);
+  bodyMat.emissive.setHex(0xe85d04);
+  bodyMat.emissiveIntensity = 0.12;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 8), bodyMat);
+  body.scale.set(1.15, 0.75, 1.05);
+  body.position.y = 0.58;
   rig.bob.add(body);
 
   addSpikes(rig.bob, 4, 0x2a1a12, 0.6);
