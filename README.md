@@ -138,7 +138,7 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.0
+- **版本**：0.7.1
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
@@ -171,6 +171,12 @@ npm run dev
 - [x] 灰殼盾牌（更大尺寸, 損壞劃痕, 金屬材質）
 - [x] 紅契披風（翼膜細節, 骨骼結構, 高 emissive）
 - [x] 燈光效果（環境光, 動態色溫, 強脈動）
+
+#### 0.7.1 - UI／VFX polish
+- [x] 標題粉結錨點（雙線底＋蝴蝶結 silhouette、Start hover 粉邊、og 暗角 ≤0.25）
+- [x] `hud-plate` 統一血／體／瓶／公爵／惡魔／鎖定浮卡邊框
+- [x] 擊中 VFX 層級：輕 1×／重 1.6×／崩架 2.2×（count／size／life；AdditiveBlending）
+- [x] 色板補 `--color-bow`／`--bow-pink`（`#e8a0b8`）
 
 ### 下一步開發（按優先順序）
 
@@ -270,3 +276,4 @@ feature/* → 新功能開發
 | 0.5.4 | 2026-10-14 | Loading bar, routeTree gen |
 | 0.6.0 | 2026-10-14 | 模型優化（頭身比例、劍長度）|
 | 0.7.0 | 2026-10-15 | 火焰/拱門/公爵/盾牌/披風/燈光優化 |
+| 0.7.1 | 2026-10-15 | UI/VFX：標題粉結、hud-plate、擊中 spark 層級 |

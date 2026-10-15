@@ -108,7 +108,7 @@ function Home() {
       {hud.phase !== "title" && (
         <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="w-full max-w-[14rem] rounded-sm bg-cinematic/80 px-2 py-1.5 backdrop-blur-[2px]">
+            <div className="hud-plate w-full max-w-[14rem] rounded-sm bg-cinematic/80 px-2 py-1.5 backdrop-blur-[2px]">
               <p className="font-display text-[10px] tracking-[0.2em] text-muted/80">粉誓庭院</p>
               <div className="mt-1 h-1.5 overflow-hidden rounded-sm border border-line/60 bg-surface/60">
                 <div className="h-full bg-hp shadow-[0_0_6px_rgba(155,35,53,0.6)]" style={{ width: `${hpPct}%` }} />
@@ -139,7 +139,7 @@ function Home() {
             </button>
           </div>
           {hud.demonShown && (
-            <div className="mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
+            <div className="hud-plate mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
               <p className="font-display text-[10px] tracking-[0.18em] text-hp/90">線上惡魔 · {hud.demonName}</p>
               <div className="mt-0.5 h-1 overflow-hidden rounded-sm border border-line/40 bg-surface/50">
                 <div className="h-full bg-hp" style={{ width: `${demonPct}%` }} />
@@ -147,7 +147,7 @@ function Home() {
             </div>
           )}
           {hud.bossShown && (
-            <div className="mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
+            <div className="hud-plate mx-auto w-full max-w-[14rem] rounded-sm bg-cinematic/70 px-2 py-1 text-center backdrop-blur-[1px]">
               <p className="font-display text-[10px] tracking-[0.18em] text-ember/90">
                 煤灰公爵{hud.bossPhase > 1 ? " · 第二階段" : ""}
               </p>
@@ -157,7 +157,7 @@ function Home() {
             </div>
           )}
           {hud.lockName && (
-            <div className="mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]">
+            <div className="hud-plate mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]">
               <p className="font-display text-[11px] text-fg/85">鎖定 · {hud.lockName}{hud.punish ? " · 可打" : ""}</p>
               <div className="mt-0.5 h-0.5 overflow-hidden rounded-sm border border-line/30 bg-surface/40">
                 <div
@@ -196,9 +196,13 @@ function Home() {
       )}
 
       {(hud.phase === "title" || hud.menuOpen) && (
-        <section className="absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
+        <section className="title-panel absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
+          <div className="title-panel-vignette" aria-hidden="true" />
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW · {GAME_VERSION}</p>
-          <h1 className="mt-1 font-display text-4xl text-fg">粉誓</h1>
+          <h1 className="title-bow-accent mt-1 font-display text-4xl text-fg">
+            粉誓
+            <span className="title-bow-mark" aria-hidden="true" />
+          </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             戴粉紅蝴蝶結的騎士貓。先單挑路中灰殼，輕擊再滾。兩側灰殼很重，按住格擋。重擊和格擋會累架勢，崩了就能砍。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。衝鋒收招最長。第一刀會打開刀聲。
           </p>
@@ -229,7 +233,7 @@ function Home() {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              className="min-h-11 bg-ember px-6 font-display tracking-widest text-bg disabled:opacity-60"
+              className="btn-start-bow min-h-11 bg-ember px-6 font-display tracking-widest text-bg disabled:opacity-60"
               disabled={!hud.webgl}
               onClick={() => (hud.phase === "title" ? api.current?.begin() : api.current?.closeMenu())}
             >

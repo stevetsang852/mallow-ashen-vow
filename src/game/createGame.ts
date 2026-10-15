@@ -776,6 +776,15 @@ export function createGame(
     }
   }
 
+  /** Hit VFX hierarchy multipliers (count / size / life). Does not change moves.ts damage. */
+  const HIT_SPARK_MUL = {
+    light: 1,
+    heavy: 1.6,
+    "stance-break": 2.2,
+  } as const;
+  const SPARK_BASE_SIZE = 0.11;
+  const SPARK_BASE_COUNT = 12;
+
   const SPARK_RGB: Record<string, [number, number, number]> = {
     steel: [0.96, 0.88, 0.72],
     pink: [1, 0.48, 0.68],
@@ -796,8 +805,14 @@ export function createGame(
     dx = 0,
     dz = 0,
     kind: keyof typeof SPARK_RGB = "steel",
+    hierarchyMul = 1,
   ) {
-    const n = power > 1.3 ? 20 : 12;
+    const mul = Math.max(0.5, hierarchyMul);
+    // Preserve legacy power>1.3 → ~20 particles when no hit hierarchy is set.
+    const n = Math.min(
+      SPARKS,
+      Math.round(SPARK_BASE_COUNT * mul * (power > 1.3 && mul <= 1 ? 1.65 : 1)),
+    );
     const rgb = SPARK_RGB[kind];
     for (let i = 0; i < n; i++) {
       const k = sparkCursor % SPARKS;
@@ -805,16 +820,18 @@ export function createGame(
       sparkPos[k * 3] = x + (hash(k + 3) - 0.5) * 0.2;
       sparkPos[k * 3 + 1] = y;
       sparkPos[k * 3 + 2] = z + (hash(k + 7) - 0.5) * 0.2;
-      const spread = (hash(k + sparkCursor) - 0.5) * 3.2;
+      const spread = (hash(k + sparkCursor) - 0.5) * 3.2 * (0.85 + 0.15 * mul);
       const lift = kind === "dust" ? 0.35 : kind === "ash" ? 2.2 : 1.4;
       sparkVel[k * 3] = dx * (2.4 + power) + spread;
       sparkVel[k * 3 + 1] = lift + hash(k + 5) * (kind === "dust" ? 1.2 : 3.2) * power;
-      sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2;
-      sparkLife[k] = (kind === "ash" ? 0.38 : 0.22) + hash(k) * 0.22;
+      sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2 * (0.85 + 0.15 * mul);
+      sparkLife[k] = ((kind === "ash" ? 0.38 : 0.22) + hash(k) * 0.22) * mul;
       sparkCol[k * 3] = rgb[0];
       sparkCol[k * 3 + 1] = rgb[1];
       sparkCol[k * 3 + 2] = rgb[2];
     }
+    const mat = sparks.material as THREE.PointsMaterial;
+    mat.size = Math.max(mat.size, SPARK_BASE_SIZE * mul);
     sparkGeo.attributes.color!.needsUpdate = true;
   }
 
@@ -975,7 +992,7 @@ export function createGame(
     hitstop = Math.max(hitstop, 0.16);
     shake = Math.max(shake, 0.55);
     hitFlash = 1;
-    burst(f.x, 1.1, f.z, 1.8, 0, 0, "pink");
+    burst(f.x, 1.1, f.z, HIT_SPARK_MUL["stance-break"], 0, 0, "pink", HIT_SPARK_MUL["stance-break"]);
     slash(f.x, 1.05, f.z, f.yaw, true);
     clang(true);
     tone(70, 0.22, "sawtooth", 0.06);
@@ -1728,7 +1745,23 @@ export function createGame(
                   f.t = 0;
                 }
               }
-              burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz, heavy ? "pink" : "steel");
+              {
+                const sparkMul = broken
+                  ? HIT_SPARK_MUL["stance-break"]
+                  : heavy
+                    ? HIT_SPARK_MUL.heavy
+                    : HIT_SPARK_MUL.light;
+                burst(
+                  f.x,
+                  1.05,
+                  f.z,
+                  sparkMul,
+                  fx,
+                  fz,
+                  broken || heavy ? "pink" : "steel",
+                  sparkMul,
+                );
+              }
               slash(f.x, 1.05, f.z, player.yaw, heavy);
               feel.emit({
                 kind: heavy ? "heavy" : "hit",
@@ -2116,7 +2149,7 @@ export function createGame(
       if (gateOpen) {
         const expand = Math.sin(time * 2 + i) * 0.02 + 0.02;
         crack.scale.x = 1 + expand * clothDrop;
-        crack.material.opacity = Math.min(1, clothDrop * 1.5);
+        (crack.material as THREE.Material).opacity = Math.min(1, clothDrop * 1.5);
       }
     });
 
@@ -2186,6 +2219,12 @@ export function createGame(
     }
     sparkGeo.attributes.position!.needsUpdate = true;
     sparkGeo.attributes.color!.needsUpdate = true;
+    {
+      const mat = sparks.material as THREE.PointsMaterial;
+      if (mat.size > SPARK_BASE_SIZE) {
+        mat.size = Math.max(SPARK_BASE_SIZE, mat.size - 0.01);
+      }
+    }
 
     if (shake > 0) shake = Math.max(0, shake - 0.016);
     const tmp = new THREE.Vector3();
