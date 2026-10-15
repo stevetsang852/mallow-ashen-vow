@@ -58,14 +58,18 @@ import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 import { createAudio } from "@/game/audio";
 import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
 import {
+  EXPLOSIVE_AOE_RADIUS,
+  EXPLOSIVE_DAMAGE,
   ITEM_LABEL,
   TORCH_LIGHT_DISTANCE,
+  applyExplosiveAoe,
   applyTorchDemonBonus,
   defaultWorldPickups,
   emptyInventory,
   findNearestPickup,
   resetItems,
   tryCollectNearest,
+  tryConsumeExplosive,
   type InventoryFlags,
   type WorldPickup,
 } from "@/game/items";
@@ -380,14 +384,22 @@ export function createGame(
   scene.add(pickupRing);
   let pickupT = 0;
 
-  /** P1 world pickup stubs (ash-token / flask-shard / torch). */
+  /** P1 world pickup stubs (ash-token / flask-shard / torch / explosive). */
   const worldPickups: WorldPickup[] = defaultWorldPickups();
   const inventory: InventoryFlags = emptyInventory();
   const itemMeshes: THREE.Mesh[] = worldPickups.map((p) => {
     const color =
-      p.id === "ash-token" ? 0xe85d04 : p.id === "flask-shard" ? 0x7ec8e3 : 0xffb347;
+      p.id === "ash-token"
+        ? 0xe85d04
+        : p.id === "flask-shard"
+          ? 0x7ec8e3
+          : p.id === "torch"
+            ? 0xffb347
+            : 0xc23b22;
     const mesh = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.16, 0),
+      p.id === "explosive"
+        ? new THREE.BoxGeometry(0.28, 0.28, 0.28)
+        : new THREE.OctahedronGeometry(0.16, 0),
       new THREE.MeshStandardMaterial({
         color,
         emissive: color,
@@ -791,6 +803,7 @@ export function createGame(
       hasAshToken: inventory["ash-token"],
       hasFlaskShard: inventory["flask-shard"],
       hasTorch: inventory.torch,
+      hasExplosive: inventory.explosive,
       nearItem:
         phase === "play"
           ? (() => {
@@ -829,6 +842,7 @@ export function createGame(
       snap.hasAshToken ? 1 : 0,
       snap.hasFlaskShard ? 1 : 0,
       snap.hasTorch ? 1 : 0,
+      snap.hasExplosive ? 1 : 0,
       snap.nearItem,
     ].join("|");
     if (!force && key === lastKey) return;
@@ -1195,6 +1209,25 @@ export function createGame(
     audio.tone(380, 0.1, "sine", 0.05);
     audio.tone(520, 0.16, "triangle", 0.04);
     say(`拾取 · ${ITEM_LABEL[id]}`);
+    emit(true);
+    return true;
+  }
+
+  /** P1 0.8.9 — detonate held explosive at player feet (AoE stub). */
+  function tryDetonateExplosive() {
+    if (phase !== "play") return false;
+    if (!tryConsumeExplosive(inventory)) return false;
+    const living = foes.filter((f) => livingFoe(f));
+    const hit = applyExplosiveAoe(player.x, player.z, living, EXPLOSIVE_AOE_RADIUS, EXPLOSIVE_DAMAGE);
+    for (const f of hit) {
+      f.flash = 0.16;
+    }
+    shockDust(player.x, player.z);
+    burst(player.x, 0.55, player.z, 1.6, 0, 0, "pink");
+    shake = Math.max(shake, 0.28);
+    audio.tone(90, 0.22, "square", 0.07);
+    audio.noise(0.12, 0.08);
+    say(hit.length ? `炸藥 · ${hit.length} 命中` : "炸藥 · 空爆");
     emit(true);
     return true;
   }
@@ -2412,7 +2445,7 @@ export function createGame(
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
       if (e.code === "KeyE") {
-        if (!tryInteract()) tryFlask();
+        if (!tryInteract() && !tryDetonateExplosive()) tryFlask();
       }
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
@@ -2784,7 +2817,7 @@ export function createGame(
     },
     flask: tryFlask,
     interact: () => {
-      tryInteract();
+      if (!tryInteract()) tryDetonateExplosive();
     },
     toggleMute,
     closeMenu: () => {
