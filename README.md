@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.7**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.8**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.7";
+  export const GAME_VERSION = "0.7.8";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.7（P0 輕擊三連：20→25→35、窗口 0.8s、結束 short recovery）
+- **版本**：0.7.8（Fullstack：戰鬥 spark 池 → `particles.ts`）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.7)
+### 已完成 (0.5.x - 0.7.8)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -219,6 +219,12 @@ npm run dev
 - [x] 單元測試 `moves.combo.test.ts`（chain／window／damage／recover）
 - [x] 唔改 Graphics／audio API／SaveManager／AI／粒子
 
+#### 0.7.8 - Particles extract
+- [x] 戰鬥 spark Points 池抽成 `src/game/particles.ts`（burst／ringDust／update）
+- [x] `HIT_SPARK_MUL`／base size／count 原數鎖定（唔改 spark 倍數／moves feel）
+- [x] 單元測試 `particles.test.ts`
+- [x] `createGame.ts` 薄接線；環境 ember／mote 仍在 createGame；唔動 Graphics／Save／audio／AI
+
 
 ### 下一步開發（按優先順序）
 
@@ -251,7 +257,7 @@ npm run dev
    - 拆分大檔案（持續）
    - 玩家邏輯 → `player.ts`（部分已有）
    - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
-   - 粒子系統 → `particles.ts`
+   - ~~粒子系統 → `particles.ts`~~（0.7.8 已完成戰鬥 spark 池抽取；環境 ember／mote 仍可後續）
    - ~~音效系統 → `audio.ts`~~（0.7.5 已完成戰鬥合成音抽取；環境／腳步見 P3）
 
 #### Fullstack 後續（AI／自動遊玩）
@@ -331,3 +337,4 @@ feature/* → 新功能開發
 | 0.7.5 | 2026-10-15 | Audio 抽取（WebAudio 戰鬥合成音 → audio.ts） |
 | 0.7.6 | 2026-10-15 | Graphics P1-F：Boss 橫幅／二階段 pulldown（字距＋opacity、條底紅脈動） |
 | 0.7.7 | 2026-10-15 | P0 輕擊三連（20→25→35、窗口 0.8s、short recovery） |
+| 0.7.8 | 2026-10-15 | Fullstack：戰鬥 spark 池 → particles.ts（唔改倍數） |
