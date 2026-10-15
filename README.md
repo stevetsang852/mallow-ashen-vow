@@ -70,6 +70,26 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **E** 食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。道具系統已關閉並隱藏（`ITEMS_ENABLED = false`）。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
+## 3D 模型風格指引（必須遵守）
+
+敵人與角色模型目標是 **cute（圓潤、大頭、chibi 比例）+ 暗黑灰燼風反差**。
+
+### 核心原則
+- **比例**：偏 chibi／圓潤（較大頭部、較短身體），但不要過於卡通。
+- **材質**：暗沉、風化、高粗糙度的灰燼色盔甲（soot / bone / ember 色板）。
+- **發光**：盔甲裂縫與接縫帶輕微 ember 發光（`0xe85d04` 附近），形成可愛與陰暗的對比。
+- **細節**：層層圓形／不規則盔甲板、刮痕、骨頭、觸手等，但整體輪廓要乾淨可讀。
+- **程序化優先**：主要在 `src/game/enemyMesh.ts` 調整。外部 GLB（`public/models/`）只作輔助，失敗時必須 fallback 回程序化版本。
+- **授權**：只用自由授權（CC0 / CC BY）或原創程序化模型。不要放未確認授權的第三方模型。
+
+### 相關檔案
+- 程序化敵人：`src/game/enemyMesh.ts`
+- 外部模型載入：`src/game/enemyRig.ts`
+- 玩家騎士貓：`src/game/knightMesh.ts`、`src/game/mallowRig.ts`
+- 概念圖：`public/concepts/`
+
+改模型後記得更新版本號並在 PR 說明視覺變化。
+
 ## 版本規則（必須遵守）
 
 任何 PR 或直接合併到 `main` 時，**必須更新版本號**。
@@ -78,7 +98,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.17";
+  export const GAME_VERSION = "0.8.21";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
