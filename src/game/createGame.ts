@@ -2566,6 +2566,7 @@ export function createGame(
         move: f.move,
         aggro: f.aggro,
         stagger: f.stagger,
+        phase2: f.enraged,
       })),
     };
     const action = harness.enabled ? learner.decide(ctx, dt) : decideAutoThink(ctx, dt);
