@@ -12,7 +12,8 @@ import {
   dukeSwingSpan,
   shouldDukeCommit,
 } from "@/game/ai";
-import { actionEnd, hitWindow, inIFrame, inRecover, inWindup } from "@/game/player";
+import { actionEnd, DEFLECT, hitWindow, inIFrame, inRecover, inWindup, resolveGuardHit } from "@/game/player";
+import { applyDeflectBounce } from "@/game/foes";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
   FIRE,
@@ -607,6 +608,8 @@ export function createGame(
   };
 
   let lightCombo: LightComboState = createLightComboState();
+  /** Seconds since entering block; used for DEFLECT.window press timing. */
+  let blockAge = 0;
   let ash = 0;
   let deaths = 0;
   let bestMs: number | null = null;
@@ -869,6 +872,7 @@ export function createGame(
     player.invuln = 1;
     player.combo = 0;
     lightCombo = createLightComboState();
+    blockAge = 0;
     camYaw = 0;
   }
 
@@ -929,7 +933,44 @@ export function createGame(
       const dx = from.x - player.x;
       const dz = from.z - player.z;
       const nd = Math.hypot(dx, dz) || 0.0001;
-      if ((fx * dx + fz * dz) / nd > 0.1 && player.sta >= 14) {
+      const facingDot = (fx * dx + fz * dz) / nd;
+      const guard = resolveGuardHit({
+        blocking: true,
+        blockAge,
+        facingDot,
+        stamina: player.sta,
+      });
+      if (guard === "deflect") {
+        player.sta = Math.max(0, player.sta - DEFLECT.staCost);
+        player.staDelay = 0.35;
+        from.poise += DEFLECT.poise;
+        applyDeflectBounce(from, player.x, player.z);
+        {
+          const side = from.kind === "demon" ? "north" : from.kind === "duke" ? "south" : "any";
+          const c = clampWorld(from.x, from.z, from.r, side);
+          from.x = c.x;
+          from.z = c.z;
+        }
+        breakPoise(from, DEFLECT.poise);
+        strikeCamera(from, amount, true);
+        guardV = 1;
+        hitFlash = Math.max(hitFlash, 0.9);
+        hitstop = Math.max(hitstop, 0.14);
+        shake = Math.max(shake, 0.42);
+        feel.emit({ kind: "deflect", amount, foeId: from.id, foeKind: from.kind });
+        burst((player.x + from.x) * 0.5, 1.1, (player.z + from.z) * 0.5, 1.6, 0, 0, "steel", 1.4);
+        slash(from.x, 1.05, from.z, player.yaw, false);
+        audio.clang(true);
+        audio.tone(320, 0.09, "square", 0.07);
+        say("招架！");
+        if (from.hp <= 0) {
+          from.state = "dead";
+          from.t = 0;
+        }
+        emit(true);
+        return;
+      }
+      if (guard === "block") {
         player.sta = Math.max(0, player.sta - 16);
         player.staDelay = 0.4;
         player.hp = Math.max(0, player.hp - Math.max(1, Math.round(amount * 0.18)));
@@ -1733,6 +1774,7 @@ export function createGame(
         player.staDelay = 0.2;
         if (player.sta <= 0) {
           player.act = "free";
+          blockAge = 0;
           say("氣力空了");
           shake = Math.max(shake, 0.18);
           camPush = Math.max(camPush, 0.25);
@@ -1765,8 +1807,15 @@ export function createGame(
     }
 
     const wantBlock = held("KeyC") && player.sta > 6;
-    if (player.act === "free" && wantBlock) player.act = "block";
-    else if (player.act === "block" && !held("KeyC")) player.act = "free";
+    if (player.act === "free" && wantBlock) {
+      player.act = "block";
+      blockAge = 0;
+    } else if (player.act === "block" && !held("KeyC")) {
+      player.act = "free";
+      blockAge = 0;
+    } else if (player.act === "block") {
+      blockAge += dt;
+    }
 
     const running =
       player.act === "free" &&
