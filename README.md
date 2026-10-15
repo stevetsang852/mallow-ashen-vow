@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.8**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.9**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.8";
+  export const GAME_VERSION = "0.7.9";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.8（Fullstack：戰鬥 spark 池 → `particles.ts`）
+- **版本**：0.7.9（Graphics P1-G：鎖定菱形細線＋中心粉點＋punish 外圈 cue）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.8)
+### 已完成 (0.5.x - 0.7.9)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -224,7 +224,11 @@ npm run dev
 - [x] `HIT_SPARK_MUL`／base size／count 原數鎖定（唔改 spark 倍數／moves feel）
 - [x] 單元測試 `particles.test.ts`
 - [x] `createGame.ts` 薄接線；環境 ember／mote 仍在 createGame；唔動 Graphics／Save／audio／AI
-
+#### 0.7.9 - 鎖定菱形＋「可打」優雅化（Research P1-G）
+- [x] 鎖定菱形：細線邊＋中心粉點（唔擋判定；raycast 關閉）
+- [x] punish／收招窗：外圈 1.0→1.08 ping-pong；平時外圈隱藏
+- [x] HUD「可打」粉結色＋輕脈動（CSS）；唔動 moves／Save／audio／AI／particles
+- [x] 建基於 main 0.7.8（連擊＋particles 已合入）
 
 ### 下一步開發（按優先順序）
 
@@ -338,3 +342,4 @@ feature/* → 新功能開發
 | 0.7.6 | 2026-10-15 | Graphics P1-F：Boss 橫幅／二階段 pulldown（字距＋opacity、條底紅脈動） |
 | 0.7.7 | 2026-10-15 | P0 輕擊三連（20→25→35、窗口 0.8s、short recovery） |
 | 0.7.8 | 2026-10-15 | Fullstack：戰鬥 spark 池 → particles.ts（唔改倍數） |
+| 0.7.9 | 2026-10-15 | Graphics P1-G：鎖定菱形細線＋中心粉點＋punish 外圈 cue |

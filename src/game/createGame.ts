@@ -498,19 +498,48 @@ export function createGame(
     return ring;
   });
 
+  // P1-G: lock diamond = thin pink outline + center pink dot (visual only; no hit blocking)
   const gem = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.16, 0),
-    new THREE.MeshBasicMaterial({ color: 0xf6efe4, transparent: true, opacity: 0.95, depthTest: false }),
+    new THREE.SphereGeometry(0.04, 10, 8),
+    new THREE.MeshBasicMaterial({ color: 0xe8a0b8, transparent: true, opacity: 0.95, depthTest: false }),
   );
-  gem.scale.set(1, 1.35, 1);
+  gem.raycast = () => {};
   const lockRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.42, 0.5, 4),
-    new THREE.MeshBasicMaterial({ color: 0xe7a0b0, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthTest: false }),
+    new THREE.RingGeometry(0.5, 0.52, 4),
+    new THREE.MeshBasicMaterial({
+      color: 0xe7a0b0,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    }),
   );
   lockRing.rotation.x = -Math.PI / 2;
   lockRing.rotation.z = Math.PI / 4;
+  lockRing.raycast = () => {};
+  // Outer cue ring: punish/recover window only (1.0→1.08 ping-pong)
+  const lockPulse = new THREE.Mesh(
+    new THREE.RingGeometry(0.58, 0.6, 4),
+    new THREE.MeshBasicMaterial({
+      color: 0xe8a0b8,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  );
+  lockPulse.rotation.x = -Math.PI / 2;
+  lockPulse.rotation.z = Math.PI / 4;
+  lockPulse.visible = false;
+  lockPulse.raycast = () => {};
   gem.add(lockRing);
+  gem.add(lockPulse);
   gem.visible = false;
+  gem.renderOrder = 10;
+  lockRing.renderOrder = 10;
+  lockPulse.renderOrder = 10;
   scene.add(gem);
   let gemX = SPAWN.x;
   let gemZ = SPAWN.z;
@@ -2007,11 +2036,23 @@ export function createGame(
       gemZ += (locked.z - gemZ) * k;
       const h = locked.kind === "duke" ? 3.05 : 2.15;
       gem.position.set(gemX, h + Math.sin(time * 3) * 0.06, gemZ);
-      gem.rotation.y = time * 2.2;
-      lockRing.scale.setScalar(1 + Math.sin(time * 4) * 0.08);
+      gem.rotation.y = time * 1.6;
+      // Steady thin diamond; pulse only during punish/recover (收招窗)
+      lockRing.scale.setScalar(1);
+      const punishCue = locked.state === "recover" || locked.state === "hurt";
+      lockPulse.visible = punishCue;
+      if (punishCue) {
+        // ping-pong 1.0 → 1.08
+        const pulse = 1 + 0.04 * (1 + Math.sin(time * 7));
+        lockPulse.scale.setScalar(pulse);
+        (lockPulse.material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.25 * (0.5 + 0.5 * Math.sin(time * 7));
+      } else {
+        lockPulse.scale.setScalar(1);
+      }
     } else {
       gemX = player.x;
       gemZ = player.z;
+      lockPulse.visible = false;
     }
 
     if (pickupT > 0) {

@@ -166,8 +166,13 @@ function Home() {
             </div>
           )}
           {hud.lockName && (
-            <div className="hud-plate mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]">
-              <p className="font-display text-[11px] text-fg/85">鎖定 · {hud.lockName}{hud.punish ? " · 可打" : ""}</p>
+            <div
+              className={`hud-plate hud-lock-plate mx-auto w-full max-w-[9rem] rounded-sm bg-cinematic/60 px-2 py-0.5 text-center backdrop-blur-[1px]${hud.punish ? " hud-lock-plate--punish" : ""}`}
+            >
+              <p className="font-display text-[11px] text-fg/85">
+                鎖定 · {hud.lockName}
+                {hud.punish ? <span className="hud-lock-punish"> · 可打</span> : null}
+              </p>
               <div className="mt-0.5 h-0.5 overflow-hidden rounded-sm border border-line/30 bg-surface/40">
                 <div
                   className="h-full bg-ember"
