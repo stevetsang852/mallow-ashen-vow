@@ -200,6 +200,17 @@ function Home() {
             </p>
           )}
           {hud.toast && <p className="text-center text-xs text-fg/80 drop-shadow">{hud.toast}</p>}
+          {hud.phase === "play" && hud.lightCombo > 0 && (
+            <div
+              key={hud.lightCombo}
+              className="hud-plate hud-combo-plate mx-auto w-fit min-w-[3.25rem] rounded-sm bg-cinematic/70 px-2.5 py-1 text-center backdrop-blur-[1px]"
+              role="status"
+              aria-label={`連擊 ${hud.lightCombo}`}
+            >
+              <p className="hud-combo-label font-display text-[9px] tracking-[0.22em] text-muted/75">連擊</p>
+              <p className="hud-combo-count font-display text-lg leading-none tracking-wider">×{hud.lightCombo}</p>
+            </div>
+          )}
           {hud.nearItem && hud.phase === "play" && (
             <div className="pointer-events-auto mx-auto flex flex-wrap items-center justify-center gap-2">
               <button

@@ -49,6 +49,8 @@ export type HudSnap = {
   hasHealHerb: boolean;
   /** Nearest in-range world pickup label, or "". */
   nearItem: string;
+  /** Light-combo display count 1..3; 0 = hide plate (normal UI). */
+  lightCombo: number;
 };
 
 export type GameApi = {
@@ -114,4 +116,5 @@ export const INITIAL_HUD: HudSnap = {
   hasExplosive: false,
   hasHealHerb: false,
   nearItem: "",
+  lightCombo: 0,
 };

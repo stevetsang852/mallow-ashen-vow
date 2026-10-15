@@ -467,3 +467,29 @@
 .title-panel .title-bow-mark {
   animation: title-bow-breath 2.8s ease-in-out infinite;
 }
+
+
+/* 0.8.14: light-combo counter plate (hidden when lightCombo===0 / normal idle) */
+.hud-combo-plate {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-bow) 28%, transparent),
+    0 0 12px color-mix(in srgb, var(--color-ember) 22%, transparent);
+  animation: hud-combo-pop 0.22s ease-out;
+}
+.hud-combo-count {
+  color: color-mix(in srgb, var(--color-bow) 72%, var(--color-ember));
+  text-shadow: 0 0 8px color-mix(in srgb, var(--color-ember) 45%, transparent);
+}
+.hud-combo-label {
+  margin-bottom: 0.1rem;
+}
+@keyframes hud-combo-pop {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
