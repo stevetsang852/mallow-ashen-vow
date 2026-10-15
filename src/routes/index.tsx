@@ -11,6 +11,10 @@ import { GAME_VERSION } from "@/game/version";
 
 const PAYME = "https://payme.hsbc/d6d295dff7854566b4536a98f0b02ef8";
 
+/** Key1–4 hotbar glyphs — order matches HudSnap.hotbarFilled (torch/explosive/healHerb/flask-shard). */
+const HOTBAR_SLOT_GLYPHS = ["炬", "炸", "藥", "片"] as const;
+const HOTBAR_SLOT_NAMES = ["火炬", "炸藥", "恢復藥草", "瓶碎片"] as const;
+
 const CREDIT_NOTE = `謝謝你陪騎士貓走到這裡。
 如果牠的戰鬥讓你覺得過瘾，也想看牠繼續打下去，
 歡迎用 PayMe 支持我。
@@ -138,7 +142,6 @@ function Home() {
                     ]
                       .filter(Boolean)
                       .join("·")}
-                    <span className="ml-1.5 text-muted/65">欄{hud.hotbarSelected + 1}</span>
                   </span>
                 )}
               </div>
@@ -380,6 +383,30 @@ function Home() {
             </div>
           </div>
         </section>
+      )}
+
+      {hud.phase === "play" && hud.hotbarFilled.some(Boolean) && (
+        <div
+          className="hud-plate hud-hotbar-plate pointer-events-none absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.75rem))] left-1/2 z-10 flex -translate-x-1/2 items-end gap-1.5 rounded-sm bg-cinematic/75 px-2 py-1.5 backdrop-blur-[1px]"
+          role="status"
+          aria-label="道具快捷欄"
+        >
+          {hud.hotbarFilled.map((filled, i) => {
+            if (!filled) return null;
+            const keyNum = i + 1;
+            const selected = hud.hotbarSelected === i;
+            return (
+              <div
+                key={i}
+                className={`hud-hotbar-slot${selected ? " hud-hotbar-slot--selected" : ""}`}
+                aria-label={`${keyNum} ${HOTBAR_SLOT_NAMES[i]}${selected ? " · 已選" : ""}`}
+              >
+                <span className="hud-hotbar-key font-display">{keyNum}</span>
+                <span className="hud-hotbar-glyph font-display">{HOTBAR_SLOT_GLYPHS[i]}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       <div className="touch-controls pointer-events-none absolute inset-0 z-20">
