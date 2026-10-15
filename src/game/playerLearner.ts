@@ -31,11 +31,94 @@ export const LEARN_ACTIONS: readonly LearnActionId[] = [
 
 const POLICY_KEY = "mallow-qa-learner";
 
+/** Snapshot schema version (JSON export). Bump when fields change incompatibly. */
+export const LEARNER_SNAPSHOT_VERSION = 1 as const;
+
+export type EpsilonScheduleMode = "linear" | "exponential";
+
+/**
+ * ε-decay schedule (0.8.10): reduced exploration over harness episodes.
+ * Deterministic under fixed episode counts / fixed seed (seed only affects action RNG).
+ */
+export type EpsilonSchedule = {
+  mode: EpsilonScheduleMode;
+  /** Starting exploration rate. */
+  start: number;
+  /** Floor exploration rate. */
+  floor: number;
+  /**
+   * Episodes over which ε decays from start → floor.
+   * At episode >= window, ε stays at floor.
+   */
+  window: number;
+  /** Per-episode multiplicative factor when mode === "exponential". */
+  decay: number;
+};
+
+/** Default linear schedule: 0.28 → 0.06 over 80 episodes. */
+export const DEFAULT_EPSILON_SCHEDULE: EpsilonSchedule = {
+  mode: "linear",
+  start: 0.28,
+  floor: 0.06,
+  window: 80,
+  decay: 0.992,
+};
+
+/**
+ * Pure ε(episode) under a schedule. Episode 0 → start; at/after window → floor.
+ * Linear: lerp. Exponential: start * decay^episode, clamped to floor.
+ */
+export function epsilonAtEpisode(
+  episode: number,
+  schedule: EpsilonSchedule = DEFAULT_EPSILON_SCHEDULE,
+): number {
+  const ep = Math.max(0, Math.floor(episode));
+  if (schedule.window <= 0 || ep >= schedule.window) return schedule.floor;
+  if (schedule.mode === "linear") {
+    const t = ep / schedule.window;
+    return schedule.start + (schedule.floor - schedule.start) * t;
+  }
+  return Math.max(schedule.floor, schedule.start * Math.pow(schedule.decay, ep));
+}
+
+/** Resolve LearnerOptions into a concrete schedule (legacy epsilonDecay → exponential). */
+export function resolveEpsilonSchedule(opts: LearnerOptions = {}): EpsilonSchedule {
+  const base: EpsilonSchedule = {
+    ...DEFAULT_EPSILON_SCHEDULE,
+    ...(opts.epsilonSchedule ?? {}),
+  };
+  if (opts.epsilon != null) base.start = opts.epsilon;
+  if (opts.epsilonMin != null) base.floor = opts.epsilonMin;
+  if (opts.epsilonDecay != null) base.decay = opts.epsilonDecay;
+  // Explicit decay without schedule.mode → keep historical multiplicative behaviour.
+  if (opts.epsilonDecay != null && opts.epsilonSchedule?.mode == null) {
+    base.mode = "exponential";
+  }
+  return base;
+}
+
+/** JSON-serializable learner dump for replay / debug / regression (0.8.10). */
+export type LearnerSnapshot = {
+  snapshotVersion: typeof LEARNER_SNAPSHOT_VERSION;
+  gameVersion: string;
+  /** Optional fixed seed used for action RNG (null if Math.random / unknown). */
+  seed: number | null;
+  episodes: number;
+  wins: number;
+  losses: number;
+  epsilon: number;
+  schedule: EpsilonSchedule;
+  q: Record<string, Record<LearnActionId, number>>;
+  exportedAt: number;
+};
+
 export type LearnerSummary = {
   episodes: number;
   wins: number;
   losses: number;
   epsilon: number;
+  /** Active schedule mode (0.8.10). */
+  scheduleMode: EpsilonScheduleMode;
   qStates: number;
   lastReward: number;
   winRate: number | null;
@@ -46,6 +129,8 @@ export type LearnerOptions = {
   epsilon?: number;
   epsilonMin?: number;
   epsilonDecay?: number;
+  /** Full / partial ε schedule (0.8.10). Overrides defaults; legacy decay still works. */
+  epsilonSchedule?: Partial<EpsilonSchedule>;
   alpha?: number;
   gamma?: number;
   /** Prefer sessionStorage persistence (browser). Default true. */
@@ -54,7 +139,77 @@ export type LearnerOptions = {
   seedPriors?: boolean;
   /** Inject RNG for tests. */
   random?: () => number;
+  /** Optional seed tag stored in snapshots (does not reseed Math.random). */
+  seed?: number | null;
+  /** Tag for snapshot export (defaults to "0.8.10" locally; createGame passes GAME_VERSION). */
+  gameVersion?: string;
 };
+
+/** Build a snapshot object from raw learner fields (pure). */
+export function buildLearnerSnapshot(args: {
+  q: Map<string, Record<LearnActionId, number>> | Record<string, Record<LearnActionId, number>>;
+  episodes: number;
+  wins: number;
+  losses: number;
+  epsilon: number;
+  schedule: EpsilonSchedule;
+  seed?: number | null;
+  gameVersion?: string;
+  exportedAt?: number;
+}): LearnerSnapshot {
+  const qObj: Record<string, Record<LearnActionId, number>> = {};
+  if (args.q instanceof Map) {
+    for (const [k, v] of args.q) qObj[k] = { ...v };
+  } else {
+    for (const [k, v] of Object.entries(args.q)) qObj[k] = { ...v };
+  }
+  return {
+    snapshotVersion: LEARNER_SNAPSHOT_VERSION,
+    gameVersion: args.gameVersion ?? "0.8.10",
+    seed: args.seed ?? null,
+    episodes: args.episodes,
+    wins: args.wins,
+    losses: args.losses,
+    epsilon: args.epsilon,
+    schedule: { ...args.schedule },
+    q: qObj,
+    exportedAt: args.exportedAt ?? Date.now(),
+  };
+}
+
+/** Validate / normalize a parsed snapshot (throws on hard errors). */
+export function parseLearnerSnapshot(raw: unknown): LearnerSnapshot {
+  if (!raw || typeof raw !== "object") throw new Error("learner snapshot: not an object");
+  const o = raw as Record<string, unknown>;
+  if (o.snapshotVersion !== LEARNER_SNAPSHOT_VERSION) {
+    throw new Error(`learner snapshot: unsupported version ${String(o.snapshotVersion)}`);
+  }
+  if (typeof o.episodes !== "number" || typeof o.epsilon !== "number") {
+    throw new Error("learner snapshot: missing episodes/epsilon");
+  }
+  if (!o.q || typeof o.q !== "object") throw new Error("learner snapshot: missing q");
+  if (!o.schedule || typeof o.schedule !== "object") throw new Error("learner snapshot: missing schedule");
+  const sch = o.schedule as Record<string, unknown>;
+  const schedule: EpsilonSchedule = {
+    mode: sch.mode === "exponential" ? "exponential" : "linear",
+    start: Number(sch.start),
+    floor: Number(sch.floor),
+    window: Number(sch.window),
+    decay: Number(sch.decay ?? 0.992),
+  };
+  return {
+    snapshotVersion: LEARNER_SNAPSHOT_VERSION,
+    gameVersion: typeof o.gameVersion === "string" ? o.gameVersion : "0.8.10",
+    seed: typeof o.seed === "number" ? o.seed : null,
+    episodes: o.episodes,
+    wins: typeof o.wins === "number" ? o.wins : 0,
+    losses: typeof o.losses === "number" ? o.losses : 0,
+    epsilon: o.epsilon,
+    schedule,
+    q: o.q as Record<string, Record<LearnActionId, number>>,
+    exportedAt: typeof o.exportedAt === "number" ? o.exportedAt : 0,
+  };
+}
 
 type StepTrace = { state: string; action: LearnActionId };
 
@@ -191,14 +346,15 @@ function feelReward(ev: CombatFeelEvent): number {
 }
 
 export function createPlayerLearner(opts: LearnerOptions = {}) {
-  let epsilon = opts.epsilon ?? 0.28;
-  const epsilonMin = opts.epsilonMin ?? 0.06;
-  const epsilonDecay = opts.epsilonDecay ?? 0.992;
+  const schedule = resolveEpsilonSchedule(opts);
+  let epsilon = epsilonAtEpisode(0, schedule);
   const alpha = opts.alpha ?? 0.22;
   const gamma = opts.gamma ?? 0.88;
   const persist = opts.persist !== false;
   const doSeed = opts.seedPriors !== false;
   const rnd = opts.random ?? Math.random;
+  let seedTag: number | null = opts.seed ?? null;
+  let gameVersionTag = opts.gameVersion ?? "0.8.10";
 
   const q = new Map<string, Record<LearnActionId, number>>();
   let episodes = 0;
@@ -399,7 +555,7 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
       update(step.state, step.action, shaped, null, true);
     }
 
-    epsilon = Math.max(epsilonMin, epsilon * epsilonDecay);
+    epsilon = epsilonAtEpisode(episodes, schedule);
     episodeReward = 0;
     episodeTrace.length = 0;
     last = null;
@@ -420,6 +576,7 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
       wins,
       losses,
       epsilon: Math.round(epsilon * 1000) / 1000,
+      scheduleMode: schedule.mode,
       qStates: q.size,
       lastReward: Math.round(lastReward * 1000) / 1000,
       winRate: decided > 0 ? Math.round((wins / decided) * 1000) / 1000 : null,
@@ -474,7 +631,7 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
     episodes = 0;
     wins = 0;
     losses = 0;
-    epsilon = opts.epsilon ?? 0.28;
+    epsilon = epsilonAtEpisode(0, schedule);
     lastReward = 0;
     episodeReward = 0;
     episodeTrace.length = 0;
@@ -561,6 +718,47 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
     }
   }
 
+  function exportSnapshot(meta?: { seed?: number | null; gameVersion?: string; exportedAt?: number }): LearnerSnapshot {
+    return buildLearnerSnapshot({
+      q,
+      episodes,
+      wins,
+      losses,
+      epsilon,
+      schedule,
+      seed: meta?.seed !== undefined ? meta.seed : seedTag,
+      gameVersion: meta?.gameVersion ?? gameVersionTag,
+      exportedAt: meta?.exportedAt,
+    });
+  }
+
+  function importSnapshot(raw: unknown) {
+    const snap = parseLearnerSnapshot(raw);
+    q.clear();
+    for (const [k, v] of Object.entries(snap.q)) {
+      const r = emptyRow();
+      for (const a of LEARN_ACTIONS) if (typeof v[a] === "number") r[a] = v[a]!;
+      q.set(k, r);
+    }
+    episodes = snap.episodes;
+    wins = snap.wins;
+    losses = snap.losses;
+    epsilon = snap.epsilon;
+    // Keep live schedule shape from snapshot (does not mutate const schedule fields in place —
+    // copy onto schedule object so subsequent endEpisode uses imported schedule).
+    schedule.mode = snap.schedule.mode;
+    schedule.start = snap.schedule.start;
+    schedule.floor = snap.schedule.floor;
+    schedule.window = snap.schedule.window;
+    schedule.decay = snap.schedule.decay;
+    seedTag = snap.seed;
+    if (snap.gameVersion) gameVersionTag = snap.gameVersion;
+    episodeReward = 0;
+    episodeTrace.length = 0;
+    last = null;
+    save();
+  }
+
   load();
   if (q.size === 0 && doSeed) seedPriors();
 
@@ -572,8 +770,11 @@ export function createPlayerLearner(opts: LearnerOptions = {}) {
     reset,
     save,
     load,
+    exportSnapshot,
+    importSnapshot,
     forceUpdate: update,
     getQ: (state: string, action: LearnActionId) => row(state)[action],
+    getSchedule: (): EpsilonSchedule => ({ ...schedule }),
     setEpsilon: (v: number) => {
       epsilon = v;
     },

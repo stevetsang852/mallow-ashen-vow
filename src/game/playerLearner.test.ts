@@ -3,8 +3,11 @@ import assert from "node:assert/strict";
 import {
   createPlayerLearner,
   evalToyPolicy,
+  epsilonAtEpisode,
+  DEFAULT_EPSILON_SCHEDULE,
   featureState,
   foePhaseLabel,
+  parseLearnerSnapshot,
   runToyLearning,
   toyFeatureCtx,
 } from "./playerLearner.ts";
@@ -171,5 +174,83 @@ describe("finer duke/demon state buckets (0.8.7)", () => {
       toyFeatureCtx({ foeState: "telegraph", dist: 1.8, playerHp: 80, playerAct: "free" }),
     );
     assert.match(key, /hollow\|danger\|near\|ok\|cleave\|f1/);
+  });
+});
+
+describe("epsilon schedule (0.8.10)", () => {
+  it("linear decays from start to floor across window", () => {
+    const sch = { ...DEFAULT_EPSILON_SCHEDULE, mode: "linear" as const, start: 0.4, floor: 0.1, window: 10 };
+    assert.equal(epsilonAtEpisode(0, sch), 0.4);
+    assert.ok(Math.abs(epsilonAtEpisode(5, sch) - 0.25) < 1e-9);
+    assert.equal(epsilonAtEpisode(10, sch), 0.1);
+    assert.equal(epsilonAtEpisode(99, sch), 0.1);
+  });
+
+  it("exponential decays multiplicatively then floors", () => {
+    const sch = {
+      mode: "exponential" as const,
+      start: 0.5,
+      floor: 0.1,
+      window: 100,
+      decay: 0.5,
+    };
+    assert.equal(epsilonAtEpisode(0, sch), 0.5);
+    assert.equal(epsilonAtEpisode(1, sch), 0.25);
+    assert.equal(epsilonAtEpisode(3, sch), 0.1); // 0.5*0.125=0.0625 → floor 0.1
+  });
+
+  it("endEpisode follows linear schedule under fixed episode count", () => {
+    const learner = createPlayerLearner({
+      persist: false,
+      seedPriors: false,
+      epsilonSchedule: { mode: "linear", start: 0.4, floor: 0.1, window: 4 },
+    });
+    assert.ok(Math.abs(learner.epsilon - 0.4) < 1e-9);
+    learner.endEpisode("win");
+    assert.ok(Math.abs(learner.epsilon - 0.325) < 1e-9); // 0.4 + (0.1-0.4)*(1/4)
+    learner.endEpisode("loss");
+    assert.ok(Math.abs(learner.epsilon - 0.25) < 1e-9);
+    const s = learner.summary();
+    assert.equal(s.scheduleMode, "linear");
+    assert.equal(s.episodes, 2);
+  });
+});
+
+describe("learner snapshot export (0.8.10)", () => {
+  it("round-trips Q + meta via export/import", () => {
+    const a = createPlayerLearner({
+      persist: false,
+      seedPriors: false,
+      epsilon: 0,
+      seed: 0x8719_8701,
+      gameVersion: "0.8.10",
+      epsilonSchedule: { mode: "linear", start: 0.3, floor: 0.05, window: 40 },
+    });
+    a.forceUpdate("hollow|danger|near|ok|cleave|f1", "dodge_r", 1.2, null, true);
+    a.endEpisode("win");
+    const snap = a.exportSnapshot({ exportedAt: 1_700_000_000_000 });
+    assert.equal(snap.snapshotVersion, 1);
+    assert.equal(snap.gameVersion, "0.8.10");
+    assert.equal(snap.seed, 0x8719_8701);
+    assert.equal(snap.episodes, 1);
+    assert.equal(snap.wins, 1);
+    assert.ok(snap.q["hollow|danger|near|ok|cleave|f1"]!.dodge_r > 0);
+
+    const json = JSON.stringify(snap);
+    const parsed = parseLearnerSnapshot(JSON.parse(json));
+    const b = createPlayerLearner({ persist: false, seedPriors: false, epsilon: 0 });
+    b.importSnapshot(parsed);
+    assert.equal(b.summary().episodes, 1);
+    assert.equal(b.summary().wins, 1);
+    assert.equal(
+      b.getQ("hollow|danger|near|ok|cleave|f1", "dodge_r"),
+      a.getQ("hollow|danger|near|ok|cleave|f1", "dodge_r"),
+    );
+    assert.equal(b.epsilon, a.epsilon);
+    assert.deepEqual(b.getSchedule(), snap.schedule);
+  });
+
+  it("parseLearnerSnapshot rejects bad version", () => {
+    assert.throws(() => parseLearnerSnapshot({ snapshotVersion: 99, episodes: 0, epsilon: 0.1, q: {}, schedule: {} }));
   });
 });
