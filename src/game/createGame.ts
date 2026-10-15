@@ -250,38 +250,40 @@ export function createGame(
     coal.position.set(FIRE.x + Math.cos(a) * 0.22, 0.05, FIRE.z + Math.sin(a) * 0.22);
     scene.add(coal);
   }
-  const flame = new THREE.Mesh(
-    new THREE.ConeGeometry(0.16, 0.5, 7),
-    new THREE.MeshBasicMaterial({ color: 0xe85d04 }),
-  );
+  // Enhanced flame with dynamic vertices for more natural movement
+  const flameGeo = new THREE.ConeGeometry(0.16, 0.5, 7, 4);
+  const flameMat = new THREE.MeshBasicMaterial({ color: 0xe85d04, side: THREE.DoubleSide });
+  const flame = new THREE.Mesh(flameGeo, flameMat);
   flame.position.set(FIRE.x, 0.48, FIRE.z);
-  const core = new THREE.Mesh(
-    new THREE.ConeGeometry(0.07, 0.32, 6),
-    new THREE.MeshBasicMaterial({ color: 0xf6efe4 }),
-  );
+  
+  const coreGeo = new THREE.ConeGeometry(0.07, 0.32, 6, 3);
+  const coreMat = new THREE.MeshBasicMaterial({ color: 0xf6efe4, side: THREE.DoubleSide });
+  const core = new THREE.Mesh(coreGeo, coreMat);
   core.position.set(FIRE.x, 0.42, FIRE.z);
-  const tongue = new THREE.Mesh(
-    new THREE.ConeGeometry(0.08, 0.28, 5),
-    new THREE.MeshBasicMaterial({ color: 0xffb35c }),
-  );
+  
+  const tongueGeo = new THREE.ConeGeometry(0.08, 0.28, 5, 3);
+  const tongueMat = new THREE.MeshBasicMaterial({ color: 0xffb35c, side: THREE.DoubleSide });
+  const tongue = new THREE.Mesh(tongueGeo, tongueMat);
   tongue.position.set(FIRE.x + 0.05, 0.55, FIRE.z);
   scene.add(flame, core, tongue);
 
-  const emberPos = new Float32Array(18 * 3);
+  const EMBER_COUNT = 28; // Increased from 18 for more embers
+  const emberPos = new Float32Array(EMBER_COUNT * 3);
   const emberGeo = new THREE.BufferGeometry();
   emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
   const embers = new THREE.Points(
     emberGeo,
     new THREE.PointsMaterial({
       color: 0xe85d04,
-      size: 0.055,
+      size: 0.065, // Slightly larger
       transparent: true,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     }),
   );
   scene.add(embers);
 
-  const MOTES = 72;
+  const MOTES = 96; // Increased from 72 for more atmospheric particles
   const motePos = new Float32Array(MOTES * 3);
   const moteCol = new Float32Array(MOTES * 3);
   const moteSeed = new Float32Array(MOTES);
