@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.4**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.5**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.4";
+  export const GAME_VERSION = "0.7.5";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -96,7 +96,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 1. 自己連續打公爵五次。若有一次不知道死在哪招，就把那招的前搖再拉長，不要加新敵人。
 2. 招式數字已抽到 `src/game/moves.ts`。模擬仍在 `createGame.ts`。再拆時才分玩家、敵人、鏡頭。
-3. 音效仍是 WebAudio 合成。第一刀會自動開聲，標題的靜音按鈕仍可用。
+3. 音效在 `src/game/audio.ts`（WebAudio 合成）。第一刀會自動開聲，標題的靜音按鈕仍可用。環境／腳步尚未做。
 
 
 ## 隱藏測試通道
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.4（Graphics P1-E：死亡／通關卡片電影感）
+- **版本**：0.7.5（Audio：戰鬥 WebAudio → `audio.ts`）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.4)
+### 已完成 (0.5.x - 0.7.5)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -202,6 +202,12 @@ npm run dev
 - [x] 通關卡顯示 clears／best；普通標題／開場不露 QA 數字
 - [x] 唔動 moves／Save／音效／AI
 
+#### 0.7.5 - Audio extract
+- [x] 戰鬥 WebAudio 合成音抽成 `src/game/audio.ts`（tone／noise／clang／mute unlock）
+- [x] 環境音／腳步 stub／TODO（未實作 beds）
+- [x] 單元測試 `audio.test.ts`
+- [x] `createGame.ts` 薄接線；唔改 moves feel／Graphics／SaveManager／AI
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -234,7 +240,7 @@ npm run dev
    - 玩家邏輯 → `player.ts`（部分已有）
    - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
    - 粒子系統 → `particles.ts`
-   - 音效系統 → `audio.ts`
+   - ~~音效系統 → `audio.ts`~~（0.7.5 已完成戰鬥合成音抽取；環境／腳步見 P3）
 
 #### Fullstack 後續（AI／自動遊玩）
 - Harness／learner 已可開循環；下一步可選：更長局數觀測、對公爵／紅契特徵更細的 state bucket、或固定種子回歸腳本（唔改招式傷害）。
@@ -247,10 +253,10 @@ npm run dev
    - LOD 系統
 
 #### P3 - 體驗提升
-7. **音效優化** (`audio.ts`)
+7. **音效優化** (`audio.ts`；戰鬥合成已於 0.7.5 抽取)
    - 環境音（風聲、火焰聲）
    - 腳步聲（地面材質）
-   - 武器揮舞聲
+   - 武器揮舞聲（可擴充現有 tone／noise）
    - 動態戰鬥 BGM
 
 8. **UI/UX** (`hud.ts`)
@@ -284,6 +290,7 @@ npm run dev
    - 玩家動作在 `player.ts`
    - 敵人決策在 `ai.ts`（`foes.ts` re-export）；外形在 `enemyMesh.ts`
    - 持久化在 `saveManager.ts`
+   - 戰鬥音效在 `audio.ts`
 
 ### 分支策略
 
@@ -309,3 +316,4 @@ feature/* → 新功能開發
 | 0.7.2 | 2026-10-15 | SaveManager 抽取（localStorage 持久化） |
 | 0.7.3 | 2026-10-15 | Fullstack：敵人 AI → `ai.ts`；harness winRate 觀測；README 進度 |
 | 0.7.4 | 2026-10-15 | Graphics P1-E：死亡／通關卡片電影感（ember sweep、深灰／微金、clears／best） |
+| 0.7.5 | 2026-10-15 | Audio 抽取（WebAudio 戰鬥合成音 → audio.ts） |
