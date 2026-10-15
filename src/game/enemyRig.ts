@@ -18,7 +18,8 @@ function groupAt(parent: THREE.Object3D, x: number, y: number, z: number) {
 
 function makeSimpleRigFromScene(scene: THREE.Object3D, scale = 1): KnightRig {
   const root = new THREE.Group();
-  root.userData.baked = true;
+  // Remove baked flag — let poseKnight drive all skeletal animation
+  root.userData.baked = undefined;
   const bob = new THREE.Group();
   root.add(bob);
 
