@@ -38,6 +38,11 @@ export type HudSnap = {
   demonName: string;
   demonHp: number | null;
   demonMax: number;
+  /** P1 items stub (0.8.3) — in-memory inventory flags. */
+  hasAshToken: boolean;
+  hasFlaskShard: boolean;
+  /** Nearest in-range world pickup label, or "". */
+  nearItem: string;
 };
 
 export type GameApi = {
@@ -51,6 +56,8 @@ export type GameApi = {
   dodge: () => void;
   lock: () => void;
   flask: () => void;
+  /** Collect nearest world pickup when in range (KeyE priority). */
+  interact: () => void;
   toggleMute: () => void;
   closeMenu: () => void;
   setStick: (x: number, y: number) => void;
@@ -95,4 +102,7 @@ export const INITIAL_HUD: HudSnap = {
   demonName: "紅契",
   demonHp: null,
   demonMax: 150,
+  hasAshToken: false,
+  hasFlaskShard: false,
+  nearItem: "",
 };

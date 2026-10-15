@@ -57,6 +57,16 @@ import { createPlayerLearner } from "@/game/playerLearner";
 import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 import { createAudio } from "@/game/audio";
 import { createParticles, HIT_SPARK_MUL } from "@/game/particles";
+import {
+  ITEM_LABEL,
+  defaultWorldPickups,
+  emptyInventory,
+  findNearestPickup,
+  resetItems,
+  tryCollectNearest,
+  type InventoryFlags,
+  type WorldPickup,
+} from "@/game/items";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -353,6 +363,52 @@ export function createGame(
   pickupRing.visible = false;
   scene.add(pickupRing);
   let pickupT = 0;
+
+  /** P1 0.8.3 world pickup stubs (ash-token / flask-shard). */
+  const worldPickups: WorldPickup[] = defaultWorldPickups();
+  const inventory: InventoryFlags = emptyInventory();
+  const itemMeshes: THREE.Mesh[] = worldPickups.map((p) => {
+    const color = p.id === "ash-token" ? 0xe85d04 : 0x7ec8e3;
+    const mesh = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.16, 0),
+      new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.45,
+        roughness: 0.55,
+        metalness: 0.15,
+      }),
+    );
+    mesh.position.set(p.x, 0.42, p.z);
+    mesh.userData.itemId = p.id;
+    scene.add(mesh);
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.22, 0.3, 16),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(p.x, 0.04, p.z);
+    scene.add(ring);
+    mesh.userData.ring = ring;
+    return mesh;
+  });
+  function syncItemMeshes() {
+    for (let i = 0; i < itemMeshes.length; i++) {
+      const mesh = itemMeshes[i]!;
+      const p = worldPickups[i]!;
+      const on = p.active && !inventory[p.id];
+      mesh.visible = on;
+      const ring = mesh.userData.ring as THREE.Mesh | undefined;
+      if (ring) ring.visible = on;
+    }
+  }
+  syncItemMeshes();
   let dustT = 0;
 
   const slashMat = new THREE.MeshBasicMaterial({
@@ -701,6 +757,15 @@ export function createGame(
       demonName: demon.name,
       demonHp: demon.hp,
       demonMax: demon.hpMax,
+      hasAshToken: inventory["ash-token"],
+      hasFlaskShard: inventory["flask-shard"],
+      nearItem:
+        phase === "play"
+          ? (() => {
+              const n = findNearestPickup(player.x, player.z, worldPickups);
+              return n ? ITEM_LABEL[n.id] : "";
+            })()
+          : "",
     };
   }
 
@@ -729,6 +794,9 @@ export function createGame(
       snap.demonShown ? Math.round(snap.demonHp ?? 0) : "-",
       snap.clears,
       snap.bestMs ?? "",
+      snap.hasAshToken ? 1 : 0,
+      snap.hasFlaskShard ? 1 : 0,
+      snap.nearItem,
     ].join("|");
     if (!force && key === lastKey) return;
     lastKey = key;
@@ -1078,6 +1146,18 @@ export function createGame(
     player.yaw = face;
     audio.noise(0.06, 0.05);
     audio.tone(180, 0.07, "sine", 0.03);
+  }
+
+  function tryInteract() {
+    if (phase !== "play") return false;
+    const id = tryCollectNearest(player.x, player.z, worldPickups, inventory);
+    if (!id) return false;
+    syncItemMeshes();
+    audio.tone(380, 0.1, "sine", 0.05);
+    audio.tone(520, 0.16, "triangle", 0.04);
+    say(`拾取 · ${ITEM_LABEL[id]}`);
+    emit(true);
+    return true;
   }
 
   function tryFlask() {
@@ -2067,6 +2147,11 @@ export function createGame(
       (pickupRing.material as THREE.MeshBasicMaterial).opacity = pickupT * 1.6;
       pickupRing.visible = pickupT > 0;
     }
+    for (const mesh of itemMeshes) {
+      if (!mesh.visible) continue;
+      mesh.rotation.y += 0.02;
+      mesh.position.y = 0.42 + Math.sin(time * 2.4 + mesh.position.x) * 0.06;
+    }
     stain.visible = !!dropped;
     if (dropped) {
       stain.position.set(dropped.x, 0.35 + Math.sin(time * 3) * 0.06, dropped.z);
@@ -2273,7 +2358,9 @@ export function createGame(
       if (e.code === "KeyJ") tryAttack("light");
       if (e.code === "KeyK") tryAttack("heavy");
       if (e.code === "KeyQ") tryLock();
-      if (e.code === "KeyE") tryFlask();
+      if (e.code === "KeyE") {
+        if (!tryInteract()) tryFlask();
+      }
       if (e.code === "KeyG") rest();
       if (e.code === "KeyF") temper();
     },
@@ -2572,6 +2659,8 @@ export function createGame(
     player.vx = 0;
     player.vz = 0;
     player.act = "free";
+    resetItems(worldPickups, inventory);
+    syncItemMeshes();
     runStart = performance.now();
     say("往拱門走。翻滾有短暫無敵。");
     emit(true);
@@ -2591,6 +2680,8 @@ export function createGame(
     resetFoes();
     ash = 0;
     dropped = null;
+    resetItems(worldPickups, inventory);
+    syncItemMeshes();
     placeAtBonfire();
     phase = "play";
     harness.onPhase("play");
@@ -2633,6 +2724,9 @@ export function createGame(
       tryLock();
     },
     flask: tryFlask,
+    interact: () => {
+      tryInteract();
+    },
     toggleMute,
     closeMenu: () => {
       menuOpen = false;
@@ -2701,6 +2795,7 @@ function noop(): GameApi {
     dodge: () => {},
     lock: () => {},
     flask: () => {},
+    interact: () => {},
     toggleMute: () => {},
     closeMenu: () => {},
     setStick: () => {},
