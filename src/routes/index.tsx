@@ -151,8 +151,17 @@ function Home() {
               <p className="font-display text-[10px] tracking-[0.18em] text-ember/90">
                 煤灰公爵{hud.bossPhase > 1 ? " · 第二階段" : ""}
               </p>
-              <div className="mt-0.5 h-1 overflow-hidden rounded-sm border border-line/40 bg-surface/50">
-                <div className={hud.bossPhase > 1 ? "h-full bg-hp" : "h-full bg-ember"} style={{ width: `${bossPct}%` }} />
+              <div
+                className={
+                  hud.bossPhase > 1 ? "boss-bar-track boss-bar-track--phase2" : "boss-bar-track"
+                }
+              >
+                <div
+                  className={
+                    hud.bossPhase > 1 ? "boss-bar-fill boss-bar-fill--phase2" : "boss-bar-fill boss-bar-fill--phase1"
+                  }
+                  style={{ width: `${bossPct}%` }}
+                />
               </div>
             </div>
           )}
@@ -168,7 +177,9 @@ function Home() {
             </div>
           )}
           {hud.banner && (
-            <p className="text-center font-display text-xl tracking-[0.25em] text-hp drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">{hud.banner}</p>
+            <p key={hud.banner} className="boss-banner" role="status">
+              {hud.banner}
+            </p>
           )}
           {hud.toast && <p className="text-center text-xs text-fg/80 drop-shadow">{hud.toast}</p>}
           {hud.nearFire && hud.phase === "play" && (
