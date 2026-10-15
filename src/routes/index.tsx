@@ -138,6 +138,7 @@ function Home() {
                     ]
                       .filter(Boolean)
                       .join("·")}
+                    <span className="ml-1.5 text-muted/65">欄{hud.hotbarSelected + 1}</span>
                   </span>
                 )}
               </div>

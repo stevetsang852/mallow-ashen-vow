@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.14**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.15**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -61,7 +61,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **按住 C** 格擋。腳下會出現朝前的白弧，體力低時弧會變淡。體力空了會破防。敵擊命中前 **0.2s 內舉起** 可 **招架／Deflect**（抵銷傷害、彈開敵人）。
 - **Space** 翻滾。有方向就朝方向滾，約 0.04–0.34 秒無敵，腳下會有一圈淡白環。出刀後的收刀期間有粉紅環，這時不能再出下一刀。
 - **Q** 鎖定，再按切下一個近處目標。
-- **E** 靠近世界道具時拾取；否則食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
+- **E** 靠近世界道具時拾取；否則引爆炸藥／使用藥草／食水回血。**1–4** 快捷欄選格並使用（1 火炬／2 炸藥／3 藥草／4 瓶碎片）。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
 ## 版本規則（必須遵守）
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.14";
+  export const GAME_VERSION = "0.8.15";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.14（Graphics：HUD 輕擊連擊數 plate；idle／0 隱藏）
+- **版本**：0.8.15（P1：Item hotbar Key1–4 select／use）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.14)
+### 已完成 (0.5.x - 0.8.15)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -329,6 +329,13 @@ npm run dev
 - [x] `createGame.lightComboHudCount` 薄接線；index CSS pop plate（`hud-combo-plate`）
 - [x] **唔改** moves feel／Save／audio／AI；合併序：rebase 到 main（含 **0.8.13** hitPath）後再開／合
 
+#### 0.8.15 - Item hotbar 1–4（P1）
+- [x] `items.ts`：`HOTBAR_SLOTS`（1 火炬／2 炸藥／3 恢復藥草／4 瓶碎片 reserved）；`clampHotbarSelected`／`hotbarFilledFlags`／`hotbarUseKind`
+- [x] `createGame`：**Key1–4**（含 Numpad）選格＋持有則嘗試使用（火炬 reaffirm／炸藥引爆／藥草回血／stub 只選）
+- [x] HUD：`hotbarSelected`＋`hotbarFilled`（Graphics **0.8.17** plate 用）；index 薄顯示「欄N」；**KeyE** 拾取／使用路徑保留
+- [x] `begin`／`again` reset 選格＋inventory；`rise` 保留；**暫無 shop UI**／唔擴 SaveManager／唔改 moves／audio／Graphics plate
+- [x] 單元測試 `items.test.ts`（slot map／filled／use kind／clamp）
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -349,7 +356,8 @@ npm run dev
    - ~~火炬（照明範圍 + 對特定敵人傷害）~~ **已完成（0.8.6）**
    - ~~炸藥（範圍傷害）~~ **已完成（0.8.9）**
    - ~~恢復藥草（即時回血）~~ **已完成（0.8.12）**
-   - 快捷欄 1-4 鍵切換／shop UI
+   - ~~快捷欄 1-4 鍵切換／使用~~ **已完成（0.8.15）**
+   - shop UI
 
 4. **環境敘事** (`createGame.ts`)
    - 可拾取物品（灰燼袋、遺物）
@@ -386,7 +394,7 @@ npm run dev
 
 8. **UI/UX** (`hud.ts`)
    - ~~連擊數顯示~~ **已完成（0.8.14）**
-   - 道具快捷欄 UI
+   - ~~道具快捷欄邏輯（Key1–4）~~ **已完成（0.8.15）**；HUD plate → **0.8.17**
    - 任務提示
    - 統計數據（殺敵數、拾取數）
 
@@ -461,3 +469,4 @@ feature/* → 新功能開發
 | 0.8.12 | 2026-10-15 | P1 恢復藥草：世界拾取＋即時回血（+40；無 shop） |
 | 0.8.13 | 2026-10-15 | Fullstack：hit-path extract → hitPath.ts（feel 數字鎖定；唔改 moves） |
 | 0.8.14 | 2026-10-15 | Graphics：HUD light-combo counter plate（×1–3；0 隱藏；唔改 moves） |
+| 0.8.15 | 2026-10-15 | P1 Item hotbar：Key1–4 選格＋使用（炬／炸／藥／片；無 shop） |
