@@ -99,4 +99,45 @@ describe("particles", () => {
     assert.equal(HIT_SPARK_MUL.heavy, 1.6);
     p.dispose();
   });
+
+  it("updateAmbient quietScale slows ember/mote motion vs baseline", () => {
+    const slow = createParticles();
+    const fast = createParticles();
+    const slowEmber = (slow.embers.geometry.getAttribute("position") as { array: Float32Array }).array;
+    const fastEmber = (fast.embers.geometry.getAttribute("position") as { array: Float32Array }).array;
+    const slowMote = (slow.motes.geometry.getAttribute("position") as { array: Float32Array }).array;
+    const fastMote = (fast.motes.geometry.getAttribute("position") as { array: Float32Array }).array;
+
+    // Seed both clocks at t=0
+    slow.updateAmbient(0, 0, 0.6);
+    fast.updateAmbient(0, 0, 1);
+    // Advance equal wall time; quietScale 0.6 should accumulate less ambient motion
+    slow.updateAmbient(2.0, 0, 0.6);
+    fast.updateAmbient(2.0, 0, 1);
+
+    // Ember y is driven by ambientClock * 0.33 — slower clock → different y than full-speed
+    assert.notEqual(slowEmber[1]!, fastEmber[1]!);
+    // Motes should also diverge
+    assert.notDeepEqual(
+      [slowMote[0]!, slowMote[1]!, slowMote[2]!],
+      [fastMote[0]!, fastMote[1]!, fastMote[2]!],
+    );
+
+    // spark feel locks untouched
+    assert.equal(HIT_SPARK_MUL.heavy, 1.6);
+    assert.equal(SPARK_BASE_SIZE, 0.11);
+    slow.dispose();
+    fast.dispose();
+  });
+
+  it("updateAmbient quietScale default 1 keeps breath and baseline motion", () => {
+    const p = createParticles();
+    const emberMat = p.embers.material as unknown as { size: number };
+    p.updateAmbient(0);
+    p.updateAmbient(1.0); // default quietScale=1
+    p.updateAmbient(Math.PI / (2 * 1.55), 0.12);
+    assert.ok(emberMat.size > EMBER_SIZE);
+    p.dispose();
+  });
+
 });

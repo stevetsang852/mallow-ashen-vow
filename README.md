@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.10**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.11**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -48,7 +48,7 @@
 - 第一下打中會打開刀聲。
 - 角色和場景仍是程序化建模。騎士貓有腿甲、臂甲、護手和拇指、兩片斗篷、較長的劍。敵人現在有專屬程序化模型（`src/game/enemyMesh.ts`）：灰殼有裂痕甲和短劍、公爵有角盔與發光裂縫、紅契有小翼與紅刃。概念圖放在 `public/concepts/`。火芯是石圈、炭和火簇。拱門有裂縫，打開時布會落下。地面有從火芯到拱門的踏痕。沒有用 Hero Forge 或其他人的模型檔。
 - 場景氛圍參考雲海和光塵：庭院有暖霧、緩慢漂浮的光點，以及兩道很淡的光柱。不是複製別人的 shader。
-- 粒子用 `THREE.Points`：鋼色是打中，粉色是重擊和架勢崩壞，灰塵是翻滾和震地，灰焰是死亡與撿灰，紅焰是紅契侵入。震地另有一圈向外擴的塵環，外加一圈更淡更短的 soft dust ring（P2-J）。
+- 粒子用 `THREE.Points`：鋼色是打中，粉色是重擊和架勢崩壞，灰塵是翻滾和震地，灰焰是死亡與撿灰，紅焰是紅契侵入。震地另有一圈向外擴的塵環，外加一圈更淡更短的 soft dust ring（P2-J）。通關後庭院 quiet lighting（P2-K）：色溫偏冷、環境粒子減速。
 PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - 打中有刀光、火花、短暫停頓和金屬加噪聲。格擋和架勢崩解也有獨立音效。
 - 死亡掉灰，走回去撿。火芯回血、回瓶。200 灰可鍛誓 +12 生命，上限 180。
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.10";
+  export const GAME_VERSION = "0.8.11";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -144,11 +144,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.10（Fullstack：ε-decay schedule＋learner snapshot export；固定種子回歸保留；0.8.9 炸藥已合）
+- **版本**：0.8.11（Graphics P2-K：通關後庭院 quiet lighting — 色溫偏冷＋粒子減速；戰鬥可讀保留）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.10)
+### 已完成 (0.5.x - 0.8.11)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -304,6 +304,14 @@ npm run dev
 - [x] 單元測試：schedule＋snapshot round-trip；**唔改** moves 傷害／Save／Graphics／items／audio
 - [x] 合併序：已 rebase 到 main（含 **0.8.9** 炸藥）後再開／合
 
+#### 0.8.11 - Win-phase quiet lighting（Research P2-K）
+- [x] 通關 `phase === "win"`：環境光色溫偏冷 ~5–8%（hemi／ambient／fog／background／moon／rim lerp；~0.8s）
+- [x] 篝火強度略降 ~12%（暖色保留）；play 基線完全還原
+- [x] `particles.updateAmbient(time, breathAmp?, quietScale?)`：win 時 quietScale → ~0.6（ember／mote 減速；累積 clock 無跳變）
+- [x] title／menu P1-H breath 仍用 wall time；combat spark `update()`／HIT_SPARK_MUL／soft dust 不變
+- [x] 合併序：已 rebase 到 main（含 **0.8.9 → 0.8.10**）後再開／合
+
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -430,3 +438,4 @@ feature/* → 新功能開發
 | 0.8.8 | 2026-10-15 | Graphics P2-J：soft dust ring — 外圈更淡更短震地暈（主環可讀性保留） |
 | 0.8.9 | 2026-10-15 | P1 炸藥 stub：世界拾取＋腳下 AoE（radius 3／dmg 50；無 shop） |
 | 0.8.10 | 2026-10-15 | Fullstack：ε-decay schedule＋learner snapshot export（固定種子回歸保留；唔改 moves） |
+| 0.8.11 | 2026-10-15 | Graphics P2-K：win-phase quiet lighting — 色溫偏冷＋ambient 粒子減速 |

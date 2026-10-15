@@ -66,8 +66,13 @@ export type GameParticles = {
   ringDust: (x: number, z: number) => void;
   /** Advance spark pool one fixed step (legacy 0.016). */
   update: () => void;
-  /** Advance ember + mote ambience from scene clock `time`. Optional breathAmp (~0.12) pulses ember size on title/menu. */
-  updateAmbient: (time: number, breathAmp?: number) => void;
+  /**
+   * Advance ember + mote ambience from scene clock `time`.
+   * Optional breathAmp (~0.12) pulses ember size on title/menu (P1-H).
+   * Optional quietScale (default 1) slows ember rise + mote drift (win-phase P2-K; ~0.55–0.7).
+   * Combat spark `update()` is untouched.
+   */
+  updateAmbient: (time: number, breathAmp?: number, quietScale?: number) => void;
   dispose: () => void;
 };
 
@@ -217,9 +222,24 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
     }
   }
 
-  function updateAmbient(time: number, breathAmp = 0) {
+  // P2-K: accumulate ambient motion clock so quietScale slows drift without jumping.
+  let ambientClock = 0;
+  let lastAmbientWall = 0;
+  let ambientClockReady = false;
+
+  function updateAmbient(time: number, breathAmp = 0, quietScale = 1) {
+    const q = Math.max(0.2, Math.min(1, quietScale));
+    if (!ambientClockReady) {
+      lastAmbientWall = time;
+      ambientClockReady = true;
+    }
+    const dWall = Math.max(0, Math.min(0.1, time - lastAmbientWall));
+    lastAmbientWall = time;
+    ambientClock += dWall * q;
+    const t = ambientClock;
+
     for (let i = 0; i < EMBER_UPDATE_COUNT; i++) {
-      const y = (time * 0.33 + hash(i)) % 1;
+      const y = (t * 0.33 + hash(i)) % 1;
       const ang = hash(i + 2) * Math.PI * 2;
       const rad = (0.08 + hash(i + 4) * 0.32) * (1 - y);
       emberPos[i * 3] = fire.x + Math.cos(ang) * rad;
@@ -229,6 +249,7 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
     emberGeo.attributes.position!.needsUpdate = true;
 
     // P1-H / Research D: gentle ember breath (+10–15% size). Does not touch spark pool.
+    // Breath uses wall `time` so title/menu pulse stays independent of quietScale.
     const amp = Math.max(0, Math.min(0.2, breathAmp));
     if (amp > 0) {
       const wave = 0.5 + 0.5 * Math.sin(time * 1.55);
@@ -240,7 +261,7 @@ export function createParticles(opts: GameParticlesOptions = {}): GameParticles 
     }
 
     for (let i = 0; i < MOTES; i++) {
-      const drift = time * (0.12 + hash(i) * 0.08);
+      const drift = t * (0.12 + hash(i) * 0.08);
       motePos[i * 3] = -10 + ((hash(i) * 20 + Math.sin(drift + moteSeed[i]!) * 0.8) % 20);
       motePos[i * 3 + 1] = 0.25 + ((hash(i + 3) * 3.4 + drift * 0.35) % 3.6);
       motePos[i * 3 + 2] = -16 + ((hash(i + 7) * 22 + Math.cos(drift * 0.7) * 0.6) % 22);

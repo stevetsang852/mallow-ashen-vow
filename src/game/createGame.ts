@@ -170,6 +170,24 @@ export function createGame(
   const keyLight = new THREE.PointLight(0xffe2c4, 10, 10, 2);
   scene.add(keyLight);
 
+  // P2-K win-phase quiet lighting — cooler ambient ~7%; play baselines untouched.
+  const coolRef = new THREE.Color(0x9eb0c8);
+  const baseBg = new THREE.Color(0x2a221c);
+  const baseFog = new THREE.Color(0x3a3128);
+  const baseHemiSky = new THREE.Color(0xf0d7b8);
+  const baseHemiGround = new THREE.Color(0x2c241e);
+  const baseMoon = new THREE.Color(0xd5e0ee);
+  const baseAmbient = new THREE.Color(0x404040);
+  const baseRim = new THREE.Color(0xffc9a0);
+  const quietBg = baseBg.clone().lerp(coolRef, 0.07);
+  const quietFog = baseFog.clone().lerp(coolRef, 0.07);
+  const quietHemiSky = baseHemiSky.clone().lerp(coolRef, 0.07);
+  const quietHemiGround = baseHemiGround.clone().lerp(coolRef, 0.06);
+  const quietMoon = baseMoon.clone().lerp(new THREE.Color(0xb8c8e8), 0.08);
+  const quietAmbient = baseAmbient.clone().lerp(coolRef, 0.07);
+  const quietRim = baseRim.clone().lerp(coolRef, 0.05);
+  let quietBlend = 0;
+
   const stoneTex = makeStoneTexture();
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x6e655c,
@@ -2270,9 +2288,22 @@ export function createGame(
     core.scale.set(1, 0.85 + Math.sin(time * 11) * 0.1, 1);
     tongue.scale.set(1, 0.7 + Math.sin(time * 13) * 0.2, 1);
     
+    // P2-K: win-phase quiet lighting linear lerp (~0.8s); restore baselines when not win.
+    const quietTarget = phase === "win" ? 1 : 0;
+    if (quietBlend < quietTarget) quietBlend = Math.min(quietTarget, quietBlend + dt / 0.8);
+    else if (quietBlend > quietTarget) quietBlend = Math.max(quietTarget, quietBlend - dt / 0.8);
+    (scene.background as THREE.Color).copy(baseBg).lerp(quietBg, quietBlend);
+    (scene.fog as THREE.FogExp2).color.copy(baseFog).lerp(quietFog, quietBlend);
+    hemi.color.copy(baseHemiSky).lerp(quietHemiSky, quietBlend);
+    hemi.groundColor.copy(baseHemiGround).lerp(quietHemiGround, quietBlend);
+    moon.color.copy(baseMoon).lerp(quietMoon, quietBlend);
+    ambientLight.color.copy(baseAmbient).lerp(quietAmbient, quietBlend);
+    rim.color.copy(baseRim).lerp(quietRim, quietBlend);
+
     // Enhanced dynamic lighting
     const lightFlicker = 18 + Math.sin(time * 9) * 4 + Math.sin(time * 23) * 2;
-    bonfireLight.intensity = lightFlicker;
+    // Optional quieter bonfire on win (~12% down); warm hue retained.
+    bonfireLight.intensity = lightFlicker * (1 - quietBlend * 0.12);
     bonfireLight.color.setHSL(0.07, 0.9, 0.5 + Math.sin(time * 5) * 0.05);
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
     syncTorchLight();
@@ -2281,8 +2312,13 @@ export function createGame(
       torchLight.intensity = flick;
     }
 
-    // P1-H: title/menu breath via particles.updateAmbient (spark API untouched)
-    particles.updateAmbient(time, phase === "title" || menuOpen ? 0.12 : 0);
+    // P1-H breath + P2-K quietScale (~0.6 at full win); spark update() untouched
+    const quietScale = 1 - quietBlend * 0.4; // 1 → 0.6
+    particles.updateAmbient(
+      time,
+      phase === "title" || menuOpen ? 0.12 : 0,
+      quietScale,
+    );
     shafts.forEach((mesh, i) => {
       const mat = mesh.material as THREE.MeshBasicMaterial;
       mat.opacity = 0.035 + Math.sin(time * 0.6 + i) * 0.02;
