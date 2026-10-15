@@ -4,7 +4,14 @@ import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
 import { applyCamera, stepCamera } from "@/game/camera";
-import { chooseDukeMove, dukeRecoverSpan, dukeSwingSpan } from "@/game/foes";
+import {
+  chooseDemonIntent,
+  chooseDukeMove,
+  chooseHollowIntent,
+  dukeRecoverSpan,
+  dukeSwingSpan,
+  shouldDukeCommit,
+} from "@/game/ai";
 import { actionEnd, hitWindow, inIFrame, inRecover, inWindup } from "@/game/player";
 import { INITIAL_HUD, type GameApi, type HudSnap, type Phase } from "@/game/hud";
 import {
@@ -18,7 +25,6 @@ import {
   MOVE,
   PILLARS,
   RUN,
-  SAVE_KEY,
   SPAWN,
   STA_MAX,
   STEP,
@@ -39,6 +45,7 @@ import {
   type AutoThinkAction,
 } from "@/game/autoHarness";
 import { createPlayerLearner } from "@/game/playerLearner";
+import { SAVE_SCHEMA, createSaveManager } from "@/game/saveManager";
 
 export type { GameApi, HudSnap, Phase };
 export { INITIAL_HUD };
@@ -195,7 +202,7 @@ export function createGame(
     // Main crack
     const crack = new THREE.Mesh(
       new THREE.BoxGeometry(0.08, 1.5, 0.1),
-      new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1, transparent: true, opacity: 0 }),
     );
     crack.position.set(sx * 2.15, 1.1, GATE_Z + 0.28);
     crack.rotation.z = sx * 0.18;
@@ -206,7 +213,7 @@ export function createGame(
     for (let j = 0; j < 3; j++) {
       const branch = new THREE.Mesh(
         new THREE.BoxGeometry(0.04, 0.4 + hash(j + 10) * 0.3, 0.08),
-        new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+        new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1, transparent: true, opacity: 0 }),
       );
       branch.position.set(
         sx * 2.15 + (j % 2 === 0 ? 0.1 : -0.1) * (1 + j * 0.3),
@@ -639,7 +646,15 @@ export function createGame(
   let simError = "";
   let disposed = false;
 
-  loadSave();
+  const saveMgr = createSaveManager();
+  {
+    const s = saveMgr.load();
+    deaths = s.deaths;
+    clears = s.clears;
+    bestMs = s.bestMs;
+    player.hpMax = s.hpMax;
+    player.hp = player.hpMax;
+  }
 
   const keys = new Set<string>();
   const abort = new AbortController();
@@ -741,40 +756,23 @@ export function createGame(
   }
 
   function save() {
-    try {
-      const data = JSON.stringify({
-        deaths,
-        hpMax: player.hpMax,
-        bestMs,
-        clears,
-      });
-      localStorage.setItem(SAVE_KEY, data);
-    } catch {
-      /* private mode */
-    }
+    saveMgr.write({
+      v: SAVE_SCHEMA,
+      deaths,
+      hpMax: player.hpMax,
+      bestMs,
+      clears,
+    });
   }
 
-  function loadSave() {
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        deaths?: number;
-        hpMax?: number;
-        bestMs?: number | null;
-        clears?: number;
-      };
-      if (typeof parsed.deaths === "number") deaths = parsed.deaths;
-      if (typeof parsed.hpMax === "number") {
-        player.hpMax = Math.min(180, Math.max(100, parsed.hpMax));
-        player.hp = player.hpMax;
-      }
-      if (typeof parsed.bestMs === "number") bestMs = parsed.bestMs;
-      if (typeof parsed.clears === "number") clears = parsed.clears;
-    } catch {
-      /* ignore */
-    }
-  }
+  /** Hit VFX hierarchy multipliers (count / size / life). Does not change moves.ts damage. */
+  const HIT_SPARK_MUL = {
+    light: 1,
+    heavy: 1.6,
+    "stance-break": 2.2,
+  } as const;
+  const SPARK_BASE_SIZE = 0.11;
+  const SPARK_BASE_COUNT = 12;
 
   const SPARK_RGB: Record<string, [number, number, number]> = {
     steel: [0.96, 0.88, 0.72],
@@ -796,8 +794,14 @@ export function createGame(
     dx = 0,
     dz = 0,
     kind: keyof typeof SPARK_RGB = "steel",
+    hierarchyMul = 1,
   ) {
-    const n = power > 1.3 ? 20 : 12;
+    const mul = Math.max(0.5, hierarchyMul);
+    // Preserve legacy power>1.3 → ~20 particles when no hit hierarchy is set.
+    const n = Math.min(
+      SPARKS,
+      Math.round(SPARK_BASE_COUNT * mul * (power > 1.3 && mul <= 1 ? 1.65 : 1)),
+    );
     const rgb = SPARK_RGB[kind];
     for (let i = 0; i < n; i++) {
       const k = sparkCursor % SPARKS;
@@ -805,16 +809,18 @@ export function createGame(
       sparkPos[k * 3] = x + (hash(k + 3) - 0.5) * 0.2;
       sparkPos[k * 3 + 1] = y;
       sparkPos[k * 3 + 2] = z + (hash(k + 7) - 0.5) * 0.2;
-      const spread = (hash(k + sparkCursor) - 0.5) * 3.2;
+      const spread = (hash(k + sparkCursor) - 0.5) * 3.2 * (0.85 + 0.15 * mul);
       const lift = kind === "dust" ? 0.35 : kind === "ash" ? 2.2 : 1.4;
       sparkVel[k * 3] = dx * (2.4 + power) + spread;
       sparkVel[k * 3 + 1] = lift + hash(k + 5) * (kind === "dust" ? 1.2 : 3.2) * power;
-      sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2;
-      sparkLife[k] = (kind === "ash" ? 0.38 : 0.22) + hash(k) * 0.22;
+      sparkVel[k * 3 + 2] = dz * (2.4 + power) + (hash(k + 9) - 0.5) * 3.2 * (0.85 + 0.15 * mul);
+      sparkLife[k] = ((kind === "ash" ? 0.38 : 0.22) + hash(k) * 0.22) * mul;
       sparkCol[k * 3] = rgb[0];
       sparkCol[k * 3 + 1] = rgb[1];
       sparkCol[k * 3 + 2] = rgb[2];
     }
+    const mat = sparks.material as THREE.PointsMaterial;
+    mat.size = Math.max(mat.size, SPARK_BASE_SIZE * mul);
     sparkGeo.attributes.color!.needsUpdate = true;
   }
 
@@ -975,7 +981,7 @@ export function createGame(
     hitstop = Math.max(hitstop, 0.16);
     shake = Math.max(shake, 0.55);
     hitFlash = 1;
-    burst(f.x, 1.1, f.z, 1.8, 0, 0, "pink");
+    burst(f.x, 1.1, f.z, HIT_SPARK_MUL["stance-break"], 0, 0, "pink", HIT_SPARK_MUL["stance-break"]);
     slash(f.x, 1.05, f.z, f.yaw, true);
     clang(true);
     tone(70, 0.22, "sawtooth", 0.06);
@@ -1379,7 +1385,7 @@ export function createGame(
       return;
     }
 
-    if (f.cd <= 0 && (dist < 2.65 || dist > 4.55)) {
+    if (shouldDukeCommit(dist, f.cd)) {
       startDukeMove(f, dist, p2);
       return;
     }
@@ -1490,35 +1496,35 @@ export function createGame(
 
     f.t += dt;
     const threatened = player.act === "attack" && player.actT > 0.06 && player.actT < 0.22 && dist < 2.55;
-    if (threatened && f.cd <= 0) {
-      const side = f.t * 3 > Math.PI ? 1 : -1;
-      f.aimX = (-dz / dist) * side;
-      f.aimZ = (dx / dist) * side;
+    const intent = chooseDemonIntent({
+      dist,
+      cd: f.cd,
+      hp: f.hp,
+      hpMax: f.hpMax,
+      chain: f.chain,
+      threatened,
+      t: f.t,
+    });
+    if (intent.type === "dodge") {
+      f.aimX = (-dz / dist) * intent.side;
+      f.aimZ = (dx / dist) * intent.side;
       f.state = "dodge";
       f.t = 0;
       f.span = 0.28;
       return;
     }
-    if (f.chain > 0 && f.hp < f.hpMax * 0.42 && dist > 2.15 && f.cd <= 0) {
+    if (intent.type === "drink") {
       f.chain = 0;
       f.state = "drink";
       f.t = 0;
       f.swung = false;
       return;
     }
-    if (f.cd <= 0 && dist < 2.05) {
-      f.move = "cleave";
+    if (intent.type === "telegraph") {
+      f.move = intent.move;
       f.state = "telegraph";
       f.t = 0;
-      f.span = 0.38;
-      f.swung = false;
-      return;
-    }
-    if (f.cd <= 0 && dist > 3.15 && dist < 6.5) {
-      f.move = "rush";
-      f.state = "telegraph";
-      f.t = 0;
-      f.span = 0.42;
+      f.span = intent.span;
       f.swung = false;
       return;
     }
@@ -1661,14 +1667,15 @@ export function createGame(
       return;
     }
 
-    if (dist <= f.range && f.cd <= 0) {
+    const hollowIntent = chooseHollowIntent(dist, f.range, f.cd);
+    if (hollowIntent === "telegraph") {
       f.state = "telegraph";
       f.t = 0;
       f.span = f.windup;
       f.move = "cleave";
       return;
     }
-    if (dist > f.range * 0.82) {
+    if (hollowIntent === "chase") {
       const nx = f.x + (dx / dist) * f.speed * dt;
       const nz = f.z + (dz / dist) * f.speed * dt;
       const c = clampWorld(nx, nz, f.r, "north");
@@ -1752,7 +1759,23 @@ export function createGame(
                   f.t = 0;
                 }
               }
-              burst(f.x, 1.05, f.z, heavy ? 1.6 : 1, fx, fz, heavy ? "pink" : "steel");
+              {
+                const sparkMul = broken
+                  ? HIT_SPARK_MUL["stance-break"]
+                  : heavy
+                    ? HIT_SPARK_MUL.heavy
+                    : HIT_SPARK_MUL.light;
+                burst(
+                  f.x,
+                  1.05,
+                  f.z,
+                  sparkMul,
+                  fx,
+                  fz,
+                  broken || heavy ? "pink" : "steel",
+                  sparkMul,
+                );
+              }
               slash(f.x, 1.05, f.z, player.yaw, heavy);
               feel.emit({
                 kind: heavy ? "heavy" : "hit",
@@ -2165,7 +2188,7 @@ export function createGame(
       if (gateOpen) {
         const expand = Math.sin(time * 2 + i) * 0.02 + 0.02;
         crack.scale.x = 1 + expand * clothDrop;
-        crack.material.opacity = Math.min(1, clothDrop * 1.5);
+        (crack.material as THREE.MeshStandardMaterial).opacity = Math.min(1, clothDrop * 1.5);
       }
     });
 
@@ -2235,6 +2258,12 @@ export function createGame(
     }
     sparkGeo.attributes.position!.needsUpdate = true;
     sparkGeo.attributes.color!.needsUpdate = true;
+    {
+      const mat = sparks.material as THREE.PointsMaterial;
+      if (mat.size > SPARK_BASE_SIZE) {
+        mat.size = Math.max(SPARK_BASE_SIZE, mat.size - 0.01);
+      }
+    }
 
     if (shake > 0) shake = Math.max(0, shake - 0.016);
     const tmp = new THREE.Vector3();

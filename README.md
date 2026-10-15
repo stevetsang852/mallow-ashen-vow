@@ -10,16 +10,19 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-12）
+## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.0**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。新功能仍建議開分支再開 PR。
+目前進度在 `main`。版本 **0.7.3**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+
+**重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
 - 戰鬥數字：`src/game/moves.ts`
 - 鏡頭：`src/game/camera.ts`
-- 公爵選招：`src/game/foes.ts`
+- 敵人 AI 決策（灰殼／公爵／紅契）：`src/game/ai.ts`（`foes.ts` 僅 re-export）
 - 玩家動作、無敵、收刀：`src/game/player.ts`
 - 敵人外形：`src/game/enemyMesh.ts`
 - 模擬：`src/game/createGame.ts`
+- CombatFeel／harness／learner：`combatFeel.ts`、`autoHarness.ts`、`playerLearner.ts`
 - 畫面：`src/routes/index.tsx`
 
 電腦按 E 食水回血，R 已取消。出刀前搖有橘色環，重擊環較大。翻滾無敵有淡白環，收刀期間有粉紅環。普通玩家介面不顯示血量數字、撿灰 +數字、倒下次數和本局時間。撿灰有餘燼、擴環和短音。看不懂公爵哪招，只改 `MOVE.duke`。
@@ -69,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.0";
+  export const GAME_VERSION = "0.7.3";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -110,7 +113,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 ```js
 window.__controlsTest.setAuto(true)
 window.__controlsTest.setHarness(true)
-window.__controlsTest.harness()      // { wins, losses, feelTotals, recentRuns, ... }
+window.__controlsTest.harness()      // { wins, losses, winRate, recentWinRate, avgMs, feelTotals, recentRuns, ... }
 window.__controlsTest.learner()      // { wins, losses, epsilon, qStates, topPrefs, ... }
 window.__controlsTest.resetLearner() // 清 Q 表／勝敗（會重新種 dodge／punish prior）
 window.__controlsTest.feelCounts()   // 本局 feel 計數
@@ -136,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.0
+- **版本**：0.7.3（Fullstack：敵人 AI → `ai.ts`＋harness winRate）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.0)
+### 已完成 (0.5.x - 0.7.3)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -153,6 +156,17 @@ npm run dev
 - [x] 公爵第二階段血條（變紅 + 橫幅）
 - [x] 手機操作優化（斬/重分開、滾/鎖加大）
 - [x] 倒下黑屏 + 通關結算延遲
+
+#### 0.5.x Fullstack — CombatFeel + AI harness（已合 main）
+- [x] CombatFeel 適配層（`combatFeel.ts`；唔改 `moves.ts`／Graphics 手感數）
+- [x] AI-vs-AI harness（`autoHarness.ts`；vowdebug「循環」；勝／敗／feel 記錄）
+- [x] Tabular ε-greedy 玩家學習政策（`playerLearner.ts`；toy 測試可測進步）
+- [x] Harness 觀測：`winRate`／`recentWinRate`（近 8 場）／`avgMs`（0.7.3）
+
+#### 0.7.3 - 敵人 AI 抽出
+- [x] 敵人決策純函式 → `src/game/ai.ts`（hollow／duke／demon；createGame 薄接線）
+- [x] `foes.ts` 改為 re-export（相容舊 import）
+- [x] 單元測試：`ai.test.ts`、`autoHarness.test.ts`
 
 #### 0.6.0 - 模型優化
 - [x] 騎士貓頭身比例（1.08,0.92,0.84 → 1.15,0.88,0.82）
@@ -169,6 +183,18 @@ npm run dev
 - [x] 灰殼盾牌（更大尺寸, 損壞劃痕, 金屬材質）
 - [x] 紅契披風（翼膜細節, 骨骼結構, 高 emissive）
 - [x] 燈光效果（環境光, 動態色溫, 強脈動）
+
+#### 0.7.1 - UI／VFX polish
+- [x] 標題粉結錨點（雙線底＋蝴蝶結 silhouette、Start hover 粉邊、og 暗角 ≤0.25）
+- [x] `hud-plate` 統一血／體／瓶／公爵／惡魔／鎖定浮卡邊框
+- [x] 擊中 VFX 層級：輕 1×／重 1.6×／崩架 2.2×（count／size／life；AdditiveBlending）
+- [x] 色板補 `--color-bow`／`--bow-pink`（`#e8a0b8`）
+
+#### 0.7.2 - SaveManager
+- [x] 持久化抽成 `src/game/saveManager.ts`（deaths／hpMax／bestMs／clears）
+- [x] 相容舊 `mallow-ashen-vow-v1` 無 `v` 存檔
+- [x] 單元測試 `saveManager.test.ts`
+- [x] `createGame.ts` 改走 SaveManager；唔改 moves／音效／Graphics
 
 ### 下一步開發（按優先順序）
 
@@ -198,11 +224,15 @@ npm run dev
 
 #### P2 - 技術優化
 5. **代碼重構** (`createGame.ts`)
-   - 拆分 2760 行大檔案
-   - 玩家邏輯 → `player.ts`
-   - 敵人 AI → `ai.ts`
+   - 拆分大檔案（持續）
+   - 玩家邏輯 → `player.ts`（部分已有）
+   - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
    - 粒子系統 → `particles.ts`
    - 音效系統 → `audio.ts`
+
+#### Fullstack 後續（AI／自動遊玩）
+- Harness／learner 已可開循環；下一步可選：更長局數觀測、對公爵／紅契特徵更細的 state bucket、或固定種子回歸腳本（唔改招式傷害）。
+- SaveManager 屬 Game developer，Fullstack 唔動。
 
 6. **性能優化**
    - 減少 Draw Calls
@@ -246,7 +276,8 @@ npm run dev
    - 招式數字統一在 `moves.ts`
    - 鏡頭邏輯在 `camera.ts`
    - 玩家動作在 `player.ts`
-   - 敵人邏輯在 `foes.ts`、`enemyMesh.ts`
+   - 敵人決策在 `ai.ts`（`foes.ts` re-export）；外形在 `enemyMesh.ts`
+   - 持久化在 `saveManager.ts`
 
 ### 分支策略
 
@@ -268,3 +299,6 @@ feature/* → 新功能開發
 | 0.5.4 | 2026-10-14 | Loading bar, routeTree gen |
 | 0.6.0 | 2026-10-14 | 模型優化（頭身比例、劍長度）|
 | 0.7.0 | 2026-10-15 | 火焰/拱門/公爵/盾牌/披風/燈光優化 |
+| 0.7.1 | 2026-10-15 | UI/VFX：標題粉結、hud-plate、擊中 spark 層級 |
+| 0.7.2 | 2026-10-15 | SaveManager 抽取（localStorage 持久化） |
+| 0.7.3 | 2026-10-15 | Fullstack：敵人 AI → `ai.ts`；harness winRate 觀測；README 進度 |

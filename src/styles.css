@@ -11,6 +11,8 @@
   --color-steel: #9aa3b2;
   --color-line: #3a322c;
   --color-cinematic: rgba(12, 10, 9, 0.72);
+  --color-bow: #e8a0b8;
+  --color-bow-pink: #e8a0b8;
   --font-display: "Cinzel", "Songti TC", "PMingLiU", serif;
   --font-sans: "Literata", "Songti TC", "PMingLiU", serif;
   --radius: 0.125rem;
@@ -35,6 +37,120 @@
   :focus-visible {
     outline: 2px solid var(--color-ember);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Shared HUD float-card frame: line border, inner ember hairline, pink corner dots */
+  .hud-plate {
+    position: relative;
+    border: 1px solid var(--color-line);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 32%, transparent);
+    background-color: var(--color-cinematic);
+    background-image:
+      linear-gradient(var(--color-bow), var(--color-bow)),
+      linear-gradient(var(--color-bow), var(--color-bow)),
+      linear-gradient(var(--color-bow), var(--color-bow)),
+      linear-gradient(var(--color-bow), var(--color-bow));
+    background-size: 2px 2px;
+    background-position:
+      3px 3px,
+      calc(100% - 3px) 3px,
+      3px calc(100% - 3px),
+      calc(100% - 3px) calc(100% - 3px);
+    background-repeat: no-repeat;
+  }
+
+  /* Title: dual underline + tiny bow silhouette under 「粉誓」 */
+  .title-bow-accent {
+    position: relative;
+    display: inline-block;
+  }
+
+  .title-bow-accent::after {
+    content: "";
+    display: block;
+    margin-top: 0.35rem;
+    height: 3px;
+    width: 100%;
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--color-bow) 8%,
+        var(--color-bow) 42%,
+        transparent 50%,
+        transparent 50%,
+        var(--color-bow) 58%,
+        var(--color-bow) 92%,
+        transparent 100%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--color-bow) 45%, transparent) 12%,
+        color-mix(in srgb, var(--color-bow) 45%, transparent) 88%,
+        transparent 100%
+      );
+    background-size: 100% 1px, 100% 1px;
+    background-position: 0 0, 0 2px;
+    background-repeat: no-repeat;
+  }
+
+  .title-bow-mark {
+    display: inline-block;
+    width: 0.85rem;
+    height: 0.55rem;
+    margin-left: 0.4rem;
+    vertical-align: 0.55em;
+    position: relative;
+  }
+
+  .title-bow-mark::before,
+  .title-bow-mark::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 0.42rem;
+    height: 0.42rem;
+    border: 1.5px solid var(--color-bow);
+    border-radius: 55% 45% 50% 50% / 60% 55% 45% 40%;
+    box-shadow: 0 0 4px color-mix(in srgb, var(--color-bow) 55%, transparent);
+  }
+
+  .title-bow-mark::before {
+    left: 0;
+    transform: rotate(-28deg);
+  }
+
+  .title-bow-mark::after {
+    right: 0;
+    transform: rotate(28deg);
+  }
+
+  .title-panel {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .title-panel-vignette {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 30% 20%, transparent 35%, rgba(12, 10, 9, 0.55) 100%),
+      url("/og.jpg") center / cover no-repeat;
+    opacity: 0.22;
+  }
+
+  .title-panel > *:not(.title-panel-vignette) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-start-bow:hover:not(:disabled) {
+    box-shadow: 0 0 0 1px var(--color-bow), 0 0 10px color-mix(in srgb, var(--color-bow) 35%, transparent);
   }
 }
 

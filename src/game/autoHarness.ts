@@ -162,6 +162,13 @@ export type HarnessSummary = {
   runs: number;
   wins: number;
   losses: number;
+  /** Finished wins / (wins+losses); null if none decided. */
+  winRate: number | null;
+  /** Win rate over the last `recentWindow` finished runs. */
+  recentWinRate: number | null;
+  recentWindow: number;
+  /** Mean duration ms of finished runs with endedAt. */
+  avgMs: number | null;
   currentId: number | null;
   lastResult: "win" | "loss" | null;
   feelTotals: CombatFeelCounts;
@@ -228,22 +235,46 @@ export function createHarnessSession() {
     return finished;
   }
 
+  const RECENT_WINDOW = 8;
+
+  function rate(w: number, l: number): number | null {
+    const n = w + l;
+    return n > 0 ? Math.round((w / n) * 1000) / 1000 : null;
+  }
+
   function summary(): HarnessSummary {
     let wins = 0;
     let losses = 0;
+    let msSum = 0;
+    let msN = 0;
     for (const r of runs) {
       if (r.result === "win") wins += 1;
       else if (r.result === "loss") losses += 1;
+      if (r.endedAt != null) {
+        msSum += r.endedAt - r.startedAt;
+        msN += 1;
+      }
+    }
+    const recent = runs.slice(-RECENT_WINDOW);
+    let rw = 0;
+    let rl = 0;
+    for (const r of recent) {
+      if (r.result === "win") rw += 1;
+      else if (r.result === "loss") rl += 1;
     }
     return {
       enabled,
       runs: runs.length,
       wins,
       losses,
+      winRate: rate(wins, losses),
+      recentWinRate: rate(rw, rl),
+      recentWindow: RECENT_WINDOW,
+      avgMs: msN > 0 ? Math.round(msSum / msN) : null,
       currentId: current?.id ?? null,
       lastResult: runs.length ? runs[runs.length - 1]!.result : null,
       feelTotals: { ...feelTotals },
-      recentRuns: runs.slice(-8).map((r) => ({
+      recentRuns: recent.map((r) => ({
         id: r.id,
         result: r.result,
         feel: { ...r.feel },
