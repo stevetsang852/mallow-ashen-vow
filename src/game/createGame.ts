@@ -184,14 +184,35 @@ export function createGame(
   cloth.position.set(0, 1.7, GATE_Z + 0.08);
   scene.add(cloth);
   let clothDrop = 0;
+  let clothVelocity = 0; // Physics simulation for cloth
+  // Enhanced cracks with more detail
+  const cracks: THREE.Mesh[] = [];
   for (const sx of [-1, 1]) {
+    // Main crack
     const crack = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 1.3, 0.08),
+      new THREE.BoxGeometry(0.08, 1.5, 0.1),
       new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
     );
     crack.position.set(sx * 2.15, 1.1, GATE_Z + 0.28);
     crack.rotation.z = sx * 0.18;
     scene.add(crack);
+    cracks.push(crack);
+    
+    // Secondary crack branches
+    for (let j = 0; j < 3; j++) {
+      const branch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.4 + hash(j + 10) * 0.3, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }),
+      );
+      branch.position.set(
+        sx * 2.15 + (j % 2 === 0 ? 0.1 : -0.1) * (1 + j * 0.3),
+        0.5 + j * 0.4,
+        GATE_Z + 0.32
+      );
+      branch.rotation.z = sx * (0.18 + j * 0.15);
+      scene.add(branch);
+      cracks.push(branch);
+    }
   }
   const path = new THREE.Mesh(
     new THREE.PlaneGeometry(1.15, 8.2),
@@ -2068,10 +2089,32 @@ export function createGame(
 
     fogMat.opacity = gateOpen ? Math.max(0, fogMat.opacity - 0.02) : 0.38;
     fogWall.visible = fogMat.opacity > 0.02;
-    if (gateOpen) clothDrop = Math.min(1, clothDrop + 0.012);
-    cloth.position.y = 1.7 - clothDrop * 1.35;
-    cloth.rotation.x = clothDrop * 1.15;
-    cloth.rotation.z = clothDrop * 0.35;
+    if (gateOpen) {
+      // Enhanced physics simulation for cloth
+      clothVelocity += 0.002; // Gravity
+      clothVelocity *= 0.95; // Damping
+      clothDrop = Math.min(1, clothDrop + clothVelocity);
+      
+      // Non-linear drop with easing
+      const dropFactor = clothDrop * clothDrop * (3 - 2 * clothDrop); // Smoothstep
+      cloth.position.y = 1.7 - dropFactor * 1.35;
+      
+      // Dynamic rotation based on velocity
+      cloth.rotation.x = dropFactor * 1.15 + Math.sin(time * 3) * clothVelocity * 0.2;
+      cloth.rotation.z = dropFactor * 0.35 + Math.cos(time * 2.5) * clothVelocity * 0.1;
+      
+      // Expand cloth as it drops
+      cloth.scale.set(1 + dropFactor * 0.3, 1, 1 + dropFactor * 0.2);
+    }
+    
+    // Dynamic crack expansion
+    cracks.forEach((crack, i) => {
+      if (gateOpen) {
+        const expand = Math.sin(time * 2 + i) * 0.02 + 0.02;
+        crack.scale.x = 1 + expand * clothDrop;
+        crack.material.opacity = Math.min(1, clothDrop * 1.5);
+      }
+    });
 
     const flick = 0.85 + Math.sin(time * 9) * 0.08 + Math.sin(time * 23) * 0.05;
     flame.scale.set(1, flick, 1);
