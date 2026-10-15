@@ -1996,6 +1996,7 @@ export function createGame(
 
     const speed = Math.hypot(player.vx, player.vz);
     const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
+    if (phase === "play") audio.footstep(moving, dt);
     const blink = player.invuln > 0 && Math.sin(time * 28) > 0;
     playerRig.root.visible = !blink;
     playerRig.root.position.set(player.x, 0, player.z);
@@ -2662,6 +2663,7 @@ export function createGame(
     resetItems(worldPickups, inventory);
     syncItemMeshes();
     runStart = performance.now();
+    audio.startAmbient();
     say("往拱門走。翻滾有短暫無敵。");
     emit(true);
   }
@@ -2672,6 +2674,7 @@ export function createGame(
     phase = "play";
     harness.onPhase("play");
     runStart = performance.now();
+    audio.startAmbient();
     say("火芯把你拉回來了");
     emit(true);
   }
@@ -2686,6 +2689,7 @@ export function createGame(
     phase = "play";
     harness.onPhase("play");
     runStart = performance.now();
+    audio.startAmbient();
     emit(true);
   }
 

@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.8.3**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.4**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.3";
+  export const GAME_VERSION = "0.8.4";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -96,7 +96,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 1. 自己連續打公爵五次。若有一次不知道死在哪招，就把那招的前搖再拉長，不要加新敵人。
 2. 招式數字已抽到 `src/game/moves.ts`。模擬仍在 `createGame.ts`。再拆時才分玩家、敵人、鏡頭。
-3. 音效在 `src/game/audio.ts`（WebAudio 合成）。第一刀會自動開聲，標題的靜音按鈕仍可用。環境／腳步尚未做。
+3. 音效在 `src/game/audio.ts`（WebAudio 合成）。第一刀會自動開聲，標題的靜音按鈕仍可用。環境風／火床＋腳步已接（無 BGM）。
 
 
 ## 隱藏測試通道
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.3（P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag）
+- **版本**：0.8.4（Fullstack P3：ambient wind／fire beds＋腳步；mute 仍有效；無 BGM）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.8.3)
+### 已完成 (0.5.x - 0.8.4)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -256,6 +256,12 @@ npm run dev
 - [x] HUD：徽／片 flag＋靠近提示；**暫無 shop UI**；唔擴 SaveManager schema
 - [x] 單元測試 `items.test.ts`（collect／flag／range／reset）
 
+#### 0.8.4 - Ambient／footstep beds（P3）
+- [x] `audio.ts`：wind＋fire **loop stubs**（`startAmbient`／`stopAmbient`；mute 會 duck）
+- [x] 移動腳步（material-agnostic cadence；`footstep(moving01, dt)`）
+- [x] `createGame` 薄接線：進 play 開 ambient；draw 打 footstep
+- [x] 單元測試擴充；**無 BGM**；唔動 moves／deflect／particles／Save／Graphics／items
+
 ### 下一步開發（按優先順序）
 
 #### P0 - 戰鬥深度
@@ -289,7 +295,7 @@ npm run dev
    - 玩家邏輯 → `player.ts`（部分已有）
    - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
    - ~~粒子系統 → `particles.ts`~~（0.7.8 spark；**0.8.1** 環境 ember／mote 已抽取）
-   - ~~音效系統 → `audio.ts`~~（0.7.5 已完成戰鬥合成音抽取；環境／腳步見 P3）
+   - ~~音效系統 → `audio.ts`~~（0.7.5 戰鬥合成；**0.8.4** ambient／腳步 beds）
 
 #### Fullstack 後續（AI／自動遊玩）
 - Harness／learner 已可開循環；下一步可選：更長局數觀測、對公爵／紅契特徵更細的 state bucket、或固定種子回歸腳本（唔改招式傷害）。
@@ -302,11 +308,11 @@ npm run dev
    - LOD 系統
 
 #### P3 - 體驗提升
-7. **音效優化** (`audio.ts`；戰鬥合成已於 0.7.5 抽取；**環境／腳步仍待做**)
-   - 環境音（風聲、火焰聲）— 尚未實作
-   - 腳步聲（地面材質）— 尚未實作
+7. **音效優化** (`audio.ts`；戰鬥合成 0.7.5；**ambient／腳步 0.8.4**)
+   - ~~環境音（風聲、火焰聲）~~ **已完成（0.8.4 loop stubs）**
+   - ~~腳步聲~~ **已完成（0.8.4；material-agnostic；材質分化仍可後續）**
    - 武器揮舞聲（可擴充現有 tone／noise）
-   - 動態戰鬥 BGM
+   - 動態戰鬥 BGM — 尚未做
 
 8. **UI/UX** (`hud.ts`)
    - 連擊數顯示
@@ -374,3 +380,4 @@ feature/* → 新功能開發
 | 0.8.1 | 2026-10-15 | Fullstack：環境 ember／mote → particles.ts（spark 倍數不變） |
 | 0.8.2 | 2026-10-15 | Graphics P1-H：`--color-bow` 統一 title＋HUD；title／ember「呼吸」pulse |
 | 0.8.3 | 2026-10-15 | P1 道具 stub：ash-token／flask-shard 世界拾取＋inventory flag（無 shop） |
+| 0.8.4 | 2026-10-15 | Fullstack P3：ambient wind／fire beds＋腳步（mute 有效；無 BGM） |
