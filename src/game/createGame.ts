@@ -1227,8 +1227,7 @@ export function createGame(
       player.combo = 0;
     }
     swingHits = new Set();
-    audio.tone(kind === "heavy" ? 120 : 196, 0.1, "sawtooth", 0.035);
-    audio.noise(0.04, kind === "heavy" ? 0.06 : 0.035);
+    audio.swing(kind === "heavy");
   }
 
   function tryDodge() {
