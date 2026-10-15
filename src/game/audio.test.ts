@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createAudio } from "./audio.ts";
+import {
+  AMBIENT_FIRE_GAIN,
+  AMBIENT_WIND_GAIN,
+  createAudio,
+  FOOTSTEP_MOVE_THRESHOLD,
+  FOOTSTEP_WALK_INTERVAL,
+} from "./audio.ts";
 
 type Call = { name: string; args: unknown[] };
 
@@ -31,7 +37,11 @@ function mockContext() {
 
   class MockGain {
     gain = {
-      setValueAtTime: (v: number, t: number) => record("gain.set", v, t),
+      value: 0,
+      setValueAtTime: (v: number, t: number) => {
+        this.gain.value = v;
+        record("gain.set", v, t);
+      },
       exponentialRampToValueAtTime: (v: number, t: number) => record("gain.ramp", v, t),
     };
     connect(next: unknown) {
@@ -51,12 +61,16 @@ function mockContext() {
 
   class MockBufSrc {
     buffer: AudioBuffer | null = null;
+    loop = false;
     connect(next: unknown) {
       record("buf.connect");
       return next as { connect: (d: unknown) => unknown };
     }
     start(t: number) {
       record("buf.start", t);
+    }
+    stop(t?: number) {
+      record("buf.stop", t ?? 0);
     }
   }
 
@@ -162,6 +176,59 @@ describe("createAudio", () => {
     a.tone(100, 0.1, "sine", 0.05);
     a.unlock();
     a.clang(true);
+    a.startAmbient();
+    a.footstep(1, 1);
     assert.equal(a.isMuted(), false);
+    assert.equal(a.isAmbientOn(), true);
+  });
+
+  it("startAmbient loops wind+fire beds and mute ducks them", () => {
+    const { ctx, calls } = mockContext();
+    const a = createAudio({ context: ctx, muted: false });
+    a.startAmbient();
+    assert.equal(a.isAmbientOn(), true);
+    const bufStarts = calls.filter((c) => c.name === "buf.start");
+    assert.ok(bufStarts.length >= 2, "wind + fire loop starts");
+    // Unmuted beds should request wind/fire levels at some point
+    const levels = calls
+      .filter((c) => c.name === "gain.set")
+      .map((c) => c.args[0] as number);
+    assert.ok(levels.some((v) => Math.abs(v - AMBIENT_WIND_GAIN) < 1e-9));
+    assert.ok(levels.some((v) => Math.abs(v - AMBIENT_FIRE_GAIN) < 1e-9));
+
+    const beforeMute = calls.length;
+    a.setMuted(true);
+    const afterMute = calls.slice(beforeMute).filter((c) => c.name === "gain.set");
+    assert.ok(afterMute.some((c) => (c.args[0] as number) <= 0.001));
+    // Combat stays silent while muted
+    const n = calls.length;
+    a.clang(false);
+    assert.equal(calls.length, n);
+  });
+
+  it("footstep fires after cadence when moving; skips when still or muted", () => {
+    const { ctx, calls } = mockContext();
+    const a = createAudio({ context: ctx, muted: false });
+    a.footstep(0, FOOTSTEP_WALK_INTERVAL);
+    assert.equal(calls.filter((c) => c.name === "createBufferSource").length, 0);
+
+    a.footstep(0.5, FOOTSTEP_WALK_INTERVAL);
+    assert.ok(calls.some((c) => c.name === "createBufferSource"));
+    assert.ok(calls.some((c) => c.name === "createOscillator"));
+
+    const n = calls.length;
+    a.setMuted(true);
+    a.footstep(1, FOOTSTEP_WALK_INTERVAL);
+    assert.equal(calls.length, n);
+    assert.ok(FOOTSTEP_MOVE_THRESHOLD > 0);
+  });
+
+  it("stopAmbient clears wanted flag and stops beds", () => {
+    const { ctx, calls } = mockContext();
+    const a = createAudio({ context: ctx, muted: false });
+    a.startAmbient();
+    a.stopAmbient();
+    assert.equal(a.isAmbientOn(), false);
+    assert.ok(calls.some((c) => c.name === "buf.stop"));
   });
 });
