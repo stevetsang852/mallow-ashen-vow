@@ -310,52 +310,6 @@ export function createGame(
   tongue.position.set(FIRE.x + 0.05, 0.55, FIRE.z);
   scene.add(flame, core, tongue);
 
-  const EMBER_COUNT = 28; // Increased from 18 for more embers
-  const emberPos = new Float32Array(EMBER_COUNT * 3);
-  const emberGeo = new THREE.BufferGeometry();
-  emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
-  const embers = new THREE.Points(
-    emberGeo,
-    new THREE.PointsMaterial({
-      color: 0xe85d04,
-      size: 0.065, // Slightly larger
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
-  );
-  scene.add(embers);
-
-  const MOTES = 96; // Increased from 72 for more atmospheric particles
-  const motePos = new Float32Array(MOTES * 3);
-  const moteCol = new Float32Array(MOTES * 3);
-  const moteSeed = new Float32Array(MOTES);
-  for (let i = 0; i < MOTES; i++) {
-    motePos[i * 3] = -10 + hash(i) * 20;
-    motePos[i * 3 + 1] = 0.3 + hash(i + 3) * 3.4;
-    motePos[i * 3 + 2] = -16 + hash(i + 7) * 22;
-    moteSeed[i] = hash(i + 11) * Math.PI * 2;
-    const warm = hash(i + 13) > 0.45;
-    moteCol[i * 3] = warm ? 1 : 0.78;
-    moteCol[i * 3 + 1] = warm ? 0.62 : 0.7;
-    moteCol[i * 3 + 2] = warm ? 0.28 : 0.62;
-  }
-  const moteGeo = new THREE.BufferGeometry();
-  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
-  moteGeo.setAttribute("color", new THREE.BufferAttribute(moteCol, 3));
-  const motes = new THREE.Points(
-    moteGeo,
-    new THREE.PointsMaterial({
-      size: 0.07,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.55,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
-  );
-  scene.add(motes);
-
   const shaftMat = new THREE.MeshBasicMaterial({
     color: 0xf3d7b0,
     transparent: true,
@@ -374,7 +328,7 @@ export function createGame(
   });
 
   const particles = createParticles();
-  scene.add(particles.points);
+  scene.add(particles.points, particles.embers, particles.motes);
   const dustRing = new THREE.Mesh(
     new THREE.RingGeometry(0.35, 0.58, 36),
     new THREE.MeshBasicMaterial({
@@ -2156,23 +2110,7 @@ export function createGame(
     bonfireLight.color.setHSL(0.07, 0.9, 0.5 + Math.sin(time * 5) * 0.05);
     keyLight.position.set(player.x + 1.1, 2.3, player.z + 1.4);
 
-    for (let i = 0; i < 18; i++) {
-      const y = (time * 0.33 + hash(i)) % 1;
-      const ang = hash(i + 2) * Math.PI * 2;
-      const rad = (0.08 + hash(i + 4) * 0.32) * (1 - y);
-      emberPos[i * 3] = FIRE.x + Math.cos(ang) * rad;
-      emberPos[i * 3 + 1] = 0.2 + y * 1.25;
-      emberPos[i * 3 + 2] = FIRE.z + Math.sin(ang) * rad;
-    }
-    emberGeo.attributes.position!.needsUpdate = true;
-
-    for (let i = 0; i < MOTES; i++) {
-      const drift = time * (0.12 + hash(i) * 0.08);
-      motePos[i * 3] = -10 + ((hash(i) * 20 + Math.sin(drift + moteSeed[i]) * 0.8) % 20);
-      motePos[i * 3 + 1] = 0.25 + ((hash(i + 3) * 3.4 + drift * 0.35) % 3.6);
-      motePos[i * 3 + 2] = -16 + ((hash(i + 7) * 22 + Math.cos(drift * 0.7) * 0.6) % 22);
-    }
-    moteGeo.attributes.position!.needsUpdate = true;
+    particles.updateAmbient(time);
     shafts.forEach((mesh, i) => {
       const mat = mesh.material as THREE.MeshBasicMaterial;
       mat.opacity = 0.035 + Math.sin(time * 0.6 + i) * 0.02;

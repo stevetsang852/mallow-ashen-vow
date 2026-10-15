@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.9**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.1**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.9";
+  export const GAME_VERSION = "0.8.1";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.9（Graphics P1-G：鎖定菱形細線＋中心粉點＋punish 外圈 cue）
+- **版本**：0.8.1（Fullstack：環境 ember／mote → `particles.ts`）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.9)
+### 已完成 (0.5.x - 0.8.1)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -224,6 +224,7 @@ npm run dev
 - [x] `HIT_SPARK_MUL`／base size／count 原數鎖定（唔改 spark 倍數／moves feel）
 - [x] 單元測試 `particles.test.ts`
 - [x] `createGame.ts` 薄接線；環境 ember／mote 仍在 createGame；唔動 Graphics／Save／audio／AI
+
 #### 0.7.9 - 鎖定菱形＋「可打」優雅化（Research P1-G）
 - [x] 鎖定菱形：細線邊＋中心粉點（唔擋判定；raycast 關閉）
 - [x] punish／收招窗：外圈 1.0→1.08 ping-pong；平時外圈隱藏
@@ -236,6 +237,12 @@ npm run dev
 - [x] 失敗（逾窗仍格擋）：沿用普通格擋（18% chip＋架勢）
 - [x] 純函式：`player.ts`（`resolveGuardHit`）／`foes.ts`（`applyDeflectBounce`／`timeUntilFoeHit`）；`createGame` 只接線
 - [x] 單元測試：`player.deflect.test.ts`
+
+#### 0.8.1 - Ambient particles extract
+- [x] 環境 ember／mote Points 抽入 `src/game/particles.ts`（`embers`／`motes`／`updateAmbient`）
+- [x] 視覺常數鎖定：EMBER 28／update 18、MOTES 96、色／size／opacity 原數
+- [x] 戰鬥 spark `HIT_SPARK_MUL` 不變；`createGame` 薄接線
+- [x] 單元測試擴充 ambient lock；唔動 moves／Graphics／Save／audio／AI／deflect
 
 ### 下一步開發（按優先順序）
 
@@ -268,7 +275,7 @@ npm run dev
    - 拆分大檔案（持續）
    - 玩家邏輯 → `player.ts`（部分已有）
    - ~~敵人 AI → `ai.ts`~~ **已完成（0.7.3）**；模擬／命中仍在 createGame
-   - ~~粒子系統 → `particles.ts`~~（0.7.8 已完成戰鬥 spark 池抽取；環境 ember／mote 仍可後續）
+   - ~~粒子系統 → `particles.ts`~~（0.7.8 spark；**0.8.1** 環境 ember／mote 已抽取）
    - ~~音效系統 → `audio.ts`~~（0.7.5 已完成戰鬥合成音抽取；環境／腳步見 P3）
 
 #### Fullstack 後續（AI／自動遊玩）
@@ -351,3 +358,4 @@ feature/* → 新功能開發
 | 0.7.8 | 2026-10-15 | Fullstack：戰鬥 spark 池 → particles.ts（唔改倍數） |
 | 0.7.9 | 2026-10-15 | Graphics P1-G：鎖定菱形細線＋中心粉點＋punish 外圈 cue |
 | 0.8.0 | 2026-10-15 | P0 招架／Deflect（0.2s 精確格擋窗、彈開＋硬直） |
+| 0.8.1 | 2026-10-15 | Fullstack：環境 ember／mote → particles.ts（spark 倍數不變） |
