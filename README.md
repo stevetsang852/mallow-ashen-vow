@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-15）
 
-目前進度在 `main`。版本 **0.7.5**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.7.6**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
 
@@ -72,7 +72,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.7.5";
+  export const GAME_VERSION = "0.7.6";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -139,11 +139,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.7.5（Audio：戰鬥 WebAudio → `audio.ts`）
+- **版本**：0.7.6（Graphics P1-F：Boss 橫幅／二階段 pulldown）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 
-### 已完成 (0.5.x - 0.7.5)
+### 已完成 (0.5.x - 0.7.6)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -207,6 +207,11 @@ npm run dev
 - [x] 環境音／腳步 stub／TODO（未實作 beds）
 - [x] 單元測試 `audio.test.ts`
 - [x] `createGame.ts` 薄接線；唔改 moves feel／Graphics／SaveManager／AI
+
+#### 0.7.6 - Boss 橫幅／二階段 pulldown（Research P1-F）
+- [x] Boss banner：字距＋opacity 0→1（200ms CSS）
+- [x] 二階段血條底極淡紅脈動（CSS）；**唔**加全屏閃白
+- [x] 唔動 moves feel／SaveManager／audio API／AI／particles spark 倍數
 
 ### 下一步開發（按優先順序）
 
@@ -317,3 +322,4 @@ feature/* → 新功能開發
 | 0.7.3 | 2026-10-15 | Fullstack：敵人 AI → `ai.ts`；harness winRate 觀測；README 進度 |
 | 0.7.4 | 2026-10-15 | Graphics P1-E：死亡／通關卡片電影感（ember sweep、深灰／微金、clears／best） |
 | 0.7.5 | 2026-10-15 | Audio 抽取（WebAudio 戰鬥合成音 → audio.ts） |
+| 0.7.6 | 2026-10-15 | Graphics P1-F：Boss 橫幅／二階段 pulldown（字距＋opacity、條底紅脈動） |
