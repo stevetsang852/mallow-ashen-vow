@@ -274,8 +274,8 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
 
 export function makeDuke(): KnightRig {
   const opts: KnightOpts = {
-    fur: 0x1a1210,
-    armor: 0x2a1a16,
+    fur: 0x0a0806,
+    armor: 0x1a1210,
     bow: false,
     helm: false,
     cape: true,
@@ -285,81 +285,148 @@ export function makeDuke(): KnightRig {
   };
   const rig = makeKnight(opts);
 
-  // Massive irregular ash-beast body
+  // Massive irregular ash-beast body - more layers
   rig.bob.traverse((o) => {
     if (o instanceof THREE.Mesh && (o.geometry instanceof THREE.BoxGeometry || o.geometry instanceof THREE.CylinderGeometry)) {
       o.visible = false;
     }
   });
 
-  // Duke height increase: +0.5 units (was 0.42, now 0.92)
-  const bulk = new THREE.Mesh(new THREE.SphereGeometry(0.92, 14, 10), std(0x1c1410, 0.75, 0.15));
-  bulk.scale.set(1.15, 0.95, 1.05);
-  bulk.position.y = 0.82;
-  bulk.material.emissive.setHex(0xe85d04);
-  bulk.material.emissiveIntensity = 0.45;
-  rig.bob.add(bulk);
+  // Multi-layered bulk body with crack glow
+  for (let layer = 0; layer < 3; layer++) {
+    const bulk = new THREE.Mesh(
+      new THREE.SphereGeometry(0.92 - layer * 0.08, 14, 10),
+      std(0x1c1410 - layer * 0x050505, 0.75, 0.15),
+    );
+    bulk.scale.set(1.15 + layer * 0.05, 0.95 - layer * 0.03, 1.05);
+    bulk.position.y = 0.82 + layer * 0.06;
+    bulk.material.emissive.setHex(0xe85d04);
+    bulk.material.emissiveIntensity = 0.35 - layer * 0.08;
+    rig.bob.add(bulk);
+  }
 
-  // Duke shoulder pads increase: 20% larger
-  // Add shoulder pads as separate boxes
-  const shoulderMat = std(0x1c1410, 0.75, 0.15);
-  shoulderMat.emissive.setHex(0xe85d04);
-  shoulderMat.emissiveIntensity = 0.45;
-  
-  const leftShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.14), shoulderMat);
-  leftShoulder.position.set(-0.25, 0.95, 0.05);
-  rig.bob.add(leftShoulder);
-  
-  const rightShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.14), shoulderMat);
-  rightShoulder.position.set(0.25, 0.95, 0.05);
-  rig.bob.add(rightShoulder);
-
-  // Large horns and spikes
+  // Massive jagged shoulder pads
   for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.55, 6), std(0x0c0806, 0.4, 0.6));
-    horn.position.set(sx * 0.22, 0.48, -0.04);
-    horn.rotation.z = sx * -0.7;
+    const shoulderMat = std(0x1c1410, 0.75, 0.15);
+    shoulderMat.emissive.setHex(0xe85d04);
+    shoulderMat.emissiveIntensity = 0.5;
+    
+    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.18), shoulderMat);
+    shoulder.position.set(sx * 0.3, 1.0, 0.08);
+    shoulder.rotation.z = sx * 0.15;
+    rig.bob.add(shoulder);
+    
+    // Extra spikes on shoulders
+    for (let i = 0; i < 3; i++) {
+      const spike = new THREE.Mesh(
+        new THREE.ConeGeometry(0.035, 0.18, 5),
+        std(0x0c0806, 0.5, 0.5),
+      );
+      spike.position.set(sx * (0.28 + i * 0.06), 1.12, 0.05);
+      spike.rotation.z = sx * 0.3;
+      rig.bob.add(spike);
+    }
+  }
+
+  // Massive asymmetric horns
+  for (let si = 0; si < 2; si++) {
+    const sx = si === 0 ? -1 : 1;
+    const horn = new THREE.Mesh(
+      new THREE.ConeGeometry(0.08 - si * 0.015, 0.65 + si * 0.1, 6),
+      std(0x0c0806, 0.4, 0.6),
+    );
+    horn.position.set(sx * (0.22 + si * 0.04), 0.52, -0.04);
+    horn.rotation.z = sx * (0.6 + si * 0.15);
     rig.head.add(horn);
   }
-  addSpikes(rig.bob, 9, 0x1a100c, 1.2);
-  addTentacles(rig.bob, 6, 0x1c1410);
+  
+  // Extra crown spikes
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI - Math.PI * 0.5;
+    const spike = new THREE.Mesh(
+      new THREE.ConeGeometry(0.025, 0.25, 4),
+      std(0x0c0806, 0.5, 0.5),
+    );
+    spike.position.set(Math.cos(angle) * 0.18, 0.55 + Math.sin(angle) * 0.05, -0.08);
+    spike.rotation.z = Math.sin(angle) * 0.4;
+    rig.head.add(spike);
+  }
+  
+  addSpikes(rig.bob, 12, 0x1a100c, 1.4);
+  addTentacles(rig.bob, 8, 0x1c1410);
   addBones(rig.bob);
 
-  // Oversized glowing weapon
-  rig.weapon.scale.set(1.35, 1.55, 1.2);
+  // Oversized glowing greatsword with lava cracks
+  rig.weapon.scale.set(1.5, 1.8, 1.3);
   const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
   if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
     blade.material.emissive.setHex(0xff7a32);
-    blade.material.emissiveIntensity = 0.85;
+    blade.material.emissiveIntensity = 1.0;
+    
+    // Lava cracks on blade
+    for (let i = 0; i < 6; i++) {
+      const crack = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.12 + hash(i + 200) * 0.08, 0.01),
+        new THREE.MeshStandardMaterial({
+          color: 0xff4d2e,
+          emissive: 0xff4d2e,
+          emissiveIntensity: 1.2,
+        }),
+      );
+      crack.position.set(
+        (hash(i + 210) - 0.5) * 0.15,
+        -0.3 + i * 0.12,
+        0.06,
+      );
+      crack.rotation.z = (hash(i + 220) - 0.5) * 0.3;
+      blade.add(crack);
+    }
   }
 
   // Phase 2 glow: enhanced eyes and chest emission
-  // Increase eye glow intensity for phase 2
-  rig.eyeMat.emissiveIntensity = 1.2; // Increased from default
+  rig.eyeMat.emissiveIntensity = 1.4;
   
-  // Add chest glow indicator (visible in phase 2)
+  // Chest glow indicator (visible in phase 2)
   const chestGlow = new THREE.Mesh(
-    new THREE.SphereGeometry(0.15, 8, 6),
+    new THREE.SphereGeometry(0.18, 8, 6),
     new THREE.MeshStandardMaterial({
       color: 0xff4d2e,
       emissive: 0xff4d2e,
-      emissiveIntensity: 0.8,
+      emissiveIntensity: 1.0,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.7,
     }),
   );
-  chestGlow.position.set(0, 0.85, 0.25);
+  chestGlow.position.set(0, 0.88, 0.28);
   chestGlow.name = "chestGlow";
   rig.bob.add(chestGlow);
+  
+  // Extra glow points on body
+  for (let i = 0; i < 8; i++) {
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 6, 4),
+      new THREE.MeshStandardMaterial({
+        color: 0xff4d2e,
+        emissive: 0xff4d2e,
+        emissiveIntensity: 0.8,
+      }),
+    );
+    glow.position.set(
+      (hash(i + 300) - 0.5) * 0.4,
+      0.5 + hash(i + 310) * 0.5,
+      0.2 + hash(i + 320) * 0.1,
+    );
+    rig.bob.add(glow);
+  }
 
-  rig.root.scale.set(1.7, 2.05, 1.7);
+  rig.root.scale.set(1.75, 2.15, 1.75);
   return rig;
 }
 
 export function makeDemon(): KnightRig {
   const opts: KnightOpts = {
-    fur: 0x2a0c14,
-    armor: 0x3a1018,
+    fur: 0x1a080c,
+    armor: 0x2a1018,
     bow: false,
     helm: false,
     cape: false,
@@ -369,85 +436,154 @@ export function makeDemon(): KnightRig {
   };
   const rig = makeKnight(opts);
 
-  // Slim demonic form with wings and claws
+  // Slim, twisted demonic form
   rig.bob.traverse((o) => {
     if (o instanceof THREE.Mesh && o.geometry instanceof THREE.BoxGeometry) {
       o.visible = false;
     }
   });
+  
+  rig.root.scale.setScalar(0.95); // Slightly smaller, more agile
 
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), std(0x2a0c12, 0.85, 0.08));
-  body.scale.set(0.9, 1.05, 0.85);
-  body.position.y = 0.75;
-  body.material.emissive.setHex(0xff2430);
-  body.material.emissiveIntensity = 0.3;
+  // Twisted body with red glow
+  const bodyMat = std(0x2a0c12, 0.88, 0.06);
+  bodyMat.emissive.setHex(0xff2430);
+  bodyMat.emissiveIntensity = 0.35;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), bodyMat);
+  body.scale.set(0.75, 1.15, 0.75); // Taller, thinner
+  body.position.y = 0.78;
   rig.bob.add(body);
-
-  // Large horns
-  for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.42, 5), std(0x1a080c, 0.5, 0.25));
-    horn.position.set(sx * 0.16, 0.38, 0.02);
-    horn.rotation.z = sx * -0.55;
-    rig.head.add(horn);
+  
+  // Red glow cracks on body
+  for (let i = 0; i < 4; i++) {
+    const crack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.01, 0.12 + hash(i + 400) * 0.06, 0.01),
+      new THREE.MeshStandardMaterial({
+        color: 0xff2430,
+        emissive: 0xff2430,
+        emissiveIntensity: 0.9,
+      }),
+    );
+    crack.position.set(
+      (hash(i + 410) - 0.5) * 0.2,
+      0.5 + hash(i + 420) * 0.4,
+      0.18 + hash(i + 430) * 0.06,
+    );
+    crack.rotation.z = (hash(i + 440) - 0.5) * 0.6;
+    rig.bob.add(crack);
   }
 
-  // Bat-like wings with more detail
+  // Curved menacing horns
   for (const sx of [-1, 1]) {
-    // Main wing
-    const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.95, 3, 4), std(0x3a1018, 0.85, 0.04));
-    wing.position.set(sx * 0.4, 0.98, -0.1);
-    wing.rotation.y = sx * 0.75;
-    wing.rotation.z = sx * -0.28;
+    const horn = new THREE.Mesh(
+      new THREE.ConeGeometry(0.045, 0.48, 5),
+      std(0x1a080c, 0.5, 0.25),
+    );
+    horn.position.set(sx * 0.14, 0.42, 0.02);
+    horn.rotation.z = sx * -0.65;
+    rig.head.add(horn);
+    
+    // Extra small horns
+    const smallHorn = new THREE.Mesh(
+      new THREE.ConeGeometry(0.02, 0.2, 4),
+      std(0x0a0408, 0.6, 0.3),
+    );
+    smallHorn.position.set(sx * 0.2, 0.35, -0.02);
+    smallHorn.rotation.z = sx * -0.4;
+    rig.head.add(smallHorn);
+  }
+
+  // Large bat-like wings with membrane
+  for (const sx of [-1, 1]) {
+    // Main wing frame
+    const wing = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.85, 1.05, 4, 5),
+      std(0x2a0c12, 0.9, 0.03),
+    );
+    wing.position.set(sx * 0.45, 0.95, -0.12);
+    wing.rotation.y = sx * 0.85;
+    wing.rotation.z = sx * -0.32;
     wing.material.side = THREE.DoubleSide;
     wing.material.emissive.setHex(0xff2430);
-    wing.material.emissiveIntensity = 0.25;
+    wing.material.emissiveIntensity = 0.18;
     rig.bob.add(wing);
     
-    // Wing membrane (inner part)
+    // Inner membrane
     const membrane = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.55, 0.75, 2, 3),
+      new THREE.PlaneGeometry(0.6, 0.8, 3, 4),
       new THREE.MeshStandardMaterial({
-        color: 0x2a0c12,
+        color: 0x1a080c,
         roughness: 0.95,
         metalness: 0.02,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.8,
       }),
     );
-    membrane.position.set(sx * 0.38, 0.95, -0.06);
-    membrane.rotation.y = sx * 0.65;
-    membrane.rotation.z = sx * -0.2;
+    membrane.position.set(sx * 0.42, 0.92, -0.08);
+    membrane.rotation.y = sx * 0.7;
+    membrane.rotation.z = sx * -0.25;
     rig.bob.add(membrane);
     
-    // Wing bones (structural detail)
-    for (let i = 0; i < 3; i++) {
+    // Wing bones
+    for (let i = 0; i < 4; i++) {
       const bone = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.008, 0.006, 0.5 + i * 0.1, 4),
-        std(0x1a080c, 0.7, 0.1),
+        new THREE.CylinderGeometry(0.007, 0.005, 0.55 + i * 0.08, 4),
+        std(0x0a0408, 0.75, 0.1),
       );
       bone.position.set(
-        sx * (0.25 + i * 0.12),
-        0.85 + i * 0.15,
-        -0.08
+        sx * (0.28 + i * 0.14),
+        0.82 + i * 0.14,
+        -0.1,
       );
-      bone.rotation.z = sx * (0.3 + i * 0.15);
+      bone.rotation.z = sx * (0.35 + i * 0.12);
       rig.bob.add(bone);
     }
   }
 
+  // Sharp claws
   addClaws(rig.bob, -1);
   addClaws(rig.bob, 1);
-
-  // Curved glowing blade
-  const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
-  if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
-    blade.material.color.setHex(0x8a2430);
-    blade.material.emissive.setHex(0xff2430);
-    blade.material.emissiveIntensity = 0.75;
-    blade.scale.set(0.55, 0.7, 0.8);
+  
+  // Floating bone ornaments
+  for (let i = 0; i < 5; i++) {
+    const bone = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.012, 0.15, 3, 4),
+      std(0x3a1a1c, 0.7, 0.08),
+    );
+    bone.position.set(
+      (hash(i + 500) - 0.5) * 0.35,
+      0.6 + hash(i + 510) * 0.5,
+      (hash(i + 520) - 0.5) * 0.2,
+    );
+    bone.rotation.z = (hash(i + 530) - 0.5) * 0.8;
+    rig.bob.add(bone);
   }
 
-  rig.root.scale.setScalar(1.08);
+  // Curved glowing scythe blade
+  const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
+  if (blade && blade instanceof THREE.Mesh && blade.material instanceof THREE.MeshStandardMaterial) {
+    blade.material.color.setHex(0x6a1420);
+    blade.material.emissive.setHex(0xff2430);
+    blade.material.emissiveIntensity = 0.9;
+    blade.scale.set(0.45, 0.85, 0.7);
+    
+    // Crescent shape enhancement
+    for (let i = 0; i < 3; i++) {
+      const shard = new THREE.Mesh(
+        new THREE.ConeGeometry(0.02, 0.1, 4),
+        new THREE.MeshStandardMaterial({
+          color: 0xff2430,
+          emissive: 0xff2430,
+          emissiveIntensity: 1.0,
+        }),
+      );
+      shard.position.set(0.04, -0.15 + i * 0.08, 0.05);
+      shard.rotation.z = 0.3;
+      blade.add(shard);
+    }
+  }
+
+  rig.root.scale.setScalar(1.05);
   return rig;
 }
