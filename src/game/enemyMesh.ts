@@ -15,21 +15,48 @@ function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe
   const mat = std(baseColor, 0.72, 0.38);
   mat.emissive.setHex(emissive);
   mat.emissiveIntensity = 0.18;
-  // Layered plates with cracks
-  for (let i = 0; i < 5; i++) {
-    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.24 - i * 0.028, 12, 8), mat);
-    plate.scale.set(1.2, 0.42 + i * 0.02, 1.08);
-    plate.position.y = 0.48 + i * 0.11;
+  // Layered plates with cracks - more irregular Dark Souls style
+  for (let i = 0; i < 6; i++) {
+    const plate = new THREE.Mesh(
+      new THREE.SphereGeometry(0.26 - i * 0.032, 12, 8),
+      mat,
+    );
+    // Irregular scaling for cracked, decayed look
+    const scaleVar = 0.9 + Math.random() * 0.2;
+    plate.scale.set(1.25 * scaleVar, 0.38 + i * 0.015, 1.05);
+    plate.position.y = 0.45 + i * 0.1;
     group.add(plate);
   }
-  // Cracked helm
+  // Cracked helm - half-broken helmet with visible skull
   const helmMat = std(baseColor, 0.68, 0.42);
   helmMat.emissive.setHex(emissive);
   helmMat.emissiveIntensity = 0.22;
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), helmMat);
-  helm.scale.set(1.08, 0.88, 1.08);
-  helm.position.y = 1.18;
+  // Half-helmet (open top)
+  const helm = new THREE.Mesh(
+    new THREE.SphereGeometry(0.32, 14, 10, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.5),
+    helmMat,
+  );
+  helm.scale.set(1.1, 0.85, 1.1);
+  helm.position.y = 1.2;
   group.add(helm);
+  // Add crack glow lines
+  for (let i = 0; i < 3; i++) {
+    const crack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.015, 0.15 + hash(i) * 0.1, 0.01),
+      new THREE.MeshStandardMaterial({
+        color: emissive,
+        emissive: emissive,
+        emissiveIntensity: 0.8,
+      }),
+    );
+    crack.position.set(
+      (hash(i + 10) - 0.5) * 0.35,
+      1.25 + hash(i + 20) * 0.15,
+      0.28 + hash(i + 30) * 0.05,
+    );
+    crack.rotation.z = (hash(i + 40) - 0.5) * 0.5;
+    group.add(crack);
+  }
 }
 
 function addSpikes(group: THREE.Group, count: number, color: number, scale = 1) {
@@ -122,14 +149,36 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   // Weathered ash armor (Dark Souls-inspired: muted, cracked, glowing seams)
   addWeatheredArmor(rig.bob, 0x4a3a2c, 0xe85d04);
 
-  // Shorter, stockier body with exposed bone feel
-  const bodyMat = std(0x2a1a14, 0.88, 0.08);
+  // Dark Souls hollow: slouched, decayed posture
+  rig.root.scale.set(0.88, 0.82, 0.88); // Lower, wider stance
+  
+  // Ashy, decayed body with ember glow from cracks
+  const bodyMat = std(0x2a1a14, 0.92, 0.06);
   bodyMat.emissive.setHex(0xe85d04);
-  bodyMat.emissiveIntensity = 0.12;
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 8), bodyMat);
-  body.scale.set(1.15, 0.75, 1.05);
-  body.position.y = 0.58;
+  bodyMat.emissiveIntensity = 0.15;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), bodyMat);
+  body.scale.set(1.2, 0.68, 1.08); // Flatter, broader torso
+  body.position.y = 0.52;
   rig.bob.add(body);
+  
+  // Add crack glow on body
+  for (let i = 0; i < 5; i++) {
+    const crack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.012, 0.1 + hash(i + 50) * 0.08, 0.01),
+      new THREE.MeshStandardMaterial({
+        color: 0xe85d04,
+        emissive: 0xe85d04,
+        emissiveIntensity: 0.6 + hash(i + 60) * 0.4,
+      }),
+    );
+    crack.position.set(
+      (hash(i + 70) - 0.5) * 0.28,
+      0.4 + hash(i + 80) * 0.3,
+      0.22 + hash(i + 90) * 0.08,
+    );
+    crack.rotation.z = (hash(i + 100) - 0.5) * 0.8;
+    rig.bob.add(crack);
+  }
 
   addSpikes(rig.bob, 4, 0x2a1a12, 0.6);
   addClaws(rig.bob, -1);
@@ -141,17 +190,50 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   skull.scale.set(1.15, 0.95, 1.1);
   rig.head.add(skull);
 
-  // Road hollow: thinner + shorter weapon (distinct silhouette).
+  // Road hollow: thinner + broken greatsword (distinct silhouette).
   if (role === "road") {
-    rig.root.scale.set(0.85, 0.82, 0.85);
+    rig.root.scale.set(0.78, 0.78, 0.78); // Even smaller, leaner
+    // Broken greatsword - jagged blade
     const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
-    if (blade) blade.scale.set(0.6, 0.55, 0.7);
+    if (blade) {
+      blade.scale.set(0.45, 0.5, 0.6);
+      // Jagged edge effect
+      for (let i = 0; i < 3; i++) {
+        const shard = new THREE.Mesh(
+          new THREE.ConeGeometry(0.025, 0.08, 4),
+          std(0x3a2a20, 0.75, 0.3),
+        );
+        shard.position.set(
+          (hash(i + 110) - 0.5) * 0.04,
+          0.08 + i * 0.03,
+          0,
+        );
+        shard.rotation.z = (hash(i + 120) - 0.5) * 0.5;
+        blade.add(shard);
+      }
+    }
     // No shield on road hollow.
   } else {
-    // Side hollow: wider body + round tower shield.
-    rig.root.scale.set(1.18, 0.9, 1.14);
+    // Side hollow: wider body + round tower shield with more damage marks
+    rig.root.scale.set(1.22, 0.92, 1.18); // Broader stance
+    // Heavier, notched greatsword
     const blade = rig.weapon.children.find((c) => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.BoxGeometry);
-    if (blade) blade.scale.set(0.9, 0.9, 0.9);
+    if (blade) {
+      blade.scale.set(1.0, 1.0, 1.0);
+      // Notches along blade edge
+      for (let i = 0; i < 4; i++) {
+        const notch = new THREE.Mesh(
+          new THREE.BoxGeometry(0.03, 0.02, 0.02),
+          new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.95 }),
+        );
+        notch.position.set(
+          0.06,
+          -0.1 + i * 0.06,
+          0,
+        );
+        blade.add(notch);
+      }
+    }
     
     // Enhanced shield with damage details
     const shieldMat = std(0x4a3a2c, 0.65, 0.35); // More metallic
