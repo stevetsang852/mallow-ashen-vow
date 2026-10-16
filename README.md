@@ -10,16 +10,19 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-16 晨）
+## 現在給同事（2026-10-17 晨）
 
-目前進度在 `main`。版本 **0.8.22**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.25**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
-**狀態**：2026-10-15 休息令仍有效——**等 YIN 通知再開下一波**。Graphics／Fullstack／Research 待命；不開新功能 PR。
+**狀態**：2026-10-15 休息令仍有效——**等 YIN 通知再開下一波**。Graphics／Fullstack／Research／GD 待命；不開新功能 PR（owner 直推 0.8.23–0.8.24 除外）。
 
-**重點更新（至 0.8.21）**：
+**重點更新（至 0.8.24）**：
 - **0.8.15–0.8.17 波次已合 main**：item hotbar Key1–4 → swing SFX → hotbar HUD plate。
 - **0.8.18**：`ITEMS_ENABLED = false`（道具隱藏；E 只食水）；打擊手感加長（重擊／崩架 hitstop）。
 - **0.8.19–0.8.21（Game developer）**：敵人骨骼動畫修復；Dark Souls weathered armor；灰殼／公爵／紅契模型升級；cute + dark contrast；3D 模型風格指引入 README。
+- **0.8.22**：Daily progress docs（休息令＋下一刀待命）。
+- **0.8.23（Game developer，直推 main）**：標題等待主題曲《反击 · MFZ》（YouTube iframe stream；進庭院停止；不打包音檔）。
+- **0.8.24（Game developer）**：修正 `version.ts` 字面 `\\n` 破壞 production build。
 - **連擊系統整合**：`moves.ts` 保留 `comboDmgMultiplier` 和 `parryWindow`，與 `DEFLECT` 系統並存。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
@@ -101,7 +104,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.22";
+  export const GAME_VERSION = "0.8.25";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -169,11 +172,11 @@ npm run dev
 
 ## Planning
 
-更新日期：2026-10-16。同事照這個順序做。先不要加新地圖、新主角、武器樹。
+更新日期：2026-10-17。同事照這個順序做。先不要加新地圖、新主角、武器樹。
 
 ### 當前版本
 
-- **版本**：0.8.22（docs：daily progress／休息令／下一刀待命；tip after merge）
+- **版本**：0.8.25（docs：daily progress／休息令／下一刀待命；tip after 0.8.23–0.8.24）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：2026-10-15 起仍有效，等 YIN 通知再開下一波
@@ -185,7 +188,7 @@ npm run dev
 - **Graphics**：待命 — 等通知；不開新 HUD／VFX PR
 - **Research**：待命 — 無主動 mallow 研究，除非指派
 
-### 已完成 (0.5.x - 0.8.22)
+### 已完成 (0.5.x - 0.8.25)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -408,6 +411,23 @@ npm run dev
 - [x] 一人一項下一刀：待命至 YIN 通知
 - [x] `GAME_VERSION` → 0.8.22
 
+#### 0.8.23 - Title waiting theme（Game developer）
+
+- [x] 標題畫面串流 YouTube《反击 · MFZ》（`ThemeWaitMusic`；進庭院停止）
+- [x] 音檔不打包；標題靜音／點面板可 unmute
+- [x] `GAME_VERSION` → 0.8.23（直推 main）
+
+#### 0.8.24 - version.ts build fix（Game developer）
+
+- [x] 修正 0.8.23 字面 `\\n` 破壞 production build
+- [x] `GAME_VERSION` → 0.8.24
+
+#### 0.8.25 - Daily progress docs（Project Mannger）
+
+- [x] Planning／同事區同步至 tip（含 0.8.23–0.8.24）；標註休息令仍有效
+- [x] 一人一項下一刀：待命至 YIN／總管家通知
+- [x] `GAME_VERSION` → 0.8.25
+
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
 - [x] 接線沿用 GD `hotbarSelected`／`hotbarFilledFlags`；index／CSS `hud-hotbar-plate`／`--selected` ember 邊（取代薄「欄N」）
@@ -556,3 +576,6 @@ feature/* → 新功能開發
 | 0.8.20 | 2026-10-15 | cute + dark contrast 敵模升級 |
 | 0.8.21 | 2026-10-15 | 3D 模型風格指引入 README；版本 0.8.21 |
 | 0.8.22 | 2026-10-16 | Daily progress docs：休息令＋下一刀待命 |
+| 0.8.23 | 2026-10-16 | 標題等待主題曲《反击 · MFZ》（YouTube stream） |
+| 0.8.24 | 2026-10-16 | 修正 version.ts 字面 \\n 破壞 build |
+| 0.8.25 | 2026-10-17 | Daily progress docs：同步 0.8.23–0.8.24＋休息令待命 |
