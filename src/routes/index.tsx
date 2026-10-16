@@ -9,6 +9,100 @@ import {
 } from "@/game/createGame";
 import { GAME_VERSION } from "@/game/version";
 
+const THEME_VIDEO = "7qEa2Wp14L4";
+const THEME_LABEL = "反击 · MFZ";
+
+type YtPlayer = {
+  playVideo: () => void;
+  pauseVideo: () => void;
+  mute: () => void;
+  unMute: () => void;
+  setVolume: (n: number) => void;
+  destroy: () => void;
+};
+
+declare global {
+  interface Window {
+    YT?: {
+      Player: new (el: HTMLElement, opts: unknown) => YtPlayer;
+      PlayerState: { ENDED: number };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+function ThemeWaitMusic({ play, muted }: { play: boolean; muted: boolean }) {
+  const host = useRef<HTMLDivElement>(null);
+  const player = useRef<YtPlayer | null>(null);
+
+  useEffect(() => {
+    let dead = false;
+    function mount() {
+      if (dead || !host.current || !window.YT?.Player || player.current) return;
+      player.current = new window.YT.Player(host.current, {
+        videoId: THEME_VIDEO,
+        width: 1,
+        height: 1,
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          playlist: THEME_VIDEO,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1,
+        },
+        events: {
+          onReady: (e: { target: YtPlayer }) => {
+            e.target.setVolume(42);
+            if (muted) e.target.mute();
+            else if (play) e.target.playVideo();
+          },
+          onStateChange: (e: { data: number; target: YtPlayer }) => {
+            if (e.data === window.YT?.PlayerState.ENDED) e.target.playVideo();
+          },
+        },
+      });
+    }
+    if (window.YT?.Player) mount();
+    else {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        prev?.();
+        mount();
+      };
+      if (!document.querySelector("script[data-yt-iframe]")) {
+        const s = document.createElement("script");
+        s.src = "https://www.youtube.com/iframe_api";
+        s.dataset.ytIframe = "1";
+        document.head.appendChild(s);
+      }
+    }
+    return () => {
+      dead = true;
+      player.current?.destroy();
+      player.current = null;
+    };
+    // mount once; mute/play are applied below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const p = player.current;
+    if (!p?.playVideo) return;
+    if (muted) p.mute();
+    else p.unMute();
+    if (play && !muted) p.playVideo();
+    else p.pauseVideo();
+  }, [play, muted]);
+
+  return (
+    <div className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
+      <div ref={host} />
+    </div>
+  );
+}
+
 const PAYME = "https://payme.hsbc/d6d295dff7854566b4536a98f0b02ef8";
 
 /** Key1–4 hotbar glyphs — order matches HudSnap.hotbarFilled (torch/explosive/healHerb/flask-shard). */
@@ -272,8 +366,15 @@ function Home() {
         </header>
       )}
 
+      {hud.phase === "title" && <ThemeWaitMusic play muted={hud.muted} />}
+
       {(hud.phase === "title" || hud.menuOpen) && (
-        <section className="title-panel absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm">
+        <section
+          className="title-panel absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm"
+          onPointerDown={() => {
+            if (hud.phase === "title" && hud.muted) api.current?.toggleMute();
+          }}
+        >
           <div className="title-panel-vignette" aria-hidden="true" />
           <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW · {GAME_VERSION}</p>
           <h1 className="title-bow-accent mt-1 font-display text-4xl text-fg">
@@ -305,6 +406,7 @@ function Home() {
                 />
               </div>
               <p className="mt-1 text-xs text-muted">模型未齊。按 Start 會等載完再開。</p>
+              <p className="mt-1 text-xs text-ember">主題曲 {THEME_LABEL}</p>
             </div>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
