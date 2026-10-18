@@ -10,15 +10,15 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-19 晨）
+## 現在給同事（2026-10-19 07:30）
 
-目前進度在 `main`。版本 **0.8.26**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.27**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：2026-10-15 休息令仍有效——**等 YIN 通知再開下一波**。Graphics／Fullstack／Research／GD 待命；不開新功能 PR（owner 直推 0.8.23–0.8.24 除外）。解休後優先走 PR gate（勿再直推 main）。
 
-**日程備註**：2026-10-18 tip 無 code commit，當日 docs progress PR 曾跳過——**錯誤**；本日（0.8.26）補回。休息期日程日報／docs progress **必須繼續**。
+**日程備註**：晨間 0.8.26（#33）已補回 10/18 docs 跳過；本日 07:30 日程日報仍開 docs progress（0.8.27）。tip 自 5e5c5f3 起無新 code commit。休息期日程日報／docs progress **必須繼續**。
 
-**重點更新（至 0.8.25）**：
+**重點更新（至 0.8.26）**：
 - **0.8.15–0.8.17 波次已合 main**：item hotbar Key1–4 → swing SFX → hotbar HUD plate。
 - **0.8.18**：`ITEMS_ENABLED = false`（道具隱藏；E 只食水）；打擊手感加長（重擊／崩架 hitstop）。
 - **0.8.19–0.8.21（Game developer）**：敵人骨骼動畫修復；Dark Souls weathered armor；灰殼／公爵／紅契模型升級；cute + dark contrast；3D 模型風格指引入 README。
@@ -26,6 +26,7 @@
 - **0.8.23（Game developer，直推 main）**：標題等待主題曲《反击 · MFZ》（YouTube iframe stream；進庭院停止；不打包音檔）。
 - **0.8.24（Game developer）**：修正 `version.ts` 字面 `\\n` 破壞 production build。
 - **0.8.25**：Daily progress docs（同步 0.8.23–0.8.24＋休息令待命）。
+- **0.8.26**：Daily progress docs catch-up（補 10/18 跳過＋10/19 休息令）。
 - **連擊系統整合**：`moves.ts` 保留 `comboDmgMultiplier` 和 `parryWindow`，與 `DEFLECT` 系統並存。
 
 **重要**：任何合併到 `main` 的 PR 都必須先更新 `src/game/version.ts` 的版本號（見下方「版本規則」）。新功能仍建議開分支再開 PR。
@@ -107,7 +108,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.26";
+  export const GAME_VERSION = "0.8.27";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -179,11 +180,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.26（docs：daily progress catch-up 10/18＋10/19 休息令／下一刀待命；tip after 0.8.25）
+- **版本**：0.8.27（docs：2026-10-19 07:30 日程日報；休息令仍有效；tip after 0.8.26 #33）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：2026-10-15 起仍有效，等 YIN 通知再開下一波
-- **日程**：2026-10-18 無 tip commit，docs PR 曾跳過（已於 0.8.26 補回）；解休後優先 PR gate（0.8.23–0.8.24 曾直推 main）
+- **日程**：晨間 0.8.26（#33）已補 10/18 跳過；本日 tip 無新 code commit；07:30 docs 仍照常（0.8.27）。解休後優先 PR gate（0.8.23–0.8.24 曾直推 main）
 
 ### 今日下一刀（一人一項；休息中）
 
@@ -191,8 +192,9 @@ npm run dev
 - **Fullstack**：待命 — 等通知；不開新 harness／extract PR
 - **Graphics**：待命 — 等通知；不開新 HUD／VFX PR
 - **Research**：待命 — 無主動 mallow 研究，除非指派
+- **Project Mannger**：繼續每日 07:30 日程日報／docs progress（休息期不中斷）
 
-### 已完成 (0.5.x - 0.8.26)
+### 已完成 (0.5.x - 0.8.27)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -439,6 +441,13 @@ npm run dev
 - [x] 註解：0.8.23–0.8.24 曾直推 main；解休後優先走 PR gate
 - [x] `GAME_VERSION` → 0.8.26
 
+#### 0.8.27 - Daily progress docs（Project Mannger）
+
+- [x] 2026-10-19 07:30 日程日報：tip 仍為 5e5c5f3（0.8.26）；無新 code／open feature PR
+- [x] 休息令仍有效；一人一項待命（GD／Fullstack／Graphics／Research）；PM 繼續日報
+- [x] 註記：功能 ≥1 進度條休息期暫停；docs progress 仍為日程必做
+- [x] `GAME_VERSION` → 0.8.27
+
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
 - [x] 接線沿用 GD `hotbarSelected`／`hotbarFilledFlags`；index／CSS `hud-hotbar-plate`／`--selected` ember 邊（取代薄「欄N」）
@@ -591,3 +600,4 @@ feature/* → 新功能開發
 | 0.8.24 | 2026-10-16 | 修正 version.ts 字面 \\n 破壞 build |
 | 0.8.25 | 2026-10-17 | Daily progress docs：同步 0.8.23–0.8.24＋休息令待命 |
 | 0.8.26 | 2026-10-19 | Daily progress docs：補 10/18 跳過＋10/19 休息令待命 |
+| 0.8.27 | 2026-10-19 | Daily progress docs：07:30 日程日報；休息令待命（無新 code） |
