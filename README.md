@@ -10,15 +10,14 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-20 07:30）
+## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.28**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.29**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
-**狀態**：2026-10-15 休息令仍有效——**等 YIN 通知再開下一波**。Graphics／Fullstack／Research／GD 待命；不開新功能 PR（owner 直推 0.8.23–0.8.24 除外）。解休後優先走 PR gate（勿再直推 main）。
+**狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**日程備註**：本日 07:30 日程日報仍開 docs progress（0.8.28）。tip 自 43b29fb（0.8.27／#34）起無新 code commit；無 open feature PR。休息期日程日報／docs progress **必須繼續**。
-
-**重點更新（至 0.8.28）**：
+**重點更新（至 0.8.29）**：
+- **0.8.29（Game developer）**：庭院自評 → **收招**修正：`MOVE.lightEnd` 0.50→0.46（前搖／判定窗不變）；出刀後更快可翻滾／接刀。
 - **0.8.15–0.8.17 波次已合 main**：item hotbar Key1–4 → swing SFX → hotbar HUD plate。
 - **0.8.18**：`ITEMS_ENABLED = false`（道具隱藏；E 只食水）；打擊手感加長（重擊／崩架 hitstop）。
 - **0.8.19–0.8.21（Game developer）**：敵人骨骼動畫修復；Dark Souls weathered armor；灰殼／公爵／紅契模型升級；cute + dark contrast；3D 模型風格指引入 README。
@@ -110,7 +109,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.28";
+  export const GAME_VERSION = "0.8.29";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -182,21 +181,21 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.28（docs：2026-10-20 07:30 日程日報；休息令仍有效；tip after 0.8.27 #34）
+- **版本**：0.8.29（輕擊收招縮短；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
-- **休息令**：2026-10-15 起仍有效，等 YIN 通知再開下一波
-- **日程**：tip 自 43b29fb（0.8.27／#34）起無新 code commit；無 open feature PR；07:30 docs 仍照常（0.8.28）。解休後優先 PR gate（0.8.23–0.8.24 曾直推 main）
+- **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
+- **合併序**：GD **0.8.29** → Fullstack 0.8.30 → Graphics 0.8.31（Research 0.8.32 檔案唔撞可平行）
 
-### 今日下一刀（一人一項；休息中）
+### 今日下一刀（一人一項；解休後）
 
-- **Game developer**：待命 — 等 YIN／總管家開下一波；可自評庭院打擊手感（不開 PR 亦可）
-- **Fullstack**：待命 — 等通知；不開新 harness／extract PR
-- **Graphics**：待命 — 等通知；不開新 HUD／VFX PR
-- **Research**：待命 — 無主動 mallow 研究，除非指派
-- **Project Mannger**：繼續每日 07:30 日程日報／docs progress（休息期不中斷）
+- **Game developer**：**0.8.29** 庭院自評 → 輕擊收招（`lightEnd`）— 本刀
+- **Fullstack**：**0.8.30** harness／learner 小改進（等 0.8.29 合入後 rebase）
+- **Graphics**：**0.8.31** 標題《反击》播放狀態視覺（等 0.8.30）
+- **Research**：**0.8.32** HUD／標題對比或可讀性小 polish（可平行）
+- **Project Mannger**：審／squash；日程日報照常
 
-### 已完成 (0.5.x - 0.8.28)
+### 已完成 (0.5.x - 0.8.29)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -456,6 +455,13 @@ npm run dev
 - [x] 休息令仍有效；一人一項待命（GD／Fullstack／Graphics／Research）；PM 繼續日報
 - [x] 註記：功能 ≥1 進度條休息期暫停；docs progress 仍為日程必做
 - [x] `GAME_VERSION` → 0.8.28
+
+#### 0.8.29 - Light recover trim（Game developer）
+
+- [x] 庭院自評：輕擊全程鎖至 `lightEnd` 才能翻滾／再出刀；收招偏黏
+- [x] `MOVE.lightEnd` 0.50→0.46（~40ms）；`lightOpen`／`lightShut`／hitstop／重擊不變
+- [x] 唔動 harness／learner、標題主題曲視覺、HUD contrast CSS
+- [x] `GAME_VERSION` → 0.8.29（PR 閘）
 
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
