@@ -10,7 +10,7 @@
   --color-sta: #d6c37a;
   --color-steel: #9aa3b2;
   --color-line: #3a322c;
-  --color-cinematic: rgba(12, 10, 9, 0.72);
+  --color-cinematic: rgba(12, 10, 9, 0.84);
   --color-bow: #e8a0b8;
   --color-bow-pink: #e8a0b8;
   --font-display: "Cinzel", "Songti TC", "PMingLiU", serif;
@@ -482,6 +482,8 @@
 }
 .hud-combo-label {
   margin-bottom: 0.1rem;
+  color: color-mix(in srgb, var(--color-fg) 68%, var(--color-muted));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
 @keyframes hud-combo-pop {
   0% {
@@ -524,7 +526,8 @@
   font-size: 0.55rem;
   line-height: 1;
   letter-spacing: 0.06em;
-  color: color-mix(in srgb, var(--color-muted) 80%, transparent);
+  color: color-mix(in srgb, var(--color-fg) 58%, var(--color-muted));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .hud-hotbar-slot--selected .hud-hotbar-key {
   color: color-mix(in srgb, var(--color-ember) 85%, var(--color-fg));
@@ -539,4 +542,57 @@
 .hud-hotbar-slot--selected .hud-hotbar-glyph {
   color: color-mix(in srgb, var(--color-ember) 70%, var(--color-bow));
   text-shadow: 0 0 8px color-mix(in srgb, var(--color-ember) 50%, transparent);
+}
+
+
+/* 0.8.30 Research: HUD / title contrast & readability (CSS/UI only) */
+.hud-caption {
+  color: color-mix(in srgb, var(--color-fg) 74%, var(--color-muted));
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.hud-ash {
+  color: color-mix(in srgb, var(--color-fg) 70%, var(--color-muted));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.hud-toast {
+  color: color-mix(in srgb, var(--color-fg) 94%, transparent);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.92),
+    0 0 8px rgba(0, 0, 0, 0.55);
+}
+
+.title-kicker {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.title-lede {
+  color: color-mix(in srgb, var(--color-muted) 72%, var(--color-fg));
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.title-controls {
+  color: color-mix(in srgb, var(--color-steel) 62%, var(--color-fg));
+  letter-spacing: 0.015em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.title-panel {
+  background-color: color-mix(in srgb, var(--color-surface) 97%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-ember) 16%, transparent),
+    0 10px 28px rgba(0, 0, 0, 0.38);
+}
+
+.title-panel .title-bow-accent {
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    0 0 1px rgba(0, 0, 0, 0.75);
+}
+
+.title-panel-vignette {
+  opacity: 0.16;
 }

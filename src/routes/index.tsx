@@ -207,7 +207,7 @@ function Home() {
         <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="hud-plate w-full max-w-[14rem] rounded-sm bg-cinematic/80 px-2 py-1.5 backdrop-blur-[2px]">
-              <p className="font-display text-[10px] tracking-[0.2em] text-muted/80">粉誓庭院</p>
+              <p className="hud-caption font-display text-[10px] tracking-[0.2em]">粉誓庭院</p>
               <div className="mt-1 h-1.5 overflow-hidden rounded-sm border border-line/60 bg-surface/60">
                 <div className="h-full bg-hp shadow-[0_0_6px_rgba(155,35,53,0.6)]" style={{ width: `${hpPct}%` }} />
               </div>
@@ -224,7 +224,7 @@ function Home() {
                     className={i < hud.flasks ? "h-2 w-2 rounded-sm bg-ember shadow-[0_0_4px_rgba(232,93,4,0.5)]" : "h-2 w-2 rounded-sm border border-line/40 bg-surface/40 opacity-40"}
                   />
                 ))}
-                <span className="ml-1.5 text-[11px] tracking-wider text-muted/70">灰</span>
+                <span className="hud-ash ml-1.5 text-[11px] tracking-wider">灰</span>
                 {false && (hud.hasAshToken || hud.hasFlaskShard || hud.hasTorch || hud.hasExplosive || hud.hasHealHerb) && (
                   <span className="ml-2 text-[10px] tracking-wider text-ember/80">
                     {[
@@ -297,7 +297,7 @@ function Home() {
               {hud.banner}
             </p>
           )}
-          {hud.toast && <p className="text-center text-xs text-fg/80 drop-shadow">{hud.toast}</p>}
+          {hud.toast && <p className="hud-toast text-center text-xs">{hud.toast}</p>}
           {hud.phase === "play" && hud.lightCombo > 0 && (
             <div
               key={hud.lightCombo}
@@ -305,7 +305,7 @@ function Home() {
               role="status"
               aria-label={`連擊 ${hud.lightCombo}`}
             >
-              <p className="hud-combo-label font-display text-[9px] tracking-[0.22em] text-muted/75">連擊</p>
+              <p className="hud-combo-label font-display text-[9px] tracking-[0.22em]">連擊</p>
               <p className="hud-combo-count font-display text-lg leading-none tracking-wider">×{hud.lightCombo}</p>
             </div>
           )}
@@ -376,15 +376,15 @@ function Home() {
           }}
         >
           <div className="title-panel-vignette" aria-hidden="true" />
-          <p className="font-display text-xs tracking-widest text-ember">ASHEN VOW · {GAME_VERSION}</p>
+          <p className="title-kicker font-display text-xs tracking-widest text-ember">ASHEN VOW · {GAME_VERSION}</p>
           <h1 className="title-bow-accent mt-1 font-display text-4xl text-fg">
             粉誓
             <span className="title-bow-mark" aria-hidden="true" />
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
+          <p className="title-lede mt-2 text-sm leading-relaxed">
             戴粉紅蝴蝶結的騎士貓。先單挑路中灰殼，輕擊再滾。兩側灰殼很重，按住格擋。重擊和格擋會累架勢，崩了就能砍。舉劍是公爵的重擊要滾，圈往外擴是震地要退，低頭是衝鋒。衝鋒收招最長。第一刀會打開刀聲。
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-steel">
+          <p className="title-controls mt-3 text-sm leading-relaxed">
             WASD 走 · Shift 跑 · 左鍵或 J 輕擊 · 右鍵或 K 重擊 · 打完才能再砍 · 按住 C 格擋 · Space 翻滾 · Q 鎖定 · E 食水 · G 火芯 · Esc 選單
           </p>
           {hud.menuOpen && hud.phase === "play" && (
