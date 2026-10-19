@@ -12,11 +12,12 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.31**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.32**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.31）**：
+**重點更新（至 0.8.32）**：
+- **0.8.32（Graphics）**：標題《反击》播放狀態視覺（playing／stopped；讀 mute；唔動 moves／audio 邏輯）。
 - **0.8.31（Fullstack）**：`harness()` 附帶 learner **ε／episodes** 可見度（`withLearnerView`；單元測試；唔改 moves／Save／Graphics）。
 - **0.8.30（Research）**：HUD／標題對比與可讀性 polish（CSS／UI only；#36）。
 - **0.8.29（Game developer）**：庭院自評 → **收招**修正：`MOVE.lightEnd` 0.50→0.46（前搖／判定窗不變）；出刀後更快可翻滾／接刀。
@@ -111,7 +112,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.31";
+  export const GAME_VERSION = "0.8.32";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -183,21 +184,21 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.31（harness ε／episodes 可見度；休息令已解除）
+- **版本**：0.8.32（標題《反击》播放狀態視覺；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
-- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack **0.8.31** → Graphics 下一刀
+- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack 0.8.31 ✓ → Graphics **0.8.32**
 
 ### 今日下一刀（一人一項；解休後）
 
 - **Game developer**：**0.8.29** 輕擊收招 — 已合 main（#37）
 - **Research**：**0.8.30** HUD／標題對比 — 已合 main（#36）
-- **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 本刀
-- **Graphics**：標題《反击》播放狀態視覺（等 0.8.31）
+- **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 已合 main（#38）
+- **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 本刀
 - **Project Mannger**：審／squash；日程日報照常
 
-### 已完成 (0.5.x - 0.8.31)
+### 已完成 (0.5.x - 0.8.32)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -478,6 +479,13 @@ npm run dev
 - [x] 單元測試：保留 winRate 欄位＋附上 ε／episodes；**唔改** moves／Save／Graphics HUD
 - [x] `GAME_VERSION` → 0.8.31（rebase after **0.8.30**／#36）
 
+#### 0.8.32 - Title 《反击》 playback state visual（Graphics）
+
+- [x] 標題畫面 playing／stopped 輕提示（ember pulse＋文字「播放中／已停」；讀既有 mute）
+- [x] mute 按鈕 ember rim＋Volume 圖示；`prefers-reduced-motion` 關閉脈衝
+- [x] CSS／UI only；唔改 ThemeWaitMusic／audio／moves／harness／Save
+- [x] 合併序：rebase after **0.8.31**（Fullstack／#38）；`GAME_VERSION` → 0.8.32
+
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
 - [x] 接線沿用 GD `hotbarSelected`／`hotbarFilledFlags`；index／CSS `hud-hotbar-plate`／`--selected` ember 邊（取代薄「欄N」）
@@ -632,3 +640,7 @@ feature/* → 新功能開發
 | 0.8.26 | 2026-10-19 | Daily progress docs：補 10/18 跳過＋10/19 休息令待命 |
 | 0.8.27 | 2026-10-19 | Daily progress docs：07:30 日程日報；休息令待命（無新 code） |
 | 0.8.28 | 2026-10-20 | Daily progress docs：07:30 日程日報；休息令待命（無新 code） |
+| 0.8.29 | 2026-10-20 | 輕擊收招 trim（lightEnd 0.50→0.46） |
+| 0.8.30 | 2026-10-20 | Research：HUD／標題對比可讀性（CSS／UI） |
+| 0.8.31 | 2026-10-20 | Fullstack：harness() learner ε／episodes 可見度 |
+| 0.8.32 | 2026-10-20 | Graphics：標題《反击》playing／stopped 播放狀態視覺 |

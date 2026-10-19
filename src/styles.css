@@ -596,7 +596,7 @@
 .title-panel-vignette {
   opacity: 0.16;
 
-/* Graphics: title theme 《反击》 playback playing/stopped cue (UI only; reads title + mute) */
+/* 0.8.32 Graphics: title theme 《反击》 playback playing/stopped cue (UI only; reads title + mute) */
 @keyframes title-theme-ember-pulse {
   0%,
   100% {
