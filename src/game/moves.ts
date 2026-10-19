@@ -34,7 +34,8 @@ export const MOVE = {
   heavyDmg: 46,
   lightOpen: 0.12,
   lightShut: 0.3,
-  lightEnd: 0.5,
+  /** Light attack total lock (0.8.29: 0.50→0.46; post-shut recover shorter; open/shut unchanged). */
+  lightEnd: 0.46,
   heavyOpen: 0.32,
   heavyShut: 0.5,
   heavyEnd: 0.78,

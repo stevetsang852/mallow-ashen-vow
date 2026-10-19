@@ -127,3 +127,13 @@ describe("light combo state machine", () => {
     assert.equal(canStartLightCombo(s), false);
   });
 });
+
+describe("light swing timings (0.8.29 recover trim)", () => {
+  it("keeps open/shut; lightEnd is 0.46", () => {
+    assert.equal(MOVE.lightOpen, 0.12);
+    assert.equal(MOVE.lightShut, 0.3);
+    assert.equal(MOVE.lightEnd, 0.46);
+    assert.ok(MOVE.lightEnd > MOVE.lightShut);
+    assert.ok(MOVE.lightShut > MOVE.lightOpen);
+  });
+});
