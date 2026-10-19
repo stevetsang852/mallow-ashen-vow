@@ -406,8 +406,29 @@ function Home() {
                 />
               </div>
               <p className="mt-1 text-xs text-muted">模型未齊。按 Start 會等載完再開。</p>
-              <p className="mt-1 text-xs text-ember">主題曲 {THEME_LABEL}</p>
             </div>
+          )}
+          {hud.phase === "title" && (
+            <p
+              className={
+                hud.muted
+                  ? "title-theme-status title-theme-status--stopped mt-3"
+                  : "title-theme-status title-theme-status--playing mt-3"
+              }
+              role="status"
+              aria-live="polite"
+              aria-label={
+                hud.muted
+                  ? `主題曲 ${THEME_LABEL} 已停`
+                  : `主題曲 ${THEME_LABEL} 播放中`
+              }
+            >
+              <span className="title-theme-glyph" aria-hidden="true" />
+              <span className="title-theme-copy">
+                主題曲 {THEME_LABEL}
+                <span className="title-theme-state">{hud.muted ? " · 已停" : " · 播放中"}</span>
+              </span>
+            </p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button
@@ -420,10 +441,25 @@ function Home() {
             </button>
             <button
               type="button"
-              className="min-h-11 border border-line px-4 text-sm text-fg"
+              className={
+                hud.phase === "title" && !hud.muted
+                  ? "title-theme-mute title-theme-mute--playing min-h-11 border border-line px-4 text-sm text-fg"
+                  : "title-theme-mute min-h-11 border border-line px-4 text-sm text-fg"
+              }
               onClick={() => api.current?.toggleMute()}
+              aria-pressed={!hud.muted}
             >
-              {hud.muted ? "開啟聲音" : "聲音已開"}
+              {hud.muted ? (
+                <>
+                  <VolumeX className="mr-1.5 inline-block h-3.5 w-3.5 align-[-0.125em]" aria-hidden="true" />
+                  開啟聲音
+                </>
+              ) : (
+                <>
+                  <Volume2 className="mr-1.5 inline-block h-3.5 w-3.5 align-[-0.125em]" aria-hidden="true" />
+                  聲音已開
+                </>
+              )}
             </button>
           </div>
           <div className="mt-4">
