@@ -7,7 +7,8 @@ function std(color: number, rough: number, metal: number) {
     color,
     roughness: rough,
     metalness: metal,
-    envMapIntensity: 0.45,
+    envMapIntensity: 0.25,
+    flatShading: true,
   });
 }
 
@@ -17,7 +18,7 @@ function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe
   mat.emissiveIntensity = 0.24;
   // Rounder cute layered plates with slight irregularity (cute + dark contrast)
   for (let i = 0; i < 4; i++) {
-    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.26 - i * 0.03, 14, 10), mat);
+    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.26 - i * 0.03, 6, 4), mat);
     const scaleVar = 0.95 + hash(i) * 0.1;
     plate.scale.set(1.25 * scaleVar, 0.5, 1.15);
     plate.position.y = 0.42 + i * 0.13;
@@ -27,7 +28,7 @@ function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe
   const helmMat = std(baseColor, 0.7, 0.4);
   helmMat.emissive.setHex(emissive);
   helmMat.emissiveIntensity = 0.28;
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 12), helmMat);
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 6), helmMat);
   helm.scale.set(1.1, 0.92, 1.1);
   helm.position.y = 1.22;
   group.add(helm);
