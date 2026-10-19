@@ -545,7 +545,7 @@
 }
 
 
-/* 0.8.32 Research: HUD / title contrast & readability (CSS/UI only) */
+/* 0.8.30 Research: HUD / title contrast & readability (CSS/UI only) */
 .hud-caption {
   color: color-mix(in srgb, var(--color-fg) 74%, var(--color-muted));
   text-shadow:
