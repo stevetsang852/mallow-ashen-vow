@@ -6,6 +6,7 @@ import {
   HARNESS_REGRESSION_SEED,
   mulberry32,
   runFixedSeedRegression,
+  withLearnerView,
 } from "./autoHarness.ts";
 
 describe("createHarnessSession summary", () => {
@@ -52,5 +53,24 @@ describe("fixed-seed harness regression", () => {
     assert.equal(r1.decideFingerprint, r2.decideFingerprint);
     assert.ok(r1.decideFingerprint.includes("dodge"));
     assert.ok(r1.wins + r1.losses === 48);
+  });
+});
+
+describe("withLearnerView", () => {
+  it("preserves winRate fields and attaches epsilon / episodes", () => {
+    const h = createHarnessSession();
+    h.setEnabled(true);
+    h.endRun("win", 2000);
+    h.endRun("loss", 3000);
+    const base = h.summary();
+    const view = withLearnerView(base, { epsilon: 0.18, episodes: 12 });
+    assert.equal(view.wins, base.wins);
+    assert.equal(view.losses, base.losses);
+    assert.equal(view.winRate, base.winRate);
+    assert.equal(view.recentWinRate, base.recentWinRate);
+    assert.equal(view.recentWindow, base.recentWindow);
+    assert.equal(view.runs, base.runs);
+    assert.equal(view.epsilon, 0.18);
+    assert.equal(view.episodes, 12);
   });
 });

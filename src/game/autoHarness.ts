@@ -182,6 +182,24 @@ export type HarnessSummary = {
   }>;
 };
 
+/** Harness summary plus learner ε / episode visibility (0.8.31). Pure merge — no learner import. */
+export type HarnessWithLearnerView = HarnessSummary & {
+  epsilon: number;
+  episodes: number;
+};
+
+/** Attach learner ε + episode counts onto a harness summary (0.8.31). */
+export function withLearnerView(
+  h: HarnessSummary,
+  learner: { epsilon: number; episodes: number },
+): HarnessWithLearnerView {
+  return {
+    ...h,
+    epsilon: learner.epsilon,
+    episodes: learner.episodes,
+  };
+}
+
 const HARNESS_KEY = "mallow-qa-harness";
 
 export function harnessWanted(): boolean {

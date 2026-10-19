@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * Fixed-seed harness regression (0.8.7) + ε schedule / snapshot smoke (0.8.10).
+ * Fixed-seed harness regression (0.8.7) + ε schedule / snapshot smoke (0.8.10) + learner view (0.8.31).
  * Usage: node --import tsx scripts/harness-regression.mjs
  * Does not touch moves damage tables.
  */
 import {
   HARNESS_REGRESSION_SEED,
   runFixedSeedRegression,
+  withLearnerView,
+  createHarnessSession,
 } from "../src/game/autoHarness.ts";
 import {
   createPlayerLearner,
@@ -65,4 +67,15 @@ console.log(
     2,
   ),
 );
+// 0.8.31: harness() learner view merge (ε + episodes)
+const view = withLearnerView(createHarnessSession().summary(), {
+  epsilon: learner.epsilon,
+  episodes: learner.summary().episodes,
+});
+if (view.epsilon !== learner.epsilon || view.episodes !== 1) {
+  console.error("withLearnerView smoke failed", view);
+  process.exit(1);
+}
+console.log(JSON.stringify({ harnessLearnerView: { epsilon: view.epsilon, episodes: view.episodes } }));
 console.log("ok");
+
