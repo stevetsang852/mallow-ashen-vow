@@ -7,47 +7,41 @@ function std(color: number, rough: number, metal: number) {
     color,
     roughness: rough,
     metalness: metal,
-    envMapIntensity: 0.25,
+    envMapIntensity: 0.15,
     flatShading: true,
   });
 }
 
 function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe85d04) {
-  const mat = std(baseColor, 0.75, 0.35);
+  const mat = std(baseColor, 0.85, 0.25);
   mat.emissive.setHex(emissive);
-  mat.emissiveIntensity = 0.24;
-  // Rounder cute layered plates with slight irregularity (cute + dark contrast)
-  for (let i = 0; i < 4; i++) {
-    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.26 - i * 0.03, 6, 4), mat);
-    const scaleVar = 0.95 + hash(i) * 0.1;
-    plate.scale.set(1.25 * scaleVar, 0.5, 1.15);
-    plate.position.y = 0.42 + i * 0.13;
+  mat.emissiveIntensity = 0.35;
+  // Blocky low-poly plates (Box for pixel/faceted look)
+  for (let i = 0; i < 3; i++) {
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.5 - i * 0.07, 0.15, 0.44 - i * 0.05), mat);
+    plate.position.y = 0.35 + i * 0.18;
+    plate.rotation.y = (hash(i) - 0.5) * 0.15;
     group.add(plate);
   }
-  // Oversized cute helm with glowing cracks
-  const helmMat = std(baseColor, 0.7, 0.4);
+  // Oversized blocky helm
+  const helmMat = std(baseColor, 0.8, 0.3);
   helmMat.emissive.setHex(emissive);
-  helmMat.emissiveIntensity = 0.28;
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 6), helmMat);
-  helm.scale.set(1.1, 0.92, 1.1);
-  helm.position.y = 1.22;
+  helmMat.emissiveIntensity = 0.4;
+  const helm = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.38, 0.42), helmMat);
+  helm.position.y = 1.15;
   group.add(helm);
-  // Add crack glow lines on helm
-  for (let i = 0; i < 3; i++) {
+  // Strong ember crack accents
+  for (let i = 0; i < 2; i++) {
     const crack = new THREE.Mesh(
-      new THREE.BoxGeometry(0.015, 0.15 + hash(i) * 0.1, 0.01),
+      new THREE.BoxGeometry(0.025, 0.2, 0.015),
       new THREE.MeshStandardMaterial({
         color: emissive,
         emissive: emissive,
-        emissiveIntensity: 0.8,
+        emissiveIntensity: 1.2,
+        flatShading: true,
       }),
     );
-    crack.position.set(
-      (hash(i + 10) - 0.5) * 0.35,
-      1.25 + hash(i + 20) * 0.15,
-      0.28 + hash(i + 30) * 0.05,
-    );
-    crack.rotation.z = (hash(i + 40) - 0.5) * 0.5;
+    crack.position.set((hash(i + 5) - 0.5) * 0.32, 1.18, 0.22);
     group.add(crack);
   }
 }

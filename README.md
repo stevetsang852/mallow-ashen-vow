@@ -85,23 +85,30 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## 3D 模型風格指引（必須遵守）
 
-敵人與角色模型目標是 **low-poly pixel 風格**：低面數、平面著色、有限色盤、塊狀比例，同時保持 cute（圓潤大頭）+ 暗黑灰燼風反差。
+敵人與角色模型目標是 **low-poly pixel 3D 風格**（PS1／PSX 與現代低面數像素感）：低面數、平面著色、塊狀比例、有限色盤，同時保持 cute（大頭）+ 暗黑灰燼風反差。
 
-### 核心原則
-- **幾何**：低三角形數（優先 Box / 低段數 Sphere / Cone）。使用 `flatShading: true`。
-- **比例**：偏 chibi／圓潤（較大頭部、較短身體），塊狀可讀。
-- **材質**：暗沉灰燼色（soot / bone / ember），高粗糙度，有限發光強調。
-- **發光**：盔甲裂縫與接縫帶輕微 ember 發光（`0xe85d04` 附近）。
-- **程序化優先**：主要在 `src/game/enemyMesh.ts` 調整低面數幾何。外部 GLB（KayKit / Quaternius 等 CC0）只作輔助，失敗時必須 fallback 回程序化版本。
-- **授權**：只用自由授權（CC0 / CC BY）或原創程序化模型。
+### 核心原則（研究摘要）
+- **幾何**：極低三角形數。優先 `BoxGeometry`、低段數 Sphere／Cone（4–8 段）。避免高段數圓滑面。
+- **著色**：所有材質強制 `flatShading: true`（每面一色，強化低面／像素塊感）。
+- **比例**：chibi／塊狀可讀（較大頭部、較短身體），輪廓乾淨易讀。
+- **材質與色盤**：暗沉灰燼色（soot、bone、ember #E85D04）。高粗糙度、低金屬度、有限顏色。
+- **發光**：裂縫／接縫用高強度 emissive 做對比重點。
+- **像素感**：程序化幾何 + flat shading 為主。若加紋理，使用 `NearestFilter` 呈現像素塊。
+- **程序化優先**：主要改 `src/game/enemyMesh.ts` 與 `knightMesh.ts`。外部 GLB 必須有程序化 fallback。
+- **授權**：只用自由授權（CC0／CC BY）或原創程序化模型。
+
+### 實作建議
+- `std()` 材質函式中強制 `flatShading: true`。
+- 盔甲與頭盔優先用 Box 而非高段 Sphere。
+- 保持識別：粉紅蝴蝶結、過大劍、灰燼／ember 發光。
 
 ### 相關檔案
 - 程序化敵人：`src/game/enemyMesh.ts`
+- 程序化玩家：`src/game/knightMesh.ts`、`src/game/mallowRig.ts`
 - 外部模型載入：`src/game/enemyRig.ts`
-- 玩家騎士貓：`src/game/knightMesh.ts`、`src/game/mallowRig.ts`
 - 概念圖：`public/concepts/`
 
-改模型後記得更新版本號並在 PR 說明視覺變化。
+改模型後必須更新版本號，並在 commit／PR 說明視覺變化。
 
 ## 版本規則（必須遵守）
 
