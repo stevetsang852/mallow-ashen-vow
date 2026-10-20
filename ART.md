@@ -39,8 +39,8 @@ Last updated: **2026-10-20** · version **0.8.33**（docs／inventory only；mes
 | `hollow`／`duke`／`demon`.glb | **~3.5–3.7 MB** each | Still heavy; re-export or drop as default |
 | Loaders | `GLTFLoader` only; enemy → procedural fallback; player reject on fail | No Meshopt／Draco; no traverse flat／NearestFilter |
 | `enemyMesh.std()` | `flatShading: true` | Aligned |
-| `knightMesh.std()` | **no** `flatShading` | **Debt** — next implementation PR |
-| Renderer | `antialias: true`; `pixelRatio ≤ 1.75` | Softens pixel blocks; P1 experiment |
+| `knightMesh.std()` | `flatShading: true` + `applyPixelLook` | Done (0.8.36) |
+| Renderer | `antialias: false`; `pixelRatio ≤ 1.75` | Facets stay crisp (0.8.39) |
 
 ## Pipeline
 

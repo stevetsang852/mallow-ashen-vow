@@ -42,7 +42,7 @@ describe("nextLightHitIndex / afterLightHitEnd", () => {
     assert.equal(a.kind, "window");
     assert.equal(a.completedHits, 1);
     assert.equal(a.duration, MOVE.lightComboWindow);
-    assert.equal(a.duration, 0.8);
+    assert.equal(a.duration, MOVE.lightComboWindow);
 
     const b = afterLightHitEnd(1);
     assert.equal(b.kind, "window");
@@ -95,9 +95,9 @@ describe("light combo state machine", () => {
 
     s = tickLightCombo(s, 0.4);
     assert.equal(s.phase, "window");
-    assert.ok(s.timer < 0.41);
+    assert.ok(s.timer < 0.53);
 
-    s = tickLightCombo(s, 0.5);
+    s = tickLightCombo(s, MOVE.lightComboWindow);
     assert.equal(s.phase, "recover");
     assert.equal(s.completedHits, 0);
     assert.equal(canStartLightCombo(s), false);

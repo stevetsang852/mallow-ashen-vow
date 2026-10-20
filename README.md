@@ -12,11 +12,12 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.37**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.40**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.36）**：
+**重點更新（至 0.8.40）**：
+- **0.8.40（Graphics）**：renderer `antialias: false` — 低模像素面更銳利（唔改 moves／AI／Save）。
 - **0.8.36（Graphics）**：low-poly pixel look — `knightMesh.std()` `flatShading`；GLB 載入後 `applyPixelLook`（flat＋NearestFilter）。唔改 moves／AI／Save。
 - **0.8.35（Game developer）**：輕擊第三下終結感（停頓、鏡頭、粉紅刀光）；重擊收招 0.78→0.84；公爵衝鋒收招 0.92→1.02；可打菱形脈衝加大。道具仍關。（#42）
 - **0.8.33（Graphics）**：Art Direction — low-poly pixel 3D 指引＋`ART.md` 資產清單（唔改 moves／meshes 大改）。
@@ -517,12 +518,12 @@ npm run dev
 - [x] 道具仍關。`GAME_VERSION` → 0.8.37
 
 
-#### 0.8.39 - 輕擊三連手感（Game developer）
+#### 0.8.40 - 輕擊三連手感（Game developer）
 
 - [x] 第二下步進 3.4→4.6，第三下 5.2；中段刀光更寬、反向
 - [x] 接刀窗 0.8→0.92
 - [x] 接刀起手有小鏡頭推近；中段命中有輕微停頓
-- [x] 道具仍關。`GAME_VERSION` → 0.8.39
+- [x] 道具仍關。`GAME_VERSION` → 0.8.40
 
 
 #### 0.8.40–0.8.42 - 三刀戰鬥（Game developer）

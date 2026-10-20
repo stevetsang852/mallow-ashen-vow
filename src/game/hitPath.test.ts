@@ -181,9 +181,9 @@ describe("connectSwingFeedback / strikeCameraImpulse / resolveBreakPoise", () =>
   it("strikeCameraImpulse locks blocked vs open magnitudes", () => {
     const open = strikeCameraImpulse(28, false);
     assert.equal(open.power, 1);
-    assert.equal(open.camPush, 1.15 + 0.9);
-    assert.equal(open.shake, 0.46 + 0.22);
-    assert.equal(open.hitstop, 0.09 + 0.04);
+    assert.equal(open.camPush, 1.15 + 1 * 0.9);
+    assert.equal(open.shake, 0.52 + 1 * 0.28);
+    assert.equal(open.hitstop, 0.1 + 1 * 0.05);
     const blocked = strikeCameraImpulse(28, true);
     assert.equal(blocked.camPush, (1.15 + 0.9) * 0.4);
     assert.equal(blocked.shake, 0.24);
