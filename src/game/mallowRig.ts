@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { KnightRig } from "@/game/knightMesh";
+import { applyPixelLook } from "@/game/pixelLook";
 
 const MODEL = "/models/mallow-knight-cat.glb";
 
@@ -137,6 +138,7 @@ export function loadMallowRig(): Promise<KnightRig> {
           else if (o.userData.slot === "fur") furMat = m;
         });
 
+        applyPixelLook(root);
         resolve({ root, bob, head, weapon, cape, legL, legR, tail, armorMat, furMat, eyeMat });
       },
       undefined,

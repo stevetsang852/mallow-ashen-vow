@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { applyPixelLook } from "@/game/pixelLook";
 
 export type KnightOpts = {
   fur: number;
@@ -31,6 +32,7 @@ function std(color: number, rough: number, metal: number) {
     roughness: rough,
     metalness: metal,
     envMapIntensity: 0.4,
+    flatShading: true,
   });
 }
 
@@ -257,6 +259,7 @@ export function makeKnight(opts: KnightOpts): KnightRig {
     }
   });
 
+  applyPixelLook(root);
   return { root, bob, head, weapon, cape, legL, legR, tail, armorMat, furMat, eyeMat };
 }
 
