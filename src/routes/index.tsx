@@ -34,6 +34,18 @@ declare global {
 function ThemeWaitMusic({ play, muted }: { play: boolean; muted: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const player = useRef<YtPlayer | null>(null);
+  const want = useRef({ play, muted });
+  want.current = { play, muted };
+
+  function apply(p: YtPlayer | null) {
+    if (!p?.playVideo) return;
+    const { play: shouldPlay, muted: isMuted } = want.current;
+    p.setVolume?.(42);
+    if (isMuted) p.mute();
+    else p.unMute();
+    if (shouldPlay && !isMuted) p.playVideo();
+    else p.pauseVideo();
+  }
 
   useEffect(() => {
     let dead = false;
@@ -54,12 +66,12 @@ function ThemeWaitMusic({ play, muted }: { play: boolean; muted: boolean }) {
         },
         events: {
           onReady: (e: { target: YtPlayer }) => {
-            e.target.setVolume(42);
-            if (muted) e.target.mute();
-            else if (play) e.target.playVideo();
+            apply(e.target);
           },
           onStateChange: (e: { data: number; target: YtPlayer }) => {
-            if (e.data === window.YT?.PlayerState.ENDED) e.target.playVideo();
+            if (e.data === window.YT?.PlayerState.ENDED && want.current.play && !want.current.muted) {
+              e.target.playVideo();
+            }
           },
         },
       });
@@ -88,12 +100,7 @@ function ThemeWaitMusic({ play, muted }: { play: boolean; muted: boolean }) {
   }, []);
 
   useEffect(() => {
-    const p = player.current;
-    if (!p?.playVideo) return;
-    if (muted) p.mute();
-    else p.unMute();
-    if (play && !muted) p.playVideo();
-    else p.pauseVideo();
+    apply(player.current);
   }, [play, muted]);
 
   return (
@@ -371,7 +378,9 @@ function Home() {
       {(hud.phase === "title" || hud.menuOpen) && (
         <section
           className="title-panel absolute top-4 right-4 left-4 z-40 max-h-[calc(100%-2rem)] overflow-y-auto border border-line bg-surface/95 p-5 sm:max-w-sm"
-          onPointerDown={() => {
+          onPointerDown={(e) => {
+            const el = e.target as HTMLElement | null;
+            if (el?.closest("button, a, input, [data-no-gesture-unmute]")) return;
             if (hud.phase === "title" && hud.muted) api.current?.toggleMute();
           }}
         >
@@ -446,6 +455,8 @@ function Home() {
                   ? "title-theme-mute title-theme-mute--playing min-h-11 border border-line px-4 text-sm text-fg"
                   : "title-theme-mute min-h-11 border border-line px-4 text-sm text-fg"
               }
+              data-no-gesture-unmute
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={() => api.current?.toggleMute()}
               aria-pressed={!hud.muted}
             >

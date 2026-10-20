@@ -12,11 +12,12 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.40**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.44**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.40）**：
+**重點更新（至 0.8.44）**：
+- **0.8.44（UI）**：標題「開啟聲音」不再被面板手勢雙重 toggle；unmute 後主題曲繼續播。
 - **0.8.40（Graphics）**：renderer `antialias: false` — 低模像素面更銳利（唔改 moves／AI／Save）。
 - **0.8.36（Graphics）**：low-poly pixel look — `knightMesh.std()` `flatShading`；GLB 載入後 `applyPixelLook`（flat＋NearestFilter）。唔改 moves／AI／Save。
 - **0.8.35（Game developer）**：輕擊第三下終結感（停頓、鏡頭、粉紅刀光）；重擊收招 0.78→0.84；公爵衝鋒收招 0.92→1.02；可打菱形脈衝加大。道具仍關。（#42）
