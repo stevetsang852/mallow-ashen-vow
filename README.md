@@ -12,12 +12,13 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.34**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.36**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.34）**：
-- **0.8.34（Game developer）**：輕擊第三下終結感（停頓、鏡頭、粉紅刀光）；重擊收招 0.78→0.84；公爵衝鋒收招 0.92→1.02；可打菱形脈衝加大。道具仍關。
+**重點更新（至 0.8.36）**：
+- **0.8.36（Graphics）**：low-poly pixel look — `knightMesh.std()` `flatShading`；GLB 載入後 `applyPixelLook`（flat＋NearestFilter）。唔改 moves／AI／Save。
+- **0.8.35（Game developer）**：輕擊第三下終結感（停頓、鏡頭、粉紅刀光）；重擊收招 0.78→0.84；公爵衝鋒收招 0.92→1.02；可打菱形脈衝加大。道具仍關。（#42）
 - **0.8.33（Graphics）**：Art Direction — low-poly pixel 3D 指引＋`ART.md` 資產清單（唔改 moves／meshes 大改）。
 - **0.8.32（Graphics）**：標題《反击》播放狀態視覺（playing／stopped；讀 mute；唔動 moves／audio 邏輯）。
 - **0.8.31（Fullstack）**：`harness()` 附帶 learner **ε／episodes** 可見度（`withLearnerView`；單元測試；唔改 moves／Save／Graphics）。
@@ -146,9 +147,9 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 - 改 moves feel、Save、audio、AI（本方向不綁）。
 
 ### 實作檢查清單（後續 PR；本刀僅 docs）
-- [ ] `knightMesh.std()` 加 `flatShading: true`（對齊 `enemyMesh`）
+- [x] `knightMesh.std()` 加 `flatShading: true`（對齊 `enemyMesh`）
 - [ ] GLB 重製／Meshopt 至上表 KB；或改預設程序化
-- [ ] `applyPixelLook` traverse（flat＋NearestFilter）
+- [x] `applyPixelLook` traverse（flat＋NearestFilter）
 - [ ] 盔／甲板優先 Box；庭院 props vertex-color flat
 - [ ] 識別保留：粉結、過大劍、ember 裂縫
 - [ ] 改模型後更新 `version.ts`＋PR 說明視覺差
@@ -205,7 +206,7 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.33";
+  export const GAME_VERSION = "0.8.36";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -277,11 +278,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.34（輕擊終結感＋收招可罰；休息令已解除）
+- **版本**：0.8.36（low-poly pixel look；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
-- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack 0.8.31 ✓ → Graphics 0.8.32 ✓ → Graphics **0.8.33**（本刀）
+- **合併序**：GD 0.8.29 ✓ → … → Graphics 0.8.33 ✓ → GD **0.8.35**（#42）✓ → Graphics **0.8.36**（本刀／#41）
 
 ### 今日下一刀（一人一項；解休後）
 
@@ -290,10 +291,11 @@ npm run dev
 - **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 已合 main（#38）
 - **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 已合 main（#39）
 - **Graphics**：**0.8.33** low-poly pixel 3D art direction＋ART.md — 已合 main
-- **Game developer**：**0.8.34** 輕擊終結感＋收招可罰 — 本刀
+- **Game developer**：**0.8.35** 輕擊終結感＋收招可罰 — 已合 main（#42）
+- **Graphics**：**0.8.36** low-poly pixel look — 本刀（#41）
 - **Project Mannger**：審／squash；日程日報照常
 
-### 已完成 (0.5.x - 0.8.33)
+### 已完成 (0.5.x - 0.8.36)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -489,14 +491,22 @@ npm run dev
 
 
 
-#### 0.8.34 - 輕擊終結感＋收招可罰（Game developer）
+#### 0.8.36 - low-poly pixel look（Graphics）
+
+- [x] `knightMesh.std()` `flatShading: true`（對齊 enemyMesh）
+- [x] `applyPixelLook`：flat shading + NearestFilter maps
+- [x] procedural knight／GLB（Mallow／foes）載入後套用
+- [x] `pixelLook.test.ts`；唔改 moves／AI／Save
+- [x] `GAME_VERSION` → 0.8.36（PR 閘／#41）
+
+#### 0.8.35 - 輕擊終結感＋收招可罰（Game developer）
 
 - [x] 輕擊第三下：額外 hitstop +0.07、鏡頭推近 +0.28、粉紅較大刀光
 - [x] `MOVE.heavyEnd` 0.78→0.84（重擊收招可罰窗更長）
 - [x] `MOVE.duke.rushRecover` 0.92→1.02（衝鋒收招可罰）
 - [x] 鎖定可打菱形脈衝 1.08→1.22
 - [x] 道具仍 `ITEMS_ENABLED = false`
-- [x] `GAME_VERSION` → 0.8.34（PR 閘）
+- [x] `GAME_VERSION` → 0.8.35（PR 閘／#42）
 
 #### 0.8.18 - 關閉道具，重心打回戰鬥
 

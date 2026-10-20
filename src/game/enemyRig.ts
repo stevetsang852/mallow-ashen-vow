@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
+import { applyPixelLook } from "@/game/pixelLook";
 
 const MODELS: Record<string, string> = {
   hollow: "/models/hollow.glb",
@@ -64,7 +65,9 @@ export function loadEnemyRig(kind: "hollow" | "duke" | "demon", role?: "road" | 
       (gltf) => {
         const scale = kind === "duke" ? 2.2 : kind === "demon" ? 1.4 : 1.5;
         console.info(`[enemy] loaded external ${kind} model`);
-        resolve(makeSimpleRigFromScene(gltf.scene, scale));
+        const rig = makeSimpleRigFromScene(gltf.scene, scale);
+        applyPixelLook(rig.root);
+        resolve(rig);
       },
       undefined,
       (err) => {
