@@ -38,7 +38,7 @@ export const MOVE = {
   lightEnd: 0.46,
   heavyOpen: 0.32,
   heavyShut: 0.5,
-  heavyEnd: 0.78,
+  heavyEnd: 0.84,
   /** Seconds after a light hit ends to chain the next (must press again). */
   lightComboWindow: 0.8,
   /** Short recovery after combo ends (3rd hit or window timeout). */
@@ -49,7 +49,7 @@ export const MOVE = {
     rushTell: 1.08,
     cleaveTell: 1.06,
     phase2Slow: 0.9,
-    rushRecover: 0.92,
+    rushRecover: 1.02,
     rushRecoverP2: 1.28,
     shockRecover: 1.22,
     overheadRecover: 1.12,

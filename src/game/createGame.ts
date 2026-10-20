@@ -937,17 +937,17 @@ export function createGame(
     particles.ringDust(x, z);
   }
 
-  function slash(x: number, y: number, z: number, yaw: number, heavy: boolean) {
+  function slash(x: number, y: number, z: number, yaw: number, heavy: boolean, finisher = false) {
     const arc = slashes[slashCursor % slashes.length]!;
     slashCursor++;
     arc.visible = true;
-    arc.userData.life = heavy ? 0.16 : 0.11;
+    arc.userData.life = finisher ? 0.2 : heavy ? 0.16 : 0.11;
     arc.position.set(x, y, z);
     arc.rotation.set(0.4, yaw, heavy ? -0.6 : 0.35);
-    arc.scale.setScalar(heavy ? 1.35 : 0.95);
+    arc.scale.setScalar(finisher ? 1.55 : heavy ? 1.35 : 0.95);
     const mat = arc.material as THREE.MeshBasicMaterial;
-    mat.color.setHex(heavy ? 0xfff1d2 : 0xffd7ea);
-    mat.opacity = 0.9;
+    mat.color.setHex(finisher ? 0xffb3d0 : heavy ? 0xfff1d2 : 0xffd7ea);
+    mat.opacity = 0.92;
   }
 
 
@@ -1932,7 +1932,8 @@ export function createGame(
                 resolved.sparkKind,
                 resolved.sparkMul,
               );
-              slash(f.x, 1.05, f.z, player.yaw, heavy);
+              const finisher = !heavy && player.combo === 2;
+              slash(f.x, 1.05, f.z, player.yaw, heavy || finisher, finisher);
               feel.emit({
                 kind: resolved.feelKind,
                 amount: resolved.hitDmg,
@@ -1960,11 +1961,12 @@ export function createGame(
             heardSteel = true;
             {
               const fb = connectSwingFeedback(heavy);
-              shake = Math.max(shake, fb.shake);
-              hitstop = Math.max(hitstop, fb.hitstop);
-              hitFlash = fb.hitFlash;
-              camKick = Math.max(camKick, fb.camKick);
-              fovKick = Math.max(fovKick, fb.fovKick);
+              const finisher = !heavy && player.combo === 2;
+              shake = Math.max(shake, fb.shake + (finisher ? 0.16 : 0));
+              hitstop = Math.max(hitstop, fb.hitstop + (finisher ? 0.07 : 0));
+              hitFlash = fb.hitFlash + (finisher ? 0.2 : 0);
+              camKick = Math.max(camKick, fb.camKick + (finisher ? 0.28 : 0));
+              fovKick = Math.max(fovKick, fb.fovKick + (finisher ? 1.1 : 0));
               camRoll = fb.camRoll * (Math.random() < 0.5 ? -1 : 1);
             }
             audio.clang(heavy);
@@ -2311,7 +2313,7 @@ export function createGame(
       lockPulse.visible = punishCue;
       if (punishCue) {
         // ping-pong 1.0 → 1.08
-        const pulse = 1 + 0.04 * (1 + Math.sin(time * 7));
+        const pulse = 1 + 0.11 * (1 + Math.sin(time * 7));
         lockPulse.scale.setScalar(pulse);
         (lockPulse.material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.25 * (0.5 + 0.5 * Math.sin(time * 7));
       } else {

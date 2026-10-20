@@ -12,11 +12,12 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.33**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.34**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.33）**：
+**重點更新（至 0.8.34）**：
+- **0.8.34（Game developer）**：輕擊第三下終結感（停頓、鏡頭、粉紅刀光）；重擊收招 0.78→0.84；公爵衝鋒收招 0.92→1.02；可打菱形脈衝加大。道具仍關。
 - **0.8.33（Graphics）**：Art Direction — low-poly pixel 3D 指引＋`ART.md` 資產清單（唔改 moves／meshes 大改）。
 - **0.8.32（Graphics）**：標題《反击》播放狀態視覺（playing／stopped；讀 mute；唔動 moves／audio 邏輯）。
 - **0.8.31（Fullstack）**：`harness()` 附帶 learner **ε／episodes** 可見度（`withLearnerView`；單元測試；唔改 moves／Save／Graphics）。
@@ -276,7 +277,7 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.33（low-poly pixel 3D art direction＋ART.md；休息令已解除）
+- **版本**：0.8.34（輕擊終結感＋收招可罰；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
@@ -288,7 +289,8 @@ npm run dev
 - **Research**：**0.8.30** HUD／標題對比 — 已合 main（#36）
 - **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 已合 main（#38）
 - **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 已合 main（#39）
-- **Graphics**：**0.8.33** low-poly pixel 3D art direction＋ART.md — 本刀
+- **Graphics**：**0.8.33** low-poly pixel 3D art direction＋ART.md — 已合 main
+- **Game developer**：**0.8.34** 輕擊終結感＋收招可罰 — 本刀
 - **Project Mannger**：審／squash；日程日報照常
 
 ### 已完成 (0.5.x - 0.8.33)
@@ -485,6 +487,16 @@ npm run dev
 - [x] 命中仍用既有 `clang`；**唔改** moves／Graphics HUD／items hotbar
 - [x] 合併序：hold／rebase 到 main（含 **0.8.15** item hotbar）後再開／合
 
+
+
+#### 0.8.34 - 輕擊終結感＋收招可罰（Game developer）
+
+- [x] 輕擊第三下：額外 hitstop +0.07、鏡頭推近 +0.28、粉紅較大刀光
+- [x] `MOVE.heavyEnd` 0.78→0.84（重擊收招可罰窗更長）
+- [x] `MOVE.duke.rushRecover` 0.92→1.02（衝鋒收招可罰）
+- [x] 鎖定可打菱形脈衝 1.08→1.22
+- [x] 道具仍 `ITEMS_ENABLED = false`
+- [x] `GAME_VERSION` → 0.8.34（PR 閘）
 
 #### 0.8.18 - 關閉道具，重心打回戰鬥
 
