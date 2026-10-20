@@ -91,48 +91,73 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模型 PR 必須對齊本節與 `ART.md`。
 
+### 速查子彈（Research 2026-10-20；必須遵守）
+- 目標風格：**low-poly pixel 3D**（PS1／PSX 感＋現代低面）：flat shading、塊狀比例、有限色盤、cute 大頭 × 灰燼暗黑。
+- 三角形預算：Mallow **800–2500**；灰殼 **400–1200**；公爵 **1000–2500**；紅契 **800–2000**；小 prop **50–300**。
+- 外部 GLB（若用）：每角色 **≤250–400 KB**（優先 **Meshopt**＋無大貼圖）；禁止未壓縮多 MB 寫實模上線。
+- 材質：強制 `flatShading: true`；紋理必須 `NearestFilter` 且關閉 mipmap；**優先 vertex color**。
+- 程序化優先：`enemyMesh.ts`／`knightMesh.ts`；GLB 失敗必須 fallback（GLB 非預設視覺）。
+- 識別不可改：粉紅蝴蝶結、過大劍、ember 裂縫發光。
+- 戰鬥可讀優先：前搖／收刀／翻滾／格擋環與鎖定菱對比不可被像素後處理削弱。
+- 授權：僅 CC0／CC BY 或原創；不用 Hero Forge／未授權商店模。
+- 改模型必更新 `version.ts`，PR 說明視覺差異。
+- Stack：Three.js **0.186**（網頁；非 Unity）。證據簡報：`/workspace/news-research/2026-10-20-mallow-lowpoly-pixel-3d.md`（副本 `mallow-research/`）。
+
 ### 視覺目標
 - **Silhouette first**：遠距仍可辨（騎士貓耳朵＋粉結、灰殼兜帽、公爵角盔、紅契翅）。
 - **Chunky / blocky**：盔甲用盒子與低段錐，不要圓滑 subdivision。
 - **Flat facets**：每面一色；可讀陰影來自幾何與燈，不是 normal map。
 - **Ember soulslike palette**：soot／bone／灰銀＋ember `#E85D04`；粉結 `#e8a0b8`（`--color-bow`）只給玩家識別。
-- **Pixel feel without fake CRT**：程序化幾何＋`flatShading`；紋理若有則 `NearestFilter`、小 atlas。
+- **Pixel feel without fake CRT**：程序化幾何＋`flatShading`；紋理若有則 `NearestFilter`、小 atlas（≤512 常用）。PS1 snap／dither／低解析 RT＝**P2**（需 A/B 測環可讀後再合）。
 
-### 技術約束（WebGL／Three.js 預算）
-| 項 | 目標 | 說明 |
-| --- | --- | --- |
-| 三角／角色 | 英雄 ~1k–5k；小道具幾百 | 網頁／手機上限；勿跟桌面 AAA |
-| 單檔 GLB（壓縮後） | 英雄 low hundreds KB 理想 | 現況偏大 → 見 `ART.md` 債務 |
-| 紋理 | 共享 512–1024 atlas；英雄 ≤2048 | 平坦色塊；無 4K PBR 套件 |
-| 材質 | `flatShading: true`；高 roughness、低 metal | 優先 `MeshStandard`＋flat，或 unlit／Lambert |
-| Draw calls | 合併靜態；重複道具 `InstancedMesh` | 庭院保持輕量 |
-| LOD | 遠距可降段／換盒子 | 後續；本刀只定方向 |
-| 格式 | **glTF／GLB** | Draco／Meshopt／KTX2 為後續壓縮刀 |
+### 三角形／檔案預算（庭院切片；Research 對齊）
+| 資產 | 三角形（目標） | 紋理／著色 | 備註 |
+| --- | --- | --- | --- |
+| Sir Mallow | **800–2,500** | 無或 256–512 atlas nearest | 大頭、粉結、過大劍必須可辨 |
+| 灰殼（road／side） | **400–1,200** | vertex／共享 256 atlas | 瘦／寬＋盾用幾何差 |
+| 煤灰公爵 | **1,000–2,500** | 同上；裂縫 emissive | 角盔 silhouette 優先 |
+| 紅契 | **800–2,000** | 小翼少面；紅刃 emissive | 侵入瞬間要認得 |
+| 場景 prop | **50–300** | **vertex color 預設** | 重複件 → `InstancedMesh` |
+| 拱門／火芯套件 | **500–2,000** 合計 | 共享材質 | 靜態可合併 |
+| 整場同時可見 | **≲ 25k–40k tri** 舒適 | 材質種類 ≲ 8–12 | 量測 `renderer.info` |
+| Mallow GLB（若保留） | — | 壓縮後 **≤250–400 KB** | 現況 ~**19.3 MB** → 債務 |
+| 敵人 GLB（各） | — | 壓縮後 **≤150–300 KB** | 現況 ~**3.5 MB** → 債務 |
+
+### 材質／渲染契約
+- **全部**角色／敵人 mesh：`flatShading: true`（含 GLB `traverse` 覆寫）。現況：`enemyMesh.std()` 已有；**`knightMesh.std()` 尚未**（債務，後續實作刀）。
+- 有 `map`：`magFilter = minFilter = NearestFilter`；`generateMipmaps = false`。
+- 金屬度：盔甲中低；毛皮近 0；勿讓寫實高光搶戰鬥提示。
+- Renderer：現況 `antialias: true`＋`pixelRatio ≤ 1.75`（偏平滑）。P1 可實驗關 AA／½ RT；P2 vertex snap／dither — **勿削弱 HUD 環／菱**。
+- Vertex color 為庭院 props／多數盔甲面預設；小 atlas 留給臉／粉結／武器識別。
 
 ### 管線
-1. **程序化優先**：`enemyMesh.ts`／`knightMesh.ts` 用 Box／低段 Cone／Capsule（4–8 段）。
-2. **外部模型**：Blender → **GLB**（單位一致、軸正確）→ `public/models/`；載入失敗必須 fallback 程序化（`enemyRig.ts`／`mallowRig.ts`）。
-3. **命名**：`hollow.glb`／`duke.glb`／`demon.glb`／`mallow-knight-cat.glb`；概念圖在 `public/concepts/`。
-4. **授權**：僅 CC0／CC BY／原創。禁止未確認授權與付費包。
+1. **程序化為預設視覺**：`enemyMesh.ts`／`knightMesh.ts`（Box／低段 Cone／Capsule 4–8 段）。
+2. **外部 GLB 為 opt-in／fallback 路徑**：Blender → GLB → `gltf-transform`（Meshopt）→ `public/models/`；載入失敗必須程序化（`enemyRig.ts`／`mallowRig.ts`）。
+3. **載入後**建議統一 `applyPixelLook(root)`（flat＋NearestFilter；清多餘 normalMap）— 後續實作刀。
+4. **命名**：`hollow.glb`／`duke.glb`／`demon.glb`／`mallow-knight-cat.glb`；概念圖＝low-poly pixel 目標參考（非寫實網）。
+5. **授權**：僅 CC0／CC BY／原創。禁止 Hero Forge／未授權商店／付費包。
 
 ### 不要做（反模式）
 - 高面數 PBR 電影風、細法線／ORM 套圖、subsurface 寫實毛髮。
-- 無 fallback 的巨型 GLB（玩家 GLB 現 ~19MB — 必須逐步換低面或壓縮）。
-- 為「好看」加高段 `SphereGeometry(…, 24+)`／Subdivision。
-- 改 moves feel、Save、audio、AI（除非美術文件已綁定；本方向不綁）。
+- 未壓縮多 MB GLB 當預設（玩家 ~19.3 MB、敵人各 ~3.5 MB）。
+- 高段 `SphereGeometry(…, 24+)`／Subdivision「為了圓潤」。
+- 把 PS1 snap／全屏 dither 當 P0（需可讀性驗證）。
+- 改 moves feel、Save、audio、AI（本方向不綁）。
 
-### 實作檢查清單
-- [ ] `std()`（或同等）強制 `flatShading: true`
-- [ ] 盔／甲板優先 `BoxGeometry`，避免高段 Sphere
-- [ ] 識別保留：粉結、過大劍、ember 裂縫發光
-- [ ] 外部 GLB 失敗 → 程序化 fallback
-- [ ] 改模型後更新 `src/game/version.ts`＋PR 說明視覺差
+### 實作檢查清單（後續 PR；本刀僅 docs）
+- [ ] `knightMesh.std()` 加 `flatShading: true`（對齊 `enemyMesh`）
+- [ ] GLB 重製／Meshopt 至上表 KB；或改預設程序化
+- [ ] `applyPixelLook` traverse（flat＋NearestFilter）
+- [ ] 盔／甲板優先 Box；庭院 props vertex-color flat
+- [ ] 識別保留：粉結、過大劍、ember 裂縫
+- [ ] 改模型後更新 `version.ts`＋PR 說明視覺差
 
 ### 相關檔案
 - 程序化敵人：`src/game/enemyMesh.ts`（`makeHollow`／`makeDuke`／`makeDemon`）
 - 程序化玩家底座：`src/game/knightMesh.ts`（`makeKnight`）
 - GLB 載入：`src/game/enemyRig.ts`、`src/game/mallowRig.ts`
 - 資產清單／債務：[`ART.md`](ART.md)
+- Research 簡報：`/workspace/news-research/2026-10-20-mallow-lowpoly-pixel-3d.md`
 - 概念圖：`public/concepts/`
 
 ## 版本規則（必須遵守）
