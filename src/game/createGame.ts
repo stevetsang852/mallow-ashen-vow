@@ -1087,10 +1087,12 @@ export function createGame(
         }
         breakPoise(from, DEFLECT.poise);
         strikeCamera(from, amount, true);
+        shockDust((player.x + from.x) * 0.5, (player.z + from.z) * 0.5);
         guardV = 1;
-        hitFlash = Math.max(hitFlash, 0.9);
-        hitstop = Math.max(hitstop, 0.14);
-        shake = Math.max(shake, 0.42);
+        hitFlash = Math.max(hitFlash, 1);
+        hitstop = Math.max(hitstop, 0.18);
+        shake = Math.max(shake, 0.5);
+        camKick = Math.max(camKick, 0.35);
         feel.emit({ kind: "deflect", amount, foeId: from.id, foeKind: from.kind });
         burst((player.x + from.x) * 0.5, 1.1, (player.z + from.z) * 0.5, 1.6, 0, 0, "steel", 1.4);
         slash(from.x, 1.05, from.z, player.yaw, false);
@@ -1936,6 +1938,7 @@ export function createGame(
               const finisher = !heavy && player.combo === 2;
               const mid = !heavy && player.combo === 1;
               slash(f.x, 1.05, f.z, player.yaw, heavy || finisher, finisher, mid);
+              if (heavy && !player.hitDone) shockDust(f.x, f.z);
               feel.emit({
                 kind: resolved.feelKind,
                 amount: resolved.hitDmg,
@@ -2067,7 +2070,7 @@ export function createGame(
       const lightStep = player.combo === 2 ? 5.2 : player.combo === 1 ? 4.6 : 3.4;
       const lung = heavy
         ? player.actT > 0.3 && player.actT < 0.48
-          ? 5.4
+          ? 6.2
           : 0
         : player.actT > 0.12 && player.actT < 0.28
           ? lightStep
@@ -2293,13 +2296,15 @@ export function createGame(
         const sc = f.move === "shock" ? (f.state === "swing" ? 0.8 + u * 2.4 : 1.15 + u * 0.35) : f.state === "swing" ? 1.35 : 1.05 + u * 0.45;
         ring.scale.setScalar(sc);
       } else if (f.kind === "demon") {
-        mat.color.setHex(f.state === "swing" ? 0xff4d4d : 0x9b2335);
-        mat.opacity = f.state === "telegraph" || f.state === "swing" ? 0.7 : 0.4;
-        ring.scale.setScalar(f.state === "swing" ? 1.2 : 0.95);
+        const late = f.state === "telegraph" && u > 0.65;
+        mat.color.setHex(f.state === "swing" ? 0xff4d4d : late ? 0xff6a4a : 0x9b2335);
+        mat.opacity = f.state === "telegraph" || f.state === "swing" ? (late ? 0.9 : 0.7) : 0.4;
+        ring.scale.setScalar(f.state === "swing" ? 1.2 : 0.8 + u * 0.45);
       } else {
-        mat.color.setHex(punish ? 0xf3efe7 : 0x9b2335);
-        mat.opacity = punish ? 0.7 : 0.45;
-        ring.scale.setScalar(punish ? 1.25 : f.state === "swing" ? 1.15 : 0.85 + u * 0.4);
+        const late = f.state === "telegraph" && u > 0.65;
+        mat.color.setHex(punish ? 0xf3efe7 : late ? 0xff6a4a : 0x9b2335);
+        mat.opacity = punish ? 0.7 : late ? 0.85 : 0.45;
+        ring.scale.setScalar(punish ? 1.25 : f.state === "swing" ? 1.15 : 0.7 + u * 0.7);
       }
       if (punish) {
         const left = f.span > 0 ? Math.max(0.25, 1 - f.t / f.span) : 1;

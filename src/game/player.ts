@@ -26,9 +26,9 @@ export const DEFLECT = {
   /** HP chip dealt to attacker on bounce. */
   chip: 10,
   /** Foe hurt/stagger duration after deflect. */
-  stagger: 0.55,
+  stagger: 0.68,
   /** Knockback distance along away-from-player. */
-  knockback: 1.15,
+  knockback: 1.45,
   /** Min stamina to attempt guard (same as normal block gate). */
   minSta: 14,
   /** Min facing dot (player forward · to-foe) for guard to count. */
