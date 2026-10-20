@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "three/build/three.cjs";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import fs from "fs";
 
