@@ -10,13 +10,14 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-20）
+## 現在給同事（2026-10-21）
 
-目前進度在 `main`。版本 **0.8.44**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.45**（本 docs PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。docs 前 tip：`7dde58f`／**0.8.44**。
 
-**狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
+**狀態**：**隔夜硬停已於 2026-10-21 解除**（YIN／總管家 2026-10-20 ~15:10 HKT 硬停結束）。**一日一人一推進**重開；合入必須走 **PR 閘**（勿直推 main）。付費資源仍要 YIN。
 
-**重點更新（至 0.8.44）**：
+**重點更新（至 0.8.45）**：
+- **0.8.45**：Daily progress docs（2026-10-21 07:30；硬停解除；記錄 0.8.37–0.8.44 與隔夜硬停；重開一人一推進）。
 - **0.8.44（UI）**：標題「開啟聲音」不再被面板手勢雙重 toggle；unmute 後主題曲繼續播。
 - **0.8.40（Graphics）**：renderer `antialias: false` — 低模像素面更銳利（唔改 moves／AI／Save）。
 - **0.8.36（Graphics）**：low-poly pixel look — `knightMesh.std()` `flatShading`；GLB 載入後 `applyPixelLook`（flat＋NearestFilter）。唔改 moves／AI／Save。
@@ -208,7 +209,7 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.36";
+  export const GAME_VERSION = "0.8.45";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -276,28 +277,25 @@ npm run dev
 
 ## Planning
 
-更新日期：2026-10-20。同事照這個順序做。先不要加新地圖、新主角、武器樹。
+更新日期：2026-10-21。同事照這個順序做。先不要加新地圖、新主角、武器樹。
 
 ### 當前版本
 
-- **版本**：0.8.37（前搖可讀＋被打鏡頭）（low-poly pixel look；休息令已解除）
+- **版本**：**0.8.45**（docs）；code tip before docs **0.8.44**／`7dde58f`
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
-- **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
-- **合併序**：GD 0.8.29 ✓ → … → Graphics 0.8.33 ✓ → GD **0.8.35**（#42）✓ → Graphics **0.8.36**（本刀／#41）
+- **休息令／硬停**：2026-10-20 ~15:10–隔夜硬停已於 **2026-10-21** 解除；一日一人一推進；PR 閘
+- **合併序**：… → Graphics **0.8.36**（#41）✓ → GD **0.8.37–0.8.42** 戰鬥手感 ✓ → Graphics **0.8.43** ✓ → UI **0.8.44**（#48）✓ → docs **0.8.45**（本刀）
 
-### 今日下一刀（一人一項；解休後）
+### 今日下一刀（一人一項；硬停解除後）
 
-- **Game developer**：**0.8.29** 輕擊收招 — 已合 main（#37）
-- **Research**：**0.8.30** HUD／標題對比 — 已合 main（#36）
-- **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 已合 main（#38）
-- **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 已合 main（#39）
-- **Graphics**：**0.8.33** low-poly pixel 3D art direction＋ART.md — 已合 main
-- **Game developer**：**0.8.35** 輕擊終結感＋收招可罰 — 已合 main（#42）
-- **Graphics**：**0.8.36** low-poly pixel look — 本刀（#41）
-- **Project Mannger**：審／squash；日程日報照常
+- **Game developer** → **0.8.46**：一刀戰鬥手感（建議：庭院自評後選一項 — 灰殼／紅契前搖末段可讀性，或翻滾／收招銜接；`ITEMS_ENABLED` 仍 false；唔改 Graphics meshes）
+- **Fullstack** → **0.8.47**：harness／CI 穩定性一刀（建議：把剩餘 grok-pwa／skill ENOENT 測試隔離再收緊，或 harness 觀測欄位小補＋測試；唔改 moves／Save／Graphics）
+- **Graphics** → **0.8.48**：low-poly pixel **Sir Mallow** 程序化 mesh 對齊 `ART.md` 預算（`knightMesh.ts`；flat／Nearest；唔改 moves／AI）
+- **Research** → **0.8.49**：low-poly pipeline／Meshopt／perf 筆記補進 `ART.md` 或 research 短文（assist Graphics only；禁止無關 POC）
+- **Project Mannger**：審／squash；07:30 日報照常
 
-### 已完成 (0.5.x - 0.8.36)
+### 已完成 (0.5.x - 0.8.44)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -533,6 +531,28 @@ npm run dev
 - [x] **0.8.41 招架彈開**：招架停頓 0.14→0.18，彈開 1.15→1.45，硬直 0.55→0.68，交點震地
 - [x] **0.8.42 敵人前搖**：灰殼／紅契前搖環隨進度放大，最後三成變亮
 - [x] 道具仍關。`GAME_VERSION` → 0.8.42
+
+#### 0.8.38–0.8.39 / 0.8.34 - low-poly 工具／敵甲（Graphics／GD）
+
+- [x] **0.8.34**：low-poly pixel knight generator script
+- [x] **0.8.38**：low-poly knight generator 可攜性
+- [x] **0.8.39**：輕擊三連手感＋low-poly pixel 敵甲加強
+- [x] CI：**#44** grok-pwa 測試隔離（blank cwd；唔漏 site.json／og.jpg）
+
+#### 0.8.43 - sharper low-poly pixel look（Graphics）
+
+- [x] 低模像素銳化（含 key body → Box 等）；唔改 moves／AI
+- [x] `GAME_VERSION` → 0.8.43（#45）
+
+#### 0.8.44 - title sound button（UI）
+
+- [x] 標題「開啟聲音」不再被面板手勢雙重 toggle；unmute 後主題曲繼續播
+- [x] `GAME_VERSION` → 0.8.44（#48）；其後硬停至隔夜
+
+#### 0.8.45 - Daily progress docs（Project Mannger）
+
+- [x] 2026-10-21 07:30：記錄 0.8.37–0.8.44 與隔夜硬停；硬停解除；重開一人一推進
+- [x] `GAME_VERSION` → 0.8.45
 
 #### 0.8.18 - 關閉道具，重心打回戰鬥
 
@@ -793,3 +813,13 @@ feature/* → 新功能開發
 | 0.8.31 | 2026-10-20 | Fullstack：harness() learner ε／episodes 可見度 |
 | 0.8.32 | 2026-10-20 | Graphics：標題《反击》playing／stopped 播放狀態視覺 |
 | 0.8.33 | 2026-10-20 | Graphics：low-poly pixel 3D art direction＋ART.md 資產清單 |
+| 0.8.34 | 2026-10-20 | low-poly pixel knight generator script |
+| 0.8.35 | 2026-10-20 | 輕擊終結感＋收招可罰（#42） |
+| 0.8.36 | 2026-10-20 | Graphics：low-poly pixel look（#41） |
+| 0.8.37 | 2026-10-20 | 前搖可讀＋被打鏡頭 |
+| 0.8.38 | 2026-10-20 | low-poly knight generator 可攜性 |
+| 0.8.39 | 2026-10-20 | 輕擊三連手感＋敵甲加強 |
+| 0.8.40–0.8.42 | 2026-10-20 | 重擊落地／招架彈開／敵人前搖可讀 |
+| 0.8.43 | 2026-10-20 | Graphics：sharper low-poly pixel look（#45） |
+| 0.8.44 | 2026-10-20 | 標題聲音按鈕不再停主題曲（#48）；其後硬停 |
+| 0.8.45 | 2026-10-21 | Daily progress docs：硬停解除＋重開一人一推進 |
