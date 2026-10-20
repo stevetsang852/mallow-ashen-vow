@@ -13,35 +13,38 @@ function std(color: number, rough: number, metal: number) {
 }
 
 function addWeatheredArmor(group: THREE.Group, baseColor: number, emissive = 0xe85d04) {
-  const mat = std(baseColor, 0.85, 0.25);
+  const mat = std(baseColor, 0.9, 0.2);
   mat.emissive.setHex(emissive);
-  mat.emissiveIntensity = 0.35;
-  // Blocky low-poly plates (Box for pixel/faceted look)
-  for (let i = 0; i < 3; i++) {
-    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.5 - i * 0.07, 0.15, 0.44 - i * 0.05), mat);
-    plate.position.y = 0.35 + i * 0.18;
-    plate.rotation.y = (hash(i) - 0.5) * 0.15;
+  mat.emissiveIntensity = 0.4;
+  // Stronger blocky low-poly plates (pixel-style layered armor)
+  for (let i = 0; i < 4; i++) {
+    const plate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.54 - i * 0.06, 0.13, 0.48 - i * 0.05),
+      mat,
+    );
+    plate.position.y = 0.28 + i * 0.16;
+    plate.rotation.y = (hash(i) - 0.5) * 0.12;
     group.add(plate);
   }
-  // Oversized blocky helm
-  const helmMat = std(baseColor, 0.8, 0.3);
+  // Larger, more readable blocky helm (chibi proportion)
+  const helmMat = std(baseColor, 0.85, 0.25);
   helmMat.emissive.setHex(emissive);
-  helmMat.emissiveIntensity = 0.4;
-  const helm = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.38, 0.42), helmMat);
-  helm.position.y = 1.15;
+  helmMat.emissiveIntensity = 0.5;
+  const helm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.42, 0.48), helmMat);
+  helm.position.y = 1.18;
   group.add(helm);
-  // Strong ember crack accents
-  for (let i = 0; i < 2; i++) {
+  // Stronger ember crack accents for contrast
+  for (let i = 0; i < 3; i++) {
     const crack = new THREE.Mesh(
-      new THREE.BoxGeometry(0.025, 0.2, 0.015),
+      new THREE.BoxGeometry(0.03, 0.22, 0.018),
       new THREE.MeshStandardMaterial({
         color: emissive,
         emissive: emissive,
-        emissiveIntensity: 1.2,
+        emissiveIntensity: 1.4,
         flatShading: true,
       }),
     );
-    crack.position.set((hash(i + 5) - 0.5) * 0.32, 1.18, 0.22);
+    crack.position.set((hash(i + 5) - 0.5) * 0.36, 1.2 + (i - 1) * 0.04, 0.25);
     group.add(crack);
   }
 }
