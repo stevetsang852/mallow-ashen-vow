@@ -52,6 +52,7 @@ import {
   createHarnessSession,
   decideAutoThink,
   harnessWanted,
+  withLearnerView,
   type AutoThinkAction,
 } from "@/game/autoHarness";
 import { createPlayerLearner } from "@/game/playerLearner";
@@ -109,8 +110,8 @@ declare global {
       /** Combat feel recent buffer + counts (Plan A). */
       feelRecent?: () => import("@/game/combatFeel").CombatFeelEvent[];
       feelCounts?: () => import("@/game/combatFeel").CombatFeelCounts;
-      /** AI-vs-AI harness session summary / toggle. */
-      harness?: () => import("@/game/autoHarness").HarnessSummary;
+      /** AI-vs-AI harness session summary / toggle (+ learner ε／episodes, 0.8.31). */
+      harness?: () => import("@/game/autoHarness").HarnessWithLearnerView;
       setHarness?: (on: boolean) => void;
       setAuto?: (on: boolean) => void;
       /** Learning player policy summary (harness). */
@@ -2798,7 +2799,11 @@ export function createGame(
     },
     feelRecent: () => feel.recent(),
     feelCounts: () => feel.counts(),
-    harness: () => harness.summary(),
+    harness: () =>
+      withLearnerView(harness.summary(), {
+        epsilon: learner.epsilon,
+        episodes: learner.summary().episodes,
+      }),
     setHarness: (on: boolean) => {
       unlockAuto();
       harness.setEnabled(on);

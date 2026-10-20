@@ -12,11 +12,13 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.29**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.31**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.29）**：
+**重點更新（至 0.8.31）**：
+- **0.8.31（Fullstack）**：`harness()` 附帶 learner **ε／episodes** 可見度（`withLearnerView`；單元測試；唔改 moves／Save／Graphics）。
+- **0.8.30（Research）**：HUD／標題對比與可讀性 polish（CSS／UI only；#36）。
 - **0.8.29（Game developer）**：庭院自評 → **收招**修正：`MOVE.lightEnd` 0.50→0.46（前搖／判定窗不變）；出刀後更快可翻滾／接刀。
 - **0.8.15–0.8.17 波次已合 main**：item hotbar Key1–4 → swing SFX → hotbar HUD plate。
 - **0.8.18**：`ITEMS_ENABLED = false`（道具隱藏；E 只食水）；打擊手感加長（重擊／崩架 hitstop）。
@@ -109,7 +111,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.29";
+  export const GAME_VERSION = "0.8.31";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -181,21 +183,21 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.29（輕擊收招縮短；休息令已解除）
+- **版本**：0.8.31（harness ε／episodes 可見度；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
-- **合併序**：GD **0.8.29** → Fullstack 0.8.30 → Graphics 0.8.31（Research 0.8.32 檔案唔撞可平行）
+- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack **0.8.31** → Graphics 下一刀
 
 ### 今日下一刀（一人一項；解休後）
 
-- **Game developer**：**0.8.29** 庭院自評 → 輕擊收招（`lightEnd`）— 本刀
-- **Fullstack**：**0.8.30** harness／learner 小改進（等 0.8.29 合入後 rebase）
-- **Graphics**：**0.8.31** 標題《反击》播放狀態視覺（等 0.8.30）
-- **Research**：**0.8.32** HUD／標題對比或可讀性小 polish（可平行）
+- **Game developer**：**0.8.29** 輕擊收招 — 已合 main（#37）
+- **Research**：**0.8.30** HUD／標題對比 — 已合 main（#36）
+- **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 本刀
+- **Graphics**：標題《反击》播放狀態視覺（等 0.8.31）
 - **Project Mannger**：審／squash；日程日報照常
 
-### 已完成 (0.5.x - 0.8.29)
+### 已完成 (0.5.x - 0.8.31)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -462,6 +464,19 @@ npm run dev
 - [x] `MOVE.lightEnd` 0.50→0.46（~40ms）；`lightOpen`／`lightShut`／hitstop／重擊不變
 - [x] 唔動 harness／learner、標題主題曲視覺、HUD contrast CSS
 - [x] `GAME_VERSION` → 0.8.29（PR 閘）
+
+#### 0.8.30 - HUD／title contrast（Research）
+
+- [x] HUD captions／toast／combo／hotbar contrast；title kicker／lede／controls；cinematic plate opacity
+- [x] CSS／UI only（`index.tsx`／`styles.css`）；**唔改** moves／harness／learner
+- [x] `GAME_VERSION` → 0.8.30（#36；序在 GD **0.8.29** 之後）
+
+#### 0.8.31 - Harness learner view（Fullstack）
+
+- [x] `HarnessWithLearnerView`／`withLearnerView`：純 merge，附帶 `epsilon`＋`episodes`（唔 import learner）
+- [x] `createGame` 薄接線：`harness()` 回傳 session summary＋learner ε／episode 可見度
+- [x] 單元測試：保留 winRate 欄位＋附上 ε／episodes；**唔改** moves／Save／Graphics HUD
+- [x] `GAME_VERSION` → 0.8.31（rebase after **0.8.30**／#36）
 
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
