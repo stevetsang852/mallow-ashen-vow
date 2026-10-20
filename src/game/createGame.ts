@@ -132,7 +132,7 @@ export function createGame(
   try {
     renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: false, // low-poly pixel: keep facets crisp
       alpha: false,
       powerPreference: "high-performance",
     });
