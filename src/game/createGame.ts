@@ -2193,8 +2193,14 @@ export function createGame(
     const winding = inWindup(player.act, player.actT, player.atk === "heavy");
     windupRing.visible = winding && phase === "play";
     if (windupRing.visible) {
+      const heavy = player.atk === "heavy";
+      const open = heavy ? MOVE.heavyOpen : MOVE.lightOpen;
+      const u = Math.max(0, Math.min(1, player.actT / open));
       windupRing.position.set(player.x, 0.05, player.z);
-      windupRing.scale.setScalar(player.atk === "heavy" ? 1.25 : 1);
+      windupRing.scale.setScalar((heavy ? 1.15 : 0.85) + u * (heavy ? 0.7 : 0.35));
+      const mat = windupRing.material as THREE.MeshBasicMaterial;
+      mat.color.setHex(heavy ? 0xff7a2f : 0xe85d04);
+      mat.opacity = 0.35 + u * 0.55;
     }
     const recovering = inRecover(player.act, player.actT, player.atk === "heavy");
     recoverRing.visible = recovering && phase === "play";
@@ -2278,7 +2284,8 @@ export function createGame(
       if (f.kind === "duke") {
         const warn = f.move === "shock" ? 0xff4d2e : f.move === "overhead" ? 0xf4d35e : f.move === "rush" ? 0xf6efe4 : 0xe85d04;
         mat.color.setHex(f.state === "swing" ? 0x9b2335 : warn);
-        mat.opacity = f.state === "swing" ? 0.7 : 0.45;
+        const late = f.state === "telegraph" && u > 0.7;
+        mat.opacity = f.state === "swing" ? 0.75 : late ? 0.85 : 0.45;
         const sc = f.move === "shock" ? (f.state === "swing" ? 0.8 + u * 2.4 : 1.15 + u * 0.35) : f.state === "swing" ? 1.35 : 1.05 + u * 0.45;
         ring.scale.setScalar(sc);
       } else if (f.kind === "demon") {

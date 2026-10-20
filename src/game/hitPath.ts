@@ -192,11 +192,11 @@ export function strikeCameraImpulse(amount: number, blocked = false) {
   const scale = blocked ? 0.4 : 1;
   return {
     power,
-    camPush: (0.9 + power * 0.75) * scale,
-    fovKick: blocked ? 1.1 : 2.4 + power * 1.6,
-    shake: blocked ? 0.24 : 0.46 + power * 0.22,
-    hitstop: blocked ? 0.05 : 0.09 + power * 0.04,
-    hurtDip: blocked ? 0.08 : 0.24,
+    camPush: (1.15 + power * 0.9) * scale,
+    fovKick: blocked ? 1.1 : 2.8 + power * 1.8,
+    shake: blocked ? 0.24 : 0.52 + power * 0.28,
+    hitstop: blocked ? 0.05 : 0.1 + power * 0.05,
+    hurtDip: blocked ? 0.1 : 0.34,
     camRollAbs: (blocked ? 0.028 : 0.07) * (0.7 + power),
     camYawKick: blocked ? 0.035 : 0.08,
     camRollFallback: blocked ? 0.02 : 0.05,
