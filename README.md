@@ -12,11 +12,12 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.32**，標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.33**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
-**重點更新（至 0.8.32）**：
+**重點更新（至 0.8.33）**：
+- **0.8.33（Graphics）**：Art Direction — low-poly pixel 3D 指引＋`ART.md` 資產清單（唔改 moves／meshes 大改）。
 - **0.8.32（Graphics）**：標題《反击》播放狀態視覺（playing／stopped；讀 mute；唔動 moves／audio 邏輯）。
 - **0.8.31（Fullstack）**：`harness()` 附帶 learner **ε／episodes** 可見度（`withLearnerView`；單元測試；唔改 moves／Save／Graphics）。
 - **0.8.30（Research）**：HUD／標題對比與可讀性 polish（CSS／UI only；#36）。
@@ -84,32 +85,80 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **E** 食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。道具系統已關閉並隱藏（`ITEMS_ENABLED = false`）。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
-## 3D 模型風格指引（必須遵守）
+## Art Direction: Low-poly pixel 3D（必須遵守）
 
-敵人與角色模型目標是 **low-poly pixel 3D 風格**（PS1／PSX 與現代低面數像素感）：低面數、平面著色、塊狀比例、有限色盤，同時保持 cute（大頭）+ 暗黑灰燼風反差。
+敵人與角色模型目標是 **low-poly pixel 3D**（PS1／PSX-lite＋現代低面數像素感）：極低面數、平面著色、塊狀輪廓、有限色盤，同時保持 cute（大頭／粉結）+ 暗黑灰燼風反差。完整資產清單與技術預算見 **[`ART.md`](ART.md)**。
 
-### 核心原則（研究摘要）
-- **幾何**：極低三角形數。優先 `BoxGeometry`、低段數 Sphere／Cone（4–8 段）。避免高段數圓滑面。
-- **著色**：所有材質強制 `flatShading: true`（每面一色，強化低面／像素塊感）。
-- **比例**：chibi／塊狀可讀（較大頭部、較短身體），輪廓乾淨易讀。
-- **材質與色盤**：暗沉灰燼色（soot、bone、ember #E85D04）。高粗糙度、低金屬度、有限顏色。
-- **發光**：裂縫／接縫用高強度 emissive 做對比重點。
-- **像素感**：程序化幾何 + flat shading 為主。若加紋理，使用 `NearestFilter` 呈現像素塊。
-- **程序化優先**：主要改 `src/game/enemyMesh.ts` 與 `knightMesh.ts`。外部 GLB 必須有程序化 fallback。
-- **授權**：只用自由授權（CC0／CC BY）或原創程序化模型。
+YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模型 PR 必須對齊本節與 `ART.md`。
 
-### 實作建議
-- `std()` 材質函式中強制 `flatShading: true`。
-- 盔甲與頭盔優先用 Box 而非高段 Sphere。
-- 保持識別：粉紅蝴蝶結、過大劍、灰燼／ember 發光。
+### 速查子彈（Research 2026-10-20；必須遵守）
+- 目標風格：**low-poly pixel 3D**（PS1／PSX 感＋現代低面）：flat shading、塊狀比例、有限色盤、cute 大頭 × 灰燼暗黑。
+- 三角形預算：Mallow **800–2500**；灰殼 **400–1200**；公爵 **1000–2500**；紅契 **800–2000**；小 prop **50–300**。
+- 外部 GLB（若用）：每角色 **≤250–400 KB**（優先 **Meshopt**＋無大貼圖）；禁止未壓縮多 MB 寫實模上線。
+- 材質：強制 `flatShading: true`；紋理必須 `NearestFilter` 且關閉 mipmap；**優先 vertex color**。
+- 程序化優先：`enemyMesh.ts`／`knightMesh.ts`；GLB 失敗必須 fallback（GLB 非預設視覺）。
+- 識別不可改：粉紅蝴蝶結、過大劍、ember 裂縫發光。
+- 戰鬥可讀優先：前搖／收刀／翻滾／格擋環與鎖定菱對比不可被像素後處理削弱。
+- 授權：僅 CC0／CC BY 或原創；不用 Hero Forge／未授權商店模。
+- 改模型必更新 `version.ts`，PR 說明視覺差異。
+- Stack：Three.js **0.186**（網頁；非 Unity）。證據簡報：`/workspace/news-research/2026-10-20-mallow-lowpoly-pixel-3d.md`（副本 `mallow-research/`）。
+
+### 視覺目標
+- **Silhouette first**：遠距仍可辨（騎士貓耳朵＋粉結、灰殼兜帽、公爵角盔、紅契翅）。
+- **Chunky / blocky**：盔甲用盒子與低段錐，不要圓滑 subdivision。
+- **Flat facets**：每面一色；可讀陰影來自幾何與燈，不是 normal map。
+- **Ember soulslike palette**：soot／bone／灰銀＋ember `#E85D04`；粉結 `#e8a0b8`（`--color-bow`）只給玩家識別。
+- **Pixel feel without fake CRT**：程序化幾何＋`flatShading`；紋理若有則 `NearestFilter`、小 atlas（≤512 常用）。PS1 snap／dither／低解析 RT＝**P2**（需 A/B 測環可讀後再合）。
+
+### 三角形／檔案預算（庭院切片；Research 對齊）
+| 資產 | 三角形（目標） | 紋理／著色 | 備註 |
+| --- | --- | --- | --- |
+| Sir Mallow | **800–2,500** | 無或 256–512 atlas nearest | 大頭、粉結、過大劍必須可辨 |
+| 灰殼（road／side） | **400–1,200** | vertex／共享 256 atlas | 瘦／寬＋盾用幾何差 |
+| 煤灰公爵 | **1,000–2,500** | 同上；裂縫 emissive | 角盔 silhouette 優先 |
+| 紅契 | **800–2,000** | 小翼少面；紅刃 emissive | 侵入瞬間要認得 |
+| 場景 prop | **50–300** | **vertex color 預設** | 重複件 → `InstancedMesh` |
+| 拱門／火芯套件 | **500–2,000** 合計 | 共享材質 | 靜態可合併 |
+| 整場同時可見 | **≲ 25k–40k tri** 舒適 | 材質種類 ≲ 8–12 | 量測 `renderer.info` |
+| Mallow GLB（若保留） | — | 壓縮後 **≤250–400 KB** | 現況 ~**19.3 MB** → 債務 |
+| 敵人 GLB（各） | — | 壓縮後 **≤150–300 KB** | 現況 ~**3.5 MB** → 債務 |
+
+### 材質／渲染契約
+- **全部**角色／敵人 mesh：`flatShading: true`（含 GLB `traverse` 覆寫）。現況：`enemyMesh.std()` 已有；**`knightMesh.std()` 尚未**（債務，後續實作刀）。
+- 有 `map`：`magFilter = minFilter = NearestFilter`；`generateMipmaps = false`。
+- 金屬度：盔甲中低；毛皮近 0；勿讓寫實高光搶戰鬥提示。
+- Renderer：現況 `antialias: true`＋`pixelRatio ≤ 1.75`（偏平滑）。P1 可實驗關 AA／½ RT；P2 vertex snap／dither — **勿削弱 HUD 環／菱**。
+- Vertex color 為庭院 props／多數盔甲面預設；小 atlas 留給臉／粉結／武器識別。
+
+### 管線
+1. **程序化為預設視覺**：`enemyMesh.ts`／`knightMesh.ts`（Box／低段 Cone／Capsule 4–8 段）。
+2. **外部 GLB 為 opt-in／fallback 路徑**：Blender → GLB → `gltf-transform`（Meshopt）→ `public/models/`；載入失敗必須程序化（`enemyRig.ts`／`mallowRig.ts`）。
+3. **載入後**建議統一 `applyPixelLook(root)`（flat＋NearestFilter；清多餘 normalMap）— 後續實作刀。
+4. **命名**：`hollow.glb`／`duke.glb`／`demon.glb`／`mallow-knight-cat.glb`；概念圖＝low-poly pixel 目標參考（非寫實網）。
+5. **授權**：僅 CC0／CC BY／原創。禁止 Hero Forge／未授權商店／付費包。
+
+### 不要做（反模式）
+- 高面數 PBR 電影風、細法線／ORM 套圖、subsurface 寫實毛髮。
+- 未壓縮多 MB GLB 當預設（玩家 ~19.3 MB、敵人各 ~3.5 MB）。
+- 高段 `SphereGeometry(…, 24+)`／Subdivision「為了圓潤」。
+- 把 PS1 snap／全屏 dither 當 P0（需可讀性驗證）。
+- 改 moves feel、Save、audio、AI（本方向不綁）。
+
+### 實作檢查清單（後續 PR；本刀僅 docs）
+- [ ] `knightMesh.std()` 加 `flatShading: true`（對齊 `enemyMesh`）
+- [ ] GLB 重製／Meshopt 至上表 KB；或改預設程序化
+- [ ] `applyPixelLook` traverse（flat＋NearestFilter）
+- [ ] 盔／甲板優先 Box；庭院 props vertex-color flat
+- [ ] 識別保留：粉結、過大劍、ember 裂縫
+- [ ] 改模型後更新 `version.ts`＋PR 說明視覺差
 
 ### 相關檔案
-- 程序化敵人：`src/game/enemyMesh.ts`
-- 程序化玩家：`src/game/knightMesh.ts`、`src/game/mallowRig.ts`
-- 外部模型載入：`src/game/enemyRig.ts`
+- 程序化敵人：`src/game/enemyMesh.ts`（`makeHollow`／`makeDuke`／`makeDemon`）
+- 程序化玩家底座：`src/game/knightMesh.ts`（`makeKnight`）
+- GLB 載入：`src/game/enemyRig.ts`、`src/game/mallowRig.ts`
+- 資產清單／債務：[`ART.md`](ART.md)
+- Research 簡報：`/workspace/news-research/2026-10-20-mallow-lowpoly-pixel-3d.md`
 - 概念圖：`public/concepts/`
-
-改模型後必須更新版本號，並在 commit／PR 說明視覺變化。
 
 ## 版本規則（必須遵守）
 
@@ -119,7 +168,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.32";
+  export const GAME_VERSION = "0.8.33";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -191,21 +240,22 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.32（標題《反击》播放狀態視覺；休息令已解除）
+- **版本**：0.8.33（low-poly pixel 3D art direction＋ART.md；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
-- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack 0.8.31 ✓ → Graphics **0.8.32**
+- **合併序**：GD 0.8.29 ✓ → Research 0.8.30 ✓ → Fullstack 0.8.31 ✓ → Graphics 0.8.32 ✓ → Graphics **0.8.33**（本刀）
 
 ### 今日下一刀（一人一項；解休後）
 
 - **Game developer**：**0.8.29** 輕擊收招 — 已合 main（#37）
 - **Research**：**0.8.30** HUD／標題對比 — 已合 main（#36）
 - **Fullstack**：**0.8.31** harness／learner ε＋episode 可見度 — 已合 main（#38）
-- **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 本刀
+- **Graphics**：**0.8.32** 標題《反击》播放狀態視覺 — 已合 main（#39）
+- **Graphics**：**0.8.33** low-poly pixel 3D art direction＋ART.md — 本刀
 - **Project Mannger**：審／squash；日程日報照常
 
-### 已完成 (0.5.x - 0.8.32)
+### 已完成 (0.5.x - 0.8.33)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -493,6 +543,13 @@ npm run dev
 - [x] CSS／UI only；唔改 ThemeWaitMusic／audio／moves／harness／Save
 - [x] 合併序：rebase after **0.8.31**（Fullstack／#38）；`GAME_VERSION` → 0.8.32
 
+#### 0.8.33 - Low-poly pixel 3D art direction（Graphics）
+
+- [x] README「Art Direction: Low-poly pixel 3D」：視覺目標、Web 預算、管線、反模式（研究對齊）
+- [x] 新增 `ART.md`：程序化／GLB 資產清單＋壓縮／換模債務
+- [x] **唔改** moves／Save／audio／AI；大型 mesh 重寫延後
+- [x] `GAME_VERSION` → 0.8.33（PR 閘）
+
 #### 0.8.17 - Item hotbar HUD plate（Graphics）
 - [x] `HudSnap.hotbarSelected`（0..3）／`hotbarFilled[4]`：與 GD **0.8.15** 對齊（炬／炸／藥／片）；空槽隱藏；全空隱藏 plate
 - [x] 接線沿用 GD `hotbarSelected`／`hotbarFilledFlags`；index／CSS `hud-hotbar-plate`／`--selected` ember 邊（取代薄「欄N」）
@@ -651,3 +708,4 @@ feature/* → 新功能開發
 | 0.8.30 | 2026-10-20 | Research：HUD／標題對比可讀性（CSS／UI） |
 | 0.8.31 | 2026-10-20 | Fullstack：harness() learner ε／episodes 可見度 |
 | 0.8.32 | 2026-10-20 | Graphics：標題《反击》playing／stopped 播放狀態視覺 |
+| 0.8.33 | 2026-10-20 | Graphics：low-poly pixel 3D art direction＋ART.md 資產清單 |
