@@ -91,7 +91,7 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   chain.position.y = 0.42;
   bob.add(chain);
 
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), furMat);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.32), furMat);
   torso.scale.set(1.15, 0.88, 0.82);  // 頭身比例再拉開
   torso.position.y = 0.78;
   bob.add(torso);

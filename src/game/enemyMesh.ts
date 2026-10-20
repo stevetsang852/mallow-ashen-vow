@@ -146,7 +146,7 @@ export function makeHollow(role: "road" | "side" = "side"): KnightRig {
   const bodyMat = std(0x2a1a14, 0.92, 0.06);
   bodyMat.emissive.setHex(0xe85d04);
   bodyMat.emissiveIntensity = 0.15;
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), bodyMat);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.32, 0.36), bodyMat);
   body.scale.set(1.2, 0.68, 1.08); // Flatter, broader torso
   body.position.y = 0.52;
   rig.bob.add(body);
@@ -439,7 +439,7 @@ export function makeDemon(): KnightRig {
   const bodyMat = std(0x2a0c12, 0.88, 0.06);
   bodyMat.emissive.setHex(0xff2430);
   bodyMat.emissiveIntensity = 0.35;
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), bodyMat);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.48, 0.26), bodyMat);
   body.scale.set(0.75, 1.15, 0.75); // Taller, thinner
   body.position.y = 0.78;
   rig.bob.add(body);
