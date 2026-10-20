@@ -152,6 +152,37 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 - [ ] 識別保留：粉結、過大劍、ember 裂縫
 - [ ] 改模型後更新 `version.ts`＋PR 說明視覺差
 
+### 本地／自動產生 low-poly pixel 模型的方法（研究摘要）
+
+優先使用**本地、免費、可產出 GLB／GLTF** 的工具，並保持程序化 fallback。
+
+#### 1. 純程序化（目前主力，推薦）
+- 直接在 `src/game/enemyMesh.ts` / `knightMesh.ts` 用 `BoxGeometry`、低段數 Sphere／Cone + `flatShading: true`。
+- 優點：零授權問題、可版本控制、與現有 rig／動畫完美整合、輕量。
+- 可進一步用 seed（`hash()`）產生變體。
+
+#### 2. 本地低面數建模工具（推薦）
+- **Blockbench**（免費、開源、瀏覽器／桌面）：專為 low-poly + 像素紋理設計，可直接畫 pixel texture、匯出 glTF／GLB。適合手做 chibi 騎士。
+- **MagicaVoxel**（免費）：體素建模，可匯出後在 Blender 簡化成 low-poly mesh。
+- **Blender**（免費）：
+  - 手動 low-poly 建模 + flat shading。
+  - Python API 背景模式自動產生（`blender --background --python generate.py`）後匯出 GLB。
+  - Geometry Nodes 做參數化變體。
+
+#### 3. 像素圖 → 3D 轉換（本地）
+- **Pixel to 3D Batch Builder** 等工具：把像素圖轉成低面數 GLB（帶 crisp pixel texture）。
+- 適合先畫 2D 概念再快速轉 3D。
+
+#### 4. 本地 AI 產生（進階，需 GPU）
+- **Modly**、**Hunyuan3D**（開源）、**TRELLIS** 等：可本地跑 image-to-3D 或 text-to-3D，匯出 GLB。
+- 注意：產出通常較高面數，需在 Blender 做 decimate／retopo 到低面數，並手動調成灰燼色盤 + flat shading。
+- 僅作參考或概念，最終仍建議程序化或 Blockbench 手調以確保風格一致與授權安全。
+
+#### 使用建議
+- 優先程序化 → 其次 Blockbench／Blender 手做 → AI 只作概念參考。
+- 任何外部 GLB 放入 `public/models/` 後，必須在 `enemyRig.ts` 確認有程序化 fallback。
+- 匯出時盡量保持低面數（角色 < 1000 三角）、使用 nearest 紋理過濾，並套用遊戲色盤。
+
 ### 相關檔案
 - 程序化敵人：`src/game/enemyMesh.ts`（`makeHollow`／`makeDuke`／`makeDemon`）
 - 程序化玩家底座：`src/game/knightMesh.ts`（`makeKnight`）
