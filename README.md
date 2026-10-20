@@ -12,7 +12,7 @@
 
 ## 現在給同事（2026-10-20）
 
-目前進度在 `main`。版本 **0.8.36**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
+目前進度在 `main`。版本 **0.8.37**（本 PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。
 
 **狀態**：**休息令已解除**（YIN／總管家）。一日一人一推進；合入必須走 **PR 閘**（勿直推 main）。
 
@@ -278,7 +278,7 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：0.8.36（low-poly pixel look；休息令已解除）
+- **版本**：0.8.37（前搖可讀＋被打鏡頭）（low-poly pixel look；休息令已解除）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令**：已解除（2026-10-20）；一日一人一推進；PR 閘
@@ -507,6 +507,14 @@ npm run dev
 - [x] 鎖定可打菱形脈衝 1.08→1.22
 - [x] 道具仍 `ITEMS_ENABLED = false`
 - [x] `GAME_VERSION` → 0.8.35（PR 閘／#42）
+
+
+#### 0.8.37 - 前搖可讀＋被打鏡頭（Game developer）
+
+- [x] 玩家前搖環隨進度放大，重擊更亮更外
+- [x] 公爵前搖最後三成環更亮
+- [x] 被打鏡頭推遠 0.9→1.15、下壓 0.24→0.34
+- [x] 道具仍關。`GAME_VERSION` → 0.8.37
 
 #### 0.8.18 - 關閉道具，重心打回戰鬥
 
