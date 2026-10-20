@@ -183,6 +183,11 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 - 任何外部 GLB 放入 `public/models/` 後，必須在 `enemyRig.ts` 確認有程序化 fallback。
 - 匯出時盡量保持低面數（角色 < 1000 三角）、使用 nearest 紋理過濾，並套用遊戲色盤。
 
+#### 5. 程序化產生腳本範例（本 repo）
+- 已提供 `scripts/generate-lowpoly-knight.mjs`：用 Three.js 建立塊狀 low-poly chibi 灰燼騎士（Box 盔甲、大頭盔、ember 裂縫、粉紅蝴蝶結、過大劍）。
+- 在完整 `npm install` 後執行：`node scripts/generate-lowpoly-knight.mjs`
+- 產出 `public/models/lowpoly-pixel-knight.glb`，可作為外部模型測試或參考。
+
 ### 相關檔案
 - 程序化敵人：`src/game/enemyMesh.ts`（`makeHollow`／`makeDuke`／`makeDemon`）
 - 程序化玩家底座：`src/game/knightMesh.ts`（`makeKnight`）
