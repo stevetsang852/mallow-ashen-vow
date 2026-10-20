@@ -937,16 +937,16 @@ export function createGame(
     particles.ringDust(x, z);
   }
 
-  function slash(x: number, y: number, z: number, yaw: number, heavy: boolean, finisher = false) {
+  function slash(x: number, y: number, z: number, yaw: number, heavy: boolean, finisher = false, mid = false) {
     const arc = slashes[slashCursor % slashes.length]!;
     slashCursor++;
     arc.visible = true;
-    arc.userData.life = finisher ? 0.2 : heavy ? 0.16 : 0.11;
+    arc.userData.life = finisher ? 0.2 : mid ? 0.14 : heavy ? 0.16 : 0.11;
     arc.position.set(x, y, z);
-    arc.rotation.set(0.4, yaw, heavy ? -0.6 : 0.35);
-    arc.scale.setScalar(finisher ? 1.55 : heavy ? 1.35 : 0.95);
+    arc.rotation.set(0.4, yaw, heavy ? -0.6 : mid ? -0.15 : 0.35);
+    arc.scale.setScalar(finisher ? 1.55 : mid ? 1.2 : heavy ? 1.35 : 0.95);
     const mat = arc.material as THREE.MeshBasicMaterial;
-    mat.color.setHex(finisher ? 0xffb3d0 : heavy ? 0xfff1d2 : 0xffd7ea);
+    mat.color.setHex(finisher ? 0xffb3d0 : mid ? 0xffe0c2 : heavy ? 0xfff1d2 : 0xffd7ea);
     mat.opacity = 0.92;
   }
 
@@ -1218,6 +1218,7 @@ export function createGame(
     }
     faceTarget();
     camKick = Math.max(camKick, kind === "heavy" ? 0.32 : 0.16);
+    if (kind === "light" && lightCombo.phase === "window") camKick = Math.max(camKick, 0.24);
     player.act = "attack";
     player.actT = 0;
     player.hitDone = false;
@@ -1933,7 +1934,8 @@ export function createGame(
                 resolved.sparkMul,
               );
               const finisher = !heavy && player.combo === 2;
-              slash(f.x, 1.05, f.z, player.yaw, heavy || finisher, finisher);
+              const mid = !heavy && player.combo === 1;
+              slash(f.x, 1.05, f.z, player.yaw, heavy || finisher, finisher, mid);
               feel.emit({
                 kind: resolved.feelKind,
                 amount: resolved.hitDmg,
@@ -1962,11 +1964,12 @@ export function createGame(
             {
               const fb = connectSwingFeedback(heavy);
               const finisher = !heavy && player.combo === 2;
-              shake = Math.max(shake, fb.shake + (finisher ? 0.16 : 0));
-              hitstop = Math.max(hitstop, fb.hitstop + (finisher ? 0.07 : 0));
-              hitFlash = fb.hitFlash + (finisher ? 0.2 : 0);
-              camKick = Math.max(camKick, fb.camKick + (finisher ? 0.28 : 0));
-              fovKick = Math.max(fovKick, fb.fovKick + (finisher ? 1.1 : 0));
+              const mid = !heavy && player.combo === 1;
+              shake = Math.max(shake, fb.shake + (finisher ? 0.16 : mid ? 0.06 : 0));
+              hitstop = Math.max(hitstop, fb.hitstop + (finisher ? 0.07 : mid ? 0.02 : 0));
+              hitFlash = fb.hitFlash + (finisher ? 0.2 : mid ? 0.08 : 0);
+              camKick = Math.max(camKick, fb.camKick + (finisher ? 0.28 : mid ? 0.1 : 0));
+              fovKick = Math.max(fovKick, fb.fovKick + (finisher ? 1.1 : mid ? 0.4 : 0));
               camRoll = fb.camRoll * (Math.random() < 0.5 ? -1 : 1);
             }
             audio.clang(heavy);
@@ -2061,12 +2064,13 @@ export function createGame(
       player.vz = player.dodgeZ * 11 * curve;
     } else if (player.act === "attack") {
       const heavy = player.atk === "heavy";
+      const lightStep = player.combo === 2 ? 5.2 : player.combo === 1 ? 4.6 : 3.4;
       const lung = heavy
         ? player.actT > 0.3 && player.actT < 0.48
           ? 5.4
           : 0
         : player.actT > 0.12 && player.actT < 0.28
-          ? 3.4
+          ? lightStep
           : 0;
       player.vx = -Math.sin(player.yaw) * lung;
       player.vz = -Math.cos(player.yaw) * lung;

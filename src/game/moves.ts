@@ -40,7 +40,7 @@ export const MOVE = {
   heavyShut: 0.5,
   heavyEnd: 0.84,
   /** Seconds after a light hit ends to chain the next (must press again). */
-  lightComboWindow: 0.8,
+  lightComboWindow: 0.92,
   /** Short recovery after combo ends (3rd hit or window timeout). */
   lightComboRecover: 0.22,
   duke: {
