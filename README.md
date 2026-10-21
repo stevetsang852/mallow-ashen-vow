@@ -10,14 +10,15 @@
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
 
-## 現在給同事（2026-10-21）
+## 現在給同事（2026-10-22）
 
-目前進度在 `main`。版本 **0.8.45**（本 docs PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。docs 前 tip：`7dde58f`／**0.8.44**。
+目前進度在 `main`。版本 **0.8.46**（本 docs PR 合入後），標題畫面也會顯示。公開試玩網址是 [mallow-ashen-vow.grok.me](https://mallow-ashen-vow.grok.me/)。docs 前 tip：`e33a3ac`／**0.8.45**。
 
-**狀態**：**隔夜硬停已於 2026-10-21 解除**（YIN／總管家 2026-10-20 ~15:10 HKT 硬停結束）。**一日一人一推進**重開；合入必須走 **PR 閘**（勿直推 main）。付費資源仍要 YIN。
+**狀態**：**FREEZE** — 2026-10-21 ~07:39 HKT 直屬總管家轉達：YIN 尚未批准一日一人一推進重開。取消／勿開 0.8.46–0.8.49 功能刀。全員待命 tip `e33a3ac`／0.8.45。等總管家轉達 YIN 重開令。付費資源仍要 YIN。PR 閘仍必須。
 
-**重點更新（至 0.8.45）**：
-- **0.8.45**：Daily progress docs（2026-10-21 07:30；硬停解除；記錄 0.8.37–0.8.44 與隔夜硬停；重開一人一推進）。
+**重點更新（至 0.8.46）**：
+- **0.8.46**：Daily progress docs（2026-10-22 07:30；記錄 freeze；取消先前日報指派之 0.8.46–0.8.49 功能波；無新 code）。
+- **0.8.45**：Daily progress docs（2026-10-21 07:30；硬停解除；記錄 0.8.37–0.8.44 與隔夜硬停；重開一人一推進；其後同日 ~07:39 FREEZE）。
 - **0.8.44（UI）**：標題「開啟聲音」不再被面板手勢雙重 toggle；unmute 後主題曲繼續播。
 - **0.8.40（Graphics）**：renderer `antialias: false` — 低模像素面更銳利（唔改 moves／AI／Save）。
 - **0.8.36（Graphics）**：low-poly pixel look — `knightMesh.std()` `flatShading`；GLB 載入後 `applyPixelLook`（flat＋NearestFilter）。唔改 moves／AI／Save。
@@ -209,7 +210,7 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.45";
+  export const GAME_VERSION = "0.8.46";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -277,25 +278,25 @@ npm run dev
 
 ## Planning
 
-更新日期：2026-10-21。同事照這個順序做。先不要加新地圖、新主角、武器樹。
+更新日期：2026-10-22。同事照這個順序做。先不要加新地圖、新主角、武器樹。
 
 ### 當前版本
 
-- **版本**：**0.8.45**（docs）；code tip before docs **0.8.44**／`7dde58f`
+- **版本**：**0.8.46**（docs）；docs 前 tip **0.8.45**／`e33a3ac`（code tip still **0.8.44**／`7dde58f`）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
-- **休息令／硬停**：2026-10-20 ~15:10–隔夜硬停已於 **2026-10-21** 解除；一日一人一推進；PR 閘
-- **合併序**：… → Graphics **0.8.36**（#41）✓ → GD **0.8.37–0.8.42** 戰鬥手感 ✓ → Graphics **0.8.43** ✓ → UI **0.8.44**（#48）✓ → docs **0.8.45**（本刀）
+- **休息令／硬停**：**FREEZE**（2026-10-21 ~07:39 HKT 直屬總管家轉達：YIN 尚未批准一日一人一推進重開）；取消先前指派 0.8.46–0.8.49 功能波；PR 閘仍必須；付費資源仍要 YIN
+- **合併序**：… → Graphics **0.8.36**（#41）✓ → GD **0.8.37–0.8.42** 戰鬥手感 ✓ → Graphics **0.8.43** ✓ → UI **0.8.44**（#48）✓ → docs **0.8.45** ✓ → docs **0.8.46**（本刀；freeze standby）
 
-### 今日下一刀（一人一項；硬停解除後）
+### 今日下一刀（全員待命；FREEZE）
 
-- **Game developer** → **0.8.46**：一刀戰鬥手感（建議：庭院自評後選一項 — 灰殼／紅契前搖末段可讀性，或翻滾／收招銜接；`ITEMS_ENABLED` 仍 false；唔改 Graphics meshes）
-- **Fullstack** → **0.8.47**：harness／CI 穩定性一刀（建議：把剩餘 grok-pwa／skill ENOENT 測試隔離再收緊，或 harness 觀測欄位小補＋測試；唔改 moves／Save／Graphics）
-- **Graphics** → **0.8.48**：low-poly pixel **Sir Mallow** 程序化 mesh 對齊 `ART.md` 預算（`knightMesh.ts`；flat／Nearest；唔改 moves／AI）
-- **Research** → **0.8.49**：low-poly pipeline／Meshopt／perf 筆記補進 `ART.md` 或 research 短文（assist Graphics only；禁止無關 POC）
-- **Project Mannger**：審／squash；07:30 日報照常
+- **Game developer** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
+- **Fullstack** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
+- **Graphics** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
+- **Research** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
+- **Project Mannger**：審／squash 日報 docs；07:30 日報照常；**勿指派／勿開**功能 PR
 
-### 已完成 (0.5.x - 0.8.44)
+### 已完成 (0.5.x - 0.8.46)
 
 #### 0.5.x - 基礎建設
 - [x] 傷害數字（已對普通玩家隱藏）
@@ -553,6 +554,12 @@ npm run dev
 
 - [x] 2026-10-21 07:30：記錄 0.8.37–0.8.44 與隔夜硬停；硬停解除；重開一人一推進
 - [x] `GAME_VERSION` → 0.8.45
+
+#### 0.8.46 - Daily progress docs（Project Mannger；FREEZE）
+
+- [x] 2026-10-22 07:30：記錄 FREEZE；取消先前日報指派之 0.8.46–0.8.49 功能波；全員待命 tip `e33a3ac`／0.8.45
+- [x] `GAME_VERSION` → 0.8.46
+- [x] 無新 code；僅 README＋version.ts
 
 #### 0.8.18 - 關閉道具，重心打回戰鬥
 
@@ -823,3 +830,4 @@ feature/* → 新功能開發
 | 0.8.43 | 2026-10-20 | Graphics：sharper low-poly pixel look（#45） |
 | 0.8.44 | 2026-10-20 | 標題聲音按鈕不再停主題曲（#48）；其後硬停 |
 | 0.8.45 | 2026-10-21 | Daily progress docs：硬停解除＋重開一人一推進 |
+| 0.8.46 | 2026-10-22 | Daily progress docs：FREEZE standby；取消 0.8.46–0.8.49 功能指派 |
