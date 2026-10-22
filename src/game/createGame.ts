@@ -3,7 +3,7 @@ import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
-import { applyCamera, stepCamera } from "@/game/camera";
+import { applyCamera, stepCamera, settleIsoCamera, ISO_YAW, ISO_DIST, ISO_HEIGHT, FREE_ORBIT } from "@/game/camera";
 import { ITEMS_ENABLED } from "@/game/items";
 import {
   chooseDemonIntent,
@@ -757,9 +757,9 @@ export function createGame(
   let clears = 0;
   let phase: Phase = "title";
   let menuOpen = false;
-  let camYaw = 0.15;
-  let camDist = 6.1;
-  let camHeight = 2.2;
+  let camYaw = ISO_YAW;
+  let camDist = ISO_DIST;
+  let camHeight = ISO_HEIGHT;
   let camX = SPAWN.x;
   let camY = 2.2;
   let camZ = SPAWN.z + 6;
@@ -1053,7 +1053,9 @@ export function createGame(
     player.combo = 0;
     lightCombo = createLightComboState();
     blockAge = 0;
-    camYaw = 0;
+    camYaw = ISO_YAW;
+    camDist = ISO_DIST;
+    camHeight = ISO_HEIGHT;
   }
 
   function resetFoes() {
@@ -2184,9 +2186,12 @@ export function createGame(
       say("拱門散了");
     }
 
-    if (locked) {
-      const face = Math.atan2(-(locked.x - player.x), -(locked.z - player.z));
-      camYaw = dampAngle(camYaw, face, 3.1, dt);
+    // 2.5D: keep fixed isometric yaw; lock framing uses lookX/lookZ in stepCamera.
+    {
+      const settled = settleIsoCamera({ yaw: camYaw, dist: camDist, height: camHeight }, dt);
+      camYaw = settled.yaw;
+      camDist = settled.dist;
+      camHeight = settled.height;
     }
 
     emitAcc += dt;
@@ -2571,7 +2576,11 @@ export function createGame(
   canvas.addEventListener(
     "pointerdown",
     (e) => {
-      if (e.pointerType === "touch" || e.button === 1) {
+      // Free orbit disabled for 2.5D isometric (FREE_ORBIT=false). Mid/touch no longer yaws.
+      if (!FREE_ORBIT && (e.pointerType === "touch" || e.button === 1)) {
+        return;
+      }
+      if (FREE_ORBIT && (e.pointerType === "touch" || e.button === 1)) {
         dragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
@@ -2589,7 +2598,7 @@ export function createGame(
   window.addEventListener(
     "pointermove",
     (e) => {
-      if (!dragging) return;
+      if (!FREE_ORBIT || !dragging) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
@@ -2608,7 +2617,8 @@ export function createGame(
     "wheel",
     (e) => {
       e.preventDefault();
-      camDist = Math.max(3.6, Math.min(8, camDist + Math.sign(e.deltaY) * 0.28));
+      // Narrow zoom band around ISO_DIST — no free orbit dolly.
+      camDist = Math.max(ISO_DIST - 0.45, Math.min(ISO_DIST + 0.45, camDist + Math.sign(e.deltaY) * 0.18));
     },
     { signal, passive: false },
   );
@@ -2954,7 +2964,9 @@ export function createGame(
     phase = "play";
     harness.onPhase("play");
     menuOpen = false;
-    camYaw = 0;
+    camYaw = ISO_YAW;
+    camDist = ISO_DIST;
+    camHeight = ISO_HEIGHT;
     player.yaw = 0;
     player.x = SPAWN.x;
     player.z = SPAWN.z;
