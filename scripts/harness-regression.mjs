@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Fixed-seed harness regression (0.8.7) + ε schedule / snapshot smoke (0.8.10) + learner view (0.8.31).
+ * Fixed-seed harness regression (0.8.7) + ε schedule / snapshot smoke (0.8.10) + learner view (0.8.31)
+ * + sprite sheet loader smoke (1.0.2).
  * Usage: node --import tsx scripts/harness-regression.mjs
  * Does not touch moves damage tables.
  */
@@ -16,6 +17,8 @@ import {
   DEFAULT_EPSILON_SCHEDULE,
   parseLearnerSnapshot,
 } from "../src/game/playerLearner.ts";
+
+import { smokeSpriteSheetLoader } from "../src/game/spriteSheet.ts";
 
 const report = runFixedSeedRegression(HARNESS_REGRESSION_SEED, 48);
 console.log(JSON.stringify(report, null, 2));
@@ -77,5 +80,13 @@ if (view.epsilon !== learner.epsilon || view.episodes !== 1) {
   process.exit(1);
 }
 console.log(JSON.stringify({ harnessLearnerView: { epsilon: view.epsilon, episodes: view.episodes } }));
+// 1.0.2: sprite sheet loader stub smoke (injectable; no DOM Image)
+const spriteSmoke = await smokeSpriteSheetLoader();
+if (!spriteSmoke.ok || spriteSmoke.url !== "/sprites/mallow-placeholder-4dir.png") {
+  console.error("spriteSheet smoke failed", spriteSmoke);
+  process.exit(1);
+}
+console.log(JSON.stringify({ spriteSheetSmoke: { url: spriteSmoke.url, uvS: spriteSmoke.uvS } }));
+
 console.log("ok");
 
