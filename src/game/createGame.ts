@@ -1482,31 +1482,15 @@ export function createGame(
   }
 
   function wishDir() {
-    // Camera-relative movement for fixed isometric (ISO_YAW)
-    const fx = -Math.sin(camYaw);
-    const fz = -Math.cos(camYaw);
-    const rx = Math.cos(camYaw);
-    const rz = -Math.sin(camYaw);
+    // World-relative movement — independent of fixed isometric camera (not Octopath-style)
     let ix = 0;
     let iz = 0;
-    if (held("KeyW") || held("ArrowUp")) {
-      ix += fx;
-      iz += fz;
-    }
-    if (held("KeyS") || held("ArrowDown")) {
-      ix -= fx;
-      iz -= fz;
-    }
-    if (held("KeyD") || held("ArrowRight")) {
-      ix += rx;
-      iz += rz;
-    }
-    if (held("KeyA") || held("ArrowLeft")) {
-      ix -= rx;
-      iz -= rz;
-    }
-    ix += rx * stickX + fx * stickY;
-    iz += rz * stickX + fz * stickY;
+    if (held("KeyW") || held("ArrowUp")) iz -= 1;
+    if (held("KeyS") || held("ArrowDown")) iz += 1;
+    if (held("KeyD") || held("ArrowRight")) ix += 1;
+    if (held("KeyA") || held("ArrowLeft")) ix -= 1;
+    ix += stickX;
+    iz += stickY;
     const mag = Math.hypot(ix, iz);
     if (mag > 1) {
       ix /= mag;
