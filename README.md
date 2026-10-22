@@ -93,29 +93,53 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## Art Direction: 2.5D Dark Souls-like（必須遵守，v1.0.0 起）
 
-自 **1.0.0** 起，視覺風格正式轉向 **Dark Souls-like but 2.5D**。  
-不再以程序化 3D 模型為主力，改以 Sprite / HD-2D / isometric 混合呈現。
+自 **1.0.0** 起，視覺與開發方向正式轉向 **Dark Souls-like but 2.5D**。  
+程序化 3D 模型降為過渡，主力改為固定／有限鏡頭 + 多方向 Sprite（HD-2D 風格混合）。
 
-### 目標
-- 固定或有限鏡頭角度（isometric / quarter-view / 側捲優先）。
-- 角色與敵人使用多方向 Sprite Sheet（4–8 方向）。
-- 保留灰燼暗黑氛圍、ember 發光、沉重感與戰鬥可讀性（前搖、收刀、翻滾、格擋提示）。
-- 識別元素（粉紅蝴蝶結、過大劍）以 Sprite 形式保留。
+### 核心目標
+- **鏡頭**：固定角度優先（isometric 45°–55° 或 quarter-view）。不再自由旋轉。可保留輕微跟隨與打擊時的小幅震動。
+- **角色**：4 或 8 方向 Sprite Sheet。優先 AetherAI 產出，或手動像素／手繪。必須保留粉紅蝴蝶結、過大劍、ember 裂縫的可讀性。
+- **氛圍**：灰燼暗色 + ember 橙色發光。利用有限燈光、簡單陰影、輕微 fog 與 particle 維持沉重感。
+- **戰鬥可讀**：前搖（橙色環／特效）、收刀（粉紅環）、翻滾無敵（淡白）、格擋提示必須在 2.5D 下仍然清晰。鎖定菱形保留。
 
-### 技術方向
-- Three.js 中以 `Sprite` 或固定朝向 `Mesh` 為主。
-- 優先使用 AetherAI 或其他工具產出 2.5D Sprite。
-- 環境可保留簡單深度或改為 2.5D 場景。
-- 舊有程序化 3D 程式碼視為過渡，逐步替換。
+### 技術規劃（Three.js）
+1. **鏡頭系統**（`camera.ts`）
+   - 新增 `mode: "fixed" | "isometric"`。
+   - Orthographic 或低 FOV Perspective 均可。建議先用 Perspective + 固定 pitch。
+   - 鎖定時仍讓玩家與目標同框，但角度固定。
+2. **Sprite 角色**
+   - 新建 `spriteActor.ts`：載入 Sprite Sheet、依朝向切換 frame、billboard 或固定朝向。
+   - 支援 idle / walk / attack / hit / death。
+   - 舊 `knightMesh.ts` / `enemyMesh.ts` 作為 fallback 或逐步棄用。
+3. **特效**
+   - 擴展現有 ember Sprite 原型為攻擊、格擋、架勢崩壞的主要視覺回饋。
+   - 地面圈、鎖定菱形改用 Plane 或 Sprite。
+4. **環境**
+   - 可保留簡單 3D 地面與建築作為深度參考，或逐步改為 2.5D tileset。
+   - 燈光以 1–2 盞主光 + 少量動態光（火芯、技能）為限。
+
+### 分階段路線圖
+| 階段 | 目標 | 產出 |
+|------|------|------|
+| **1.0.x** | 固定鏡頭原型 + 主角 4 方向 Sprite 可移動 | 鏡頭切換、Sprite 載入、基本朝向 |
+| **1.1.x** | 敵人 Sprite + 戰鬥提示轉換 | 灰殼／公爵 Sprite、環改 Sprite |
+| **1.2.x** | 完整戰鬥手感驗證 | 鎖定、翻滾、格擋在 2.5D 下可讀 |
+| **1.3+** | 場景深度與氛圍 | 簡單 2.5D 環境、燈光、fog |
+
+### 風險與對策
+- **手感改變**：自由鏡頭是現有類魂感的一部分。對策：保留鎖定邏輯與打擊回饋，只限制角度。
+- **Sprite 產能**：AI 產出需人工挑選與修正。對策：先做 4 方向，關鍵動作（攻擊、翻滾）優先。
+- **可讀性**：2.5D 容易出現角度斷層。對策：強制 4/8 方向、明顯 silhouettes、發光提示。
+- **技術債務**：舊 3D 程式碼。對策：標記 `@deprecated`，新功能不再依賴。
 
 ### 參考
-- GamingScan Best 2.5D Games
-- GameRant ranked 2.5D games
-- itch.io 2.5D collection
+- HD-2D 風格（Octopath Traveler、Dragon Quest HD-2D）：像素角色 + 有深度場景 + 現代燈光。
+- GamingScan / GameRant 2.5D 列表、itch.io 2.5D 資產合集。
+- 戰鬥可讀性研究：前搖特效、固定角度下的 hitbox 與視覺對齊。
 
-後續美術與視覺 PR 必須對齊本節。
+後續所有視覺與鏡頭相關 PR 必須對齊本節。舊 low-poly pixel 3D 規則已歸檔，僅作過渡參考。
 
-### 速查子彈（舊 3D 內容已歸檔）
+### 速查子彈（舊 3D 內容已歸檔，僅供參考）
 - 目標風格：**low-poly pixel 3D**（PS1／PSX 感＋現代低面）：flat shading、塊狀比例、有限色盤、cute 大頭 × 灰燼暗黑。
 - 三角形預算：Mallow **800–2500**；灰殼 **400–1200**；公爵 **1000–2500**；紅契 **800–2000**；小 prop **50–300**。
 - 外部 GLB（若用）：每角色 **≤250–400 KB**（優先 **Meshopt**＋無大貼圖）；禁止未壓縮多 MB 寫實模上線。
