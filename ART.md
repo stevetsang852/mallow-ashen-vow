@@ -1,107 +1,71 @@
-# ART.md — Low-poly pixel 3D inventory & budgets
+# ART.md — 2.5D Dark Souls-like inventory & pipeline
 
-Living art note for **Mallow: Ashen Vow**. Style mandate: **low-poly pixel 3D** (PS1／PSX-lite + chunky modern low-poly). See README § **Art Direction: Low-poly pixel 3D**.
+Living art note for **Mallow: Ashen Vow**. Style mandate: **2.5D Dark Souls-like**（Sprite／HD-2D／isometric）. See README § **Art Direction: 2.5D Dark Souls-like**（v1.0.0+）.
 
-Last updated: **2026-10-20** · version **0.8.33**（docs／inventory only；mesh rewrite deferred）.
+Last updated: **2026-10-22** · Research knife **1.0.4**（docs／inventory only；唔做 Meshopt／唔開無關 POC）.
 
-**Research brief (must cite):** `/workspace/news-research/2026-10-20-mallow-lowpoly-pixel-3d.md`（副本 `/workspace/mallow-research/2026-10-20-mallow-lowpoly-pixel-3d.md`）. Stack: Three.js **^0.186.1**（網頁；非 Unity）.
+Stack: Three.js **^0.186.1**（網頁）.
 
-## Visual goals (ember soulslike)
+## Mandate（必須）
 
-- Readable silhouettes at courtyard distance (bow ears, hood, horn helm, wings).
-- Faceted / blocky armor; flat shading; limited soot–bone–ember palette.
-- Cute player identity (pink bow `#e8a0b8`, oversized sword) vs dark ash foes + ember `#E85D04`.
-- No cinematic high-poly PBR; no paid asset packs.
-- Combat readability beats style: wind-up／recover／roll／guard rings and lock diamond contrast must not be weakened by pixel post.
+- **Primary:** Sprite／HD-2D／isometric；固定或有限鏡頭（isometric／quarter／側捲優先）.
+- **Characters／enemies:** 4–8 向 Sprite Sheet（站／走／攻擊／翻滾／受擊最少可分）.
+- **Runtime:** Three.js `Sprite` 或固定朝向 billboard `Mesh`；舊程序化 3D／GLB＝**過渡 fallback**，唔再當主力交付.
+- **Combat readability contract（不可削）:** 前搖／收刀／翻滾／格擋 rings＋lock diamond 對比必須清楚；美術後製唔可蓋過提示.
+- **Identity:** 粉紅蝴蝶結 `#e8a0b8`、過大劍 silhouette、ember `#E85D04`、灰燼 soot／bone 有限色盤.
+- **No** cinematic high-poly PBR；**no** paid asset packs；**no** Meshopt／low-poly-as-primary 作為新方向（見下方 Historical）.
 
-## Per-asset budgets (Research-aligned)
+## Pipeline（AetherAI → ship）
 
-| Asset | Tris (target) | Texture / shading | GLB size if kept |
+```
+AetherAI（或 equiv）4–8 dir sheets／概念
+  → public/sprites/<kind>/… 或 <kind>-4dir.png（frame 佈局寫本檔）
+  → Fullstack Sprite sheet loader（public/sprites/ + harness smoke）
+  → Graphics billboard Sprite（Sir Mallow stub → enemies）
+  → on miss: 過渡 procedural／GLB fallback（knightMesh／enemyMesh）
+```
+
+Paid AetherAI／訂閱：**要 YIN**；未批前只用 **original／CC0 placeholder**.
+
+## Sprite inventory（2.5D）
+
+| Asset | Path（約定） | Dirs | Status |
 | --- | --- | --- | --- |
-| Sir Mallow | **800–2,500** | none or 256–512 atlas nearest | **≤250–400 KB** Meshopt |
-| Hollow (road／side) | **400–1,200** | vertex / shared 256 atlas | **≤150–300 KB** |
-| Coal-ash Duke | **1,000–2,500** | + emissive cracks | **≤150–300 KB** |
-| Red-contract Demon | **800–2,000** | low-face wings; emissive blade | **≤150–300 KB** |
-| Handheld prop / weapon | **50–400** | solid or 128 blocks | — |
-| Scene prop | **50–300** | **vertex color default** | — |
-| Arch / bonfire kit | **500–2,000** total | shared mats; merge static | — |
-| Scene visible | **≲ 25k–40k tri** comfort; watch ≤100k verts | ≤8–12 material kinds | measure `renderer.info` |
+| Sir Mallow | `public/sprites/mallow/`（或 sheet；跟 Fullstack／Graphics 合流後） | 4–8 | **TODO** — Graphics stub（粉結＋大劍） |
+| 灰殼 Hollow | `public/sprites/hollow/` `n/e/s/w` 或 `hollow-4dir.png` | 4 | **TODO** — placeholder／sheet |
+| 煤灰公爵 Duke | `public/sprites/duke/` | 4–8 | **TODO** |
+| 紅契 Demon | `public/sprites/demon/` | 4–8 | **TODO** |
+| Skill／FX sprites | `public/sprites/fx/`（如 ember skill） | — | 實驗可有；唔取代近戰可讀提示 |
 
-**Shading default:** vertex color / per-face solids for props & most armor. Small atlas only for face／bow／weapon ID. High-res PBR **forbidden** as default.
+Sheet layout（若單檔 4-dir）: 建議 2×2（N E／S W）或橫列 N→E→S→W；實際 frame size 由 Graphics／loader 定，改 layout 必同步 `ART.md`.
 
-**Optional PS1 layer = P2:** half／quarter RT, vertex snap, ordered dither, `image-rendering: pixelated` — A/B after combat-ring readability; never on HUD DOM.
+## Transitional debt（舊 3D／GLB — 非主力）
 
-## Current gaps (inventory)
-
-| Item | Current | Gap vs direction |
+| Item | Current | Note |
 | --- | --- | --- |
-| `mallow-knight-cat.glb` | **~19.3 MB** | Far over ≤400 KB; not a low-poly delivery |
-| `hollow`／`duke`／`demon`.glb | **~3.5–3.7 MB** each | Still heavy; re-export or drop as default |
-| Loaders | `GLTFLoader` only; enemy → procedural fallback; player reject on fail | No Meshopt／Draco; no traverse flat／NearestFilter |
-| `enemyMesh.std()` | `flatShading: true` | Aligned |
-| `knightMesh.std()` | `flatShading: true` + `applyPixelLook` | Done (0.8.36) |
-| Renderer | `antialias: false`; `pixelRatio ≤ 1.75` | Facets stay crisp (0.8.39) |
+| `mallow-knight-cat.glb` | ~19.3 MB | 過渡；唔再追 ≤400 KB Meshopt 作主線 |
+| `hollow`／`duke`／`demon`.glb | ~3.5–3.7 MB ea | 過渡 fallback only |
+| `makeKnight`／`makeHollow`／… | procedural | 過渡；Sprites 到位後降級 |
+| Concepts JPG | `public/concepts/*.jpg` | 2D 參考；可餵 AetherAI／手繪 sheet |
 
-## Pipeline
-
-```
-Procedural DEFAULT (enemyMesh / knightMesh)
-  ↔ optional Blender low-poly → GLB → gltf-transform (Meshopt)
-  → public/models/<name>.glb
-  → GLTFLoader + applyPixelLook(traverse: flat + NearestFilter)
-  → on failure: makeHollow / makeDuke / makeDemon / makeKnight
-```
-
-Procedural remains source of truth until GLBs meet budgets. External GLB is **not** the default visual guarantee.
-
-## Asset inventory
-
-### Procedural (code)
-
-| Factory | File | Role | Notes (current) |
-| --- | --- | --- | --- |
-| `makeKnight` | `src/game/knightMesh.ts` | Player／foe base | Capsule／Sphere／Box mix；**`std()` missing flatShading** |
-| `makeHollow` | `src/game/enemyMesh.ts` | 灰殼 | Box plates／helm；some high-seg spheres remain |
-| `makeDuke` | `src/game/enemyMesh.ts` | 公爵 | Layered spheres＋box shoulders＋horns |
-| `makeDemon` | `src/game/enemyMesh.ts` | 紅契 | Slim＋cones／wings／red blade |
-| Helpers | `enemyMesh.ts` | Armor／spikes／bones | `std()` **has** flatShading；ember cracks |
-
-Shared type: `KnightRig`. Pose: `poseKnight`；enemies via `loadEnemyRig` then pose.
-
-### External GLB (`public/models/`)
-
-| File | Approx size | Loader | Fallback |
-| --- | --- | --- | --- |
-| `hollow.glb` | ~3.5 MB | `enemyRig.ts` | `makeHollow` |
-| `duke.glb` | ~3.5 MB | `enemyRig.ts` | `makeDuke` |
-| `demon.glb` | ~3.5 MB | `enemyRig.ts` | `makeDemon` |
-| `mallow-knight-cat.glb` | **~19.3 MB** | `mallowRig.ts` | `makeKnight`（reject path） |
-
-### Concepts (2D — low-poly pixel **target** refs, not realism nets)
-
-| File | Subject |
-| --- | --- |
-| `public/concepts/hollow-ash-shell.jpg` | 灰殼 |
-| `public/concepts/coal-ash-duke.jpg` | 煤灰公爵 |
-| `public/concepts/red-contract-demon.jpg` | 紅契 |
-
-### Scene / VFX
-
-Courtyard props、火芯、拱門、particles — ember palette；do **not** rewrite FX feel numbers in art-docs PRs.
+舊 tris／Meshopt 預算表＝**歷史債務**，唔再當 sprint 主目標.
 
 ## Naming
 
-Runtime URLs: `/models/<kind>.glb` with `kind` ∈ `hollow`｜`duke`｜`demon`｜`mallow-knight-cat`. Keep loader maps in sync.
+- Sprites: `/sprites/<kind>/…`；`kind` ∈ `mallow`｜`hollow`｜`duke`｜`demon`｜`fx`.
+- Legacy GLB: `/models/<kind>.glb` 仍可由 loader 作 fallback；唔新增大 GLB.
 
-## Deferred (later Graphics PR — not this docs pass)
+## Deferred（唔屬本刀）
 
-1. Re-author／Meshopt GLBs to KB budgets **or** switch default visual to procedural.
-2. `knightMesh.std()` → `flatShading: true`.
-3. `applyPixelLook(root)` on GLB／procedural roots.
-4. Reduce high-segment spheres；props → vertex-color boxes.
-5. Renderer P1／P2 experiments (AA off／half RT／snap／dither) with vowdebug duke readability check.
-6. `InstancedMesh` for repeated courtyard props.
+1. 實裝 loader／billboard／相機 lock（GD／Fullstack／Graphics）.
+2. 產出正式 AetherAI sheets（付費要 YIN）.
+3. 刪／壓縮舊 GLB（有 Sprite 覆蓋後再清）.
+4. PS1 half-RT／dither 等後製實驗（先保戰鬥 ring 可讀）.
+
+## Historical note
+
+≤0.8.x **low-poly pixel 3D** brief（PS1-lite、tris／Meshopt budgets、`applyPixelLook`）已封存；自 **1.0.0** 起以本檔＋README § 2.5D 為準。舊 Research 文檔僅作考古.
 
 ## License
 
-CC0／CC BY／original procedural only. No Hero Forge／unverified Asset Store／paid packs.
+CC0／CC BY／original procedural／original placeholders only. No Hero Forge／unverified Store／paid packs without YIN.
