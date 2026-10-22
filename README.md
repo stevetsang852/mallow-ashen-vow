@@ -337,23 +337,31 @@ npm run dev
 
 ## Planning
 
-更新日期：2026-10-22。同事照這個順序做。先不要加新地圖、新主角、武器樹。
+更新日期：2026-10-23。同事照這個順序做。先不要加新地圖、新主角、武器樹。
 
 ### 當前版本
 
-- **版本**：**1.0.1**（GD：2.5D isometric camera lock；base tip `a14c227`／**1.0.0** docs era）
+- **版本**：**1.1.3**（本 docs 刀；base tip `875516f`／**1.1.2**）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
-- **休息令／硬停**：**FREEZE**（2026-10-21 ~07:39 HKT 直屬總管家轉達：YIN 尚未批准一日一人一推進重開）；取消先前指派 0.8.46–0.8.49 功能波；PR 閘仍必須；付費資源仍要 YIN
-- **合併序**：… → Graphics **0.8.36**（#41）✓ → GD **0.8.37–0.8.42** 戰鬥手感 ✓ → Graphics **0.8.43** ✓ → UI **0.8.44**（#48）✓ → docs **0.8.45** ✓ → docs **0.8.46**（本刀；freeze standby）
+- **狀態**：**STANDBY** — 波次 1.0.1–1.0.4（PR 閘）已合；其後 Game developer 直推 main 1.0.5–1.1.2。**推一令-mallow-261023**＝無新功能波，等 YIN／直屬總管家轉達下一令。PR 閘仍必須；付費資源仍要 YIN
+- **合併序（近況）**：GD **1.0.1**（#52）→ FS **1.0.2**（#51）→ Graphics **1.0.3**（#53）→ Research **1.0.4**（#54）→ GD 直推 **1.0.5–1.1.2** → docs **1.1.3**（本刀；standby）
 
-### 今日下一刀（全員待命；FREEZE）
+### 今日下一刀（全員待命；推一令-mallow-261023）
 
-- **Game developer** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
-- **Fullstack** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
-- **Graphics** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
-- **Research** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
+- **Game developer** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家下一令
+- **Fullstack** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家下一令
+- **Graphics** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家下一令
+- **Research** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家下一令
 - **Project Mannger**：審／squash 日報 docs；07:30 日報照常；**勿指派／勿開**功能 PR
+
+### 已完成（近況補記 1.0.4–1.1.2）
+
+#### 1.0.4 - ART.md 2.5D／AetherAI（Research；#54）
+- [x] ART pipeline 筆記（≤1 頁）；`GAME_VERSION` → 1.0.4；tip 曾 `097bd3b`
+
+#### 1.0.5–1.1.2 - Game developer 直推 main（非 PR 閘）
+- [x] **1.0.5** movement normalize；**1.0.6** HD-2D Mallow sprite；**1.1.0** combat overhaul；**1.1.1** world-relative movement；**1.1.2** docs roadmap／next-steps（tip `875516f`）
 
 ### 已完成 (0.5.x - 1.0.1)
 
