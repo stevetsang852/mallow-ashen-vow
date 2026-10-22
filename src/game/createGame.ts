@@ -152,7 +152,7 @@ export function createGame(
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x2a221c);
-  scene.fog = new THREE.FogExp2(0x3a3128, 0.045);
+  scene.fog = new THREE.FogExp2(0x4a3e34, 0.032); // softer for HD-2D diorama feel
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
 
@@ -567,6 +567,31 @@ export function createGame(
   });
   playerRig.root.rotation.order = "YXZ";
   scene.add(playerRig.root);
+
+  // HD-2D style: 4-dir Sprite billboard for Sir Mallow (Octopath-inspired)
+  const loader = new THREE.TextureLoader();
+  const mallowDirs = {
+    s: loader.load("/sprites/mallow/s.png"),
+    e: loader.load("/sprites/mallow/e.png"),
+    n: loader.load("/sprites/mallow/n.png"),
+    w: loader.load("/sprites/mallow/w.png"),
+  };
+  for (const t of Object.values(mallowDirs)) {
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.NearestFilter;
+    t.colorSpace = THREE.SRGBColorSpace;
+  }
+  const playerSpriteMat = new THREE.SpriteMaterial({
+    map: mallowDirs.s,
+    transparent: true,
+    depthWrite: false,
+  });
+  const playerSprite = new THREE.Sprite(playerSpriteMat);
+  playerSprite.scale.set(1.6, 2.2, 1);
+  playerSprite.position.y = 1.1;
+  scene.add(playerSprite);
+  // Hide procedural mesh for pure HD-2D look (can re-enable for fallback)
+  playerRig.root.visible = false;
   let loaded = 0;
   let loadPct = 0;
   let assetsReady = false;
@@ -2258,9 +2283,14 @@ export function createGame(
     const moving = player.act === "free" || player.act === "block" ? Math.min(1, speed / RUN) : 0;
     if (phase === "play") audio.footstep(moving, dt);
     const blink = player.invuln > 0 && Math.sin(time * 28) > 0;
-    playerRig.root.visible = !blink;
-    playerRig.root.position.set(player.x, 0, player.z);
-    playerRig.root.rotation.y = player.yaw + Math.PI;
+    playerRig.root.visible = false; // HD-2D: use sprite
+    playerSprite.visible = !blink;
+    playerSprite.position.set(player.x, 1.1, player.z);
+    // 4-dir facing for Octopath-style sprite
+    const yaw = player.yaw;
+    const dir = Math.round(((yaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI / 2)) % 4;
+    const maps = [mallowDirs.s, mallowDirs.w, mallowDirs.n, mallowDirs.e];
+    playerSprite.material.map = maps[dir] ?? mallowDirs.s;
     if (setMallowFacing) setMallowFacing(player.yaw + Math.PI);
     const rolling = inIFrame(player.act, player.actT);
     iframeRing.visible = rolling && phase === "play";
