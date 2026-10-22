@@ -3,6 +3,7 @@ import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
+import { loadMallowSpriteRig } from "@/game/mallowSprite";
 import { applyCamera, stepCamera, settleIsoCamera, ISO_YAW, ISO_DIST, ISO_HEIGHT, FREE_ORBIT } from "@/game/camera";
 import { ITEMS_ENABLED } from "@/game/items";
 import {
@@ -583,17 +584,30 @@ export function createGame(
     }
     emit(true);
   }
-  loadMallowRig()
+  // 2.5D: prefer Mallow billboard sprites; fall back GLB then makeKnight.
+  let setMallowFacing: ((yaw: number) => void) | null = null;
+  function adoptPlayerRig(rig: KnightRig) {
+    const prev = playerRig.root;
+    scene.remove(prev);
+    playerRig = rig;
+    playerRig.root.rotation.order = "YXZ";
+    scene.add(playerRig.root);
+  }
+  loadMallowSpriteRig()
     .then((rig) => {
-      const prev = playerRig.root;
-      scene.remove(prev);
-      playerRig = rig;
-      playerRig.root.rotation.order = "YXZ";
-      scene.add(playerRig.root);
+      setMallowFacing = rig.setFacingYaw;
+      adoptPlayerRig(rig);
     })
-    .catch(() => {
-      /* keep the procedural cat if the model fails to load */
-    })
+    .catch(() =>
+      loadMallowRig()
+        .then((rig) => {
+          setMallowFacing = null;
+          adoptPlayerRig(rig);
+        })
+        .catch(() => {
+          /* keep procedural makeKnight */
+        }),
+    )
     .finally(noteLoad);
 
   const foeRigs: KnightRig[] = [];
@@ -2242,6 +2256,7 @@ export function createGame(
     playerRig.root.visible = !blink;
     playerRig.root.position.set(player.x, 0, player.z);
     playerRig.root.rotation.y = player.yaw + Math.PI;
+    if (setMallowFacing) setMallowFacing(player.yaw + Math.PI);
     const rolling = inIFrame(player.act, player.actT);
     iframeRing.visible = rolling && phase === "play";
     if (iframeRing.visible) {

@@ -12,6 +12,11 @@ import {
   smokeSpriteSheetLoader,
   spritePublicPath,
 } from "./spriteSheet.ts";
+import {
+  DIR_KEYS,
+  loadMallowDirTextures,
+  yawToDir,
+} from "./mallowSprite.ts";
 
 describe("spritePublicPath", () => {
   it("resolves under /sprites", () => {
@@ -83,5 +88,31 @@ describe("smokeSpriteSheetLoader", () => {
     assert.equal(r.ok, true);
     assert.equal(r.url, "/sprites/mallow-placeholder-4dir.png");
     assert.equal(r.uvS.repeat.x, 0.25);
+  });
+});
+
+describe("Graphics 1.0.3 mallow dir consumer (via FS nearest)", () => {
+  it("yawToDir maps cardinals", () => {
+    assert.equal(yawToDir(0), "s");
+    assert.equal(yawToDir(Math.PI / 2), "e");
+    assert.equal(yawToDir(Math.PI), "n");
+    assert.equal(yawToDir((3 * Math.PI) / 2), "w");
+  });
+
+  it("loadMallowDirTextures applies FS nearest via injectable loader", async () => {
+    const seen: string[] = [];
+    const maps = await loadMallowDirTextures("/sprites/mallow", {
+      loadTexture: async (url) => {
+        seen.push(url);
+        const t = new THREE.Texture();
+        t.magFilter = THREE.LinearFilter;
+        return t;
+      },
+    });
+    assert.deepEqual(seen, DIR_KEYS.map((d) => `/sprites/mallow/${d}.png`));
+    for (const d of DIR_KEYS) {
+      assert.equal(maps[d].magFilter, THREE.NearestFilter);
+      assert.equal(maps[d].generateMipmaps, false);
+    }
   });
 });

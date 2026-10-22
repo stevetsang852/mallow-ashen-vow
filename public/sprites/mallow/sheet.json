@@ -1,0 +1,14 @@
+{
+  "frameSize": [
+    64,
+    64
+  ],
+  "dirs": {
+    "s": "s.png",
+    "e": "e.png",
+    "n": "n.png",
+    "w": "w.png"
+  },
+  "filter": "nearest",
+  "notes": "placeholder Sir Mallow 4-dir; pink bow #e8a0b8 + oversized sword"
+}

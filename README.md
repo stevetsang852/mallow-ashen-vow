@@ -588,6 +588,14 @@ npm run dev
 - [x] 2026-10-21 07:30：記錄 0.8.37–0.8.44 與隔夜硬停；硬停解除；重開一人一推進
 - [x] `GAME_VERSION` → 0.8.45
 
+#### 1.0.3 - Sir Mallow billboard Sprite（Graphics）
+
+- [x] Placeholder 4-dir sprites：`public/sprites/mallow/{s,e,n,w}.png`（粉結 `#e8a0b8`＋過大劍 silhouette；Nearest）
+- [x] Consume Fullstack **1.0.2** `spriteSheet.ts`（`applySpriteNearest`／injectable load）；keep FS placeholder sheet + harness smoke
+- [x] `mallowSprite.ts`：Three.js billboard `Sprite`；失敗 → GLB `loadMallowRig` → `makeKnight`
+- [x] **唔改** moves／AI／Save／combat feel／enemy meshes
+- [x] `GAME_VERSION` → 1.0.3（rebase onto tip `63baecb`／1.0.2）
+
 #### 0.8.46 - Daily progress docs（Project Mannger；FREEZE）
 
 - [x] 2026-10-22 07:30：記錄 FREEZE；取消先前日報指派之 0.8.46–0.8.49 功能波；全員待命 tip `e33a3ac`／0.8.45
