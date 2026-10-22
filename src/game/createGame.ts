@@ -512,6 +512,50 @@ export function createGame(
   let slashCursor = 0;
   let hitFlash = 0;
 
+  // 2.5D Sprite skill effect prototype (ember slash)
+  function makeEmberSlashTexture() {
+    const c = document.createElement("canvas");
+    c.width = 128;
+    c.height = 128;
+    const g = c.getContext("2d")!;
+    g.clearRect(0, 0, 128, 128);
+    const grd = g.createRadialGradient(64, 64, 8, 64, 64, 60);
+    grd.addColorStop(0, "rgba(255,180,60,0.95)");
+    grd.addColorStop(0.4, "rgba(232,93,4,0.7)");
+    grd.addColorStop(1, "rgba(232,93,4,0)");
+    g.fillStyle = grd;
+    g.beginPath();
+    g.ellipse(64, 64, 50, 28, 0, 0, Math.PI * 2);
+    g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+  const emberTex = makeEmberSlashTexture();
+  emberTex.colorSpace = THREE.SRGBColorSpace;
+  const emberSprites = Array.from({ length: 3 }, () => {
+    const mat = new THREE.SpriteMaterial({
+      map: emberTex,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const s = new THREE.Sprite(mat);
+    s.visible = false;
+    s.userData.life = 0;
+    scene.add(s);
+    return s;
+  });
+  let emberCursor = 0;
+
+  function emberSlash(x: number, y: number, z: number, scale = 1.4) {
+    const s = emberSprites[emberCursor % emberSprites.length]!;
+    emberCursor++;
+    s.visible = true;
+    s.userData.life = 0.18;
+    s.position.set(x, y, z);
+    s.scale.set(scale, scale * 0.7, 1);
+    (s.material as THREE.SpriteMaterial).opacity = 0.9;
+  }
+
   let playerRig: KnightRig = makeKnight({
     fur: 0xe8a05a,
     armor: 0xb8c0c8,
@@ -948,6 +992,8 @@ export function createGame(
     const mat = arc.material as THREE.MeshBasicMaterial;
     mat.color.setHex(finisher ? 0xffb3d0 : mid ? 0xffe0c2 : heavy ? 0xfff1d2 : 0xffd7ea);
     mat.opacity = 0.92;
+    // Prototype: also spawn 2.5D ember Sprite
+    emberSlash(x, y + 0.1, z, finisher ? 2.1 : heavy ? 1.7 : 1.3);
   }
 
 
@@ -2438,6 +2484,16 @@ export function createGame(
       arc.userData.life = life - 0.016;
       arc.scale.multiplyScalar(1.04);
       (arc.material as THREE.MeshBasicMaterial).opacity = Math.max(0, life * 5);
+    }
+    for (const s of emberSprites) {
+      const life = Number(s.userData.life ?? 0);
+      if (life <= 0) {
+        s.visible = false;
+        continue;
+      }
+      s.userData.life = life - 0.016;
+      s.scale.multiplyScalar(1.06);
+      (s.material as THREE.SpriteMaterial).opacity = Math.max(0, life * 4.5);
     }
     if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - 0.05);
 
