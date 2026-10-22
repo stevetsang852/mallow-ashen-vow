@@ -1,5 +1,14 @@
 import type * as THREE from "three";
 
+/** Fixed 2.5D isometric / quarter-view (README Art Direction). */
+export const ISO_YAW = Math.PI / 4;
+export const ISO_DIST = 6.4;
+export const ISO_HEIGHT = 3.35;
+/** Hit-kick yaw may drift this far before settle pulls back. */
+export const ISO_YAW_KICK_MAX = 0.18;
+/** Free mid-drag / touch orbit disabled for sprite-readable 2.5D. */
+export const FREE_ORBIT = false;
+
 export type CamState = {
   x: number;
   y: number;
@@ -27,6 +36,31 @@ export type CamInput = {
   lookX: number | null;
   lookZ: number | null;
 };
+
+function shortestAngle(delta: number): number {
+  return Math.atan2(Math.sin(delta), Math.cos(delta));
+}
+
+/**
+ * Pull yaw / dist / height back toward the fixed isometric rig after hit kicks.
+ * Lock-on framing stays in stepCamera via lookX/lookZ — do not orbit to face.
+ */
+export function settleIsoCamera(
+  state: { yaw: number; dist: number; height: number },
+  dt: number,
+): { yaw: number; dist: number; height: number } {
+  const k = 1 - Math.exp(-dt * 4.2);
+  let yaw = state.yaw + shortestAngle(ISO_YAW - state.yaw) * k;
+  const drift = shortestAngle(yaw - ISO_YAW);
+  if (Math.abs(drift) > ISO_YAW_KICK_MAX) {
+    yaw = ISO_YAW + Math.sign(drift) * ISO_YAW_KICK_MAX;
+  }
+  return {
+    yaw,
+    dist: state.dist + (ISO_DIST - state.dist) * k,
+    height: state.height + (ISO_HEIGHT - state.height) * k,
+  };
+}
 
 export function stepCamera(cam: CamState, input: CamInput): CamState & {
   lookX: number;

@@ -82,9 +82,9 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## 操作
 
-- **WASD** 相機相對移動。右鍵拖曳轉鏡頭。
+- **WASD** 相機相對移動。鏡頭固定 isometric／quarter-view（2.5D；中鍵／觸控不再轉鏡頭）。
 - **Shift** 跑步，吃體力。
-- **左鍵** 或 **J**：輕擊。**右鍵** 或 **K**：重擊。前搖有橘色環，收刀有粉紅環。這一刀要完全結束，才能再出下一刀。中鍵或觸控拖曳轉鏡頭。
+- **左鍵** 或 **J**：輕擊。**右鍵** 或 **K**：重擊。前搖有橘色環，收刀有粉紅環。這一刀要完全結束，才能再出下一刀。鏡頭固定；滾輪僅窄幅變焦。
 - **按住 C** 格擋。腳下會出現朝前的白弧，體力低時弧會變淡。體力空了會破防。敵擊命中前 **0.2s 內舉起** 可 **招架／Deflect**（抵銷傷害、彈開敵人）。
 - **Space** 翻滾。有方向就朝方向滾，約 0.04–0.34 秒無敵，腳下會有一圈淡白環。出刀後的收刀期間有粉紅環，這時不能再出下一刀。
 - **Q** 鎖定，再按切下一個近處目標。
@@ -235,7 +235,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 - 版本定義在 `src/game/version.ts`：
   ```ts
-  export const GAME_VERSION = "0.8.46";
+  export const GAME_VERSION = "1.0.1";
   ```
 - 標題畫面會顯示這個版本。
 - 規則（MAJOR.MINOR.PATCH）：
@@ -307,7 +307,7 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：**0.8.46**（docs）；docs 前 tip **0.8.45**／`e33a3ac`（code tip still **0.8.44**／`7dde58f`）
+- **版本**：**1.0.1**（GD：2.5D isometric camera lock；base tip `a14c227`／**1.0.0** docs era）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **休息令／硬停**：**FREEZE**（2026-10-21 ~07:39 HKT 直屬總管家轉達：YIN 尚未批准一日一人一推進重開）；取消先前指派 0.8.46–0.8.49 功能波；PR 閘仍必須；付費資源仍要 YIN
@@ -320,6 +320,14 @@ npm run dev
 - **Graphics** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
 - **Research** → **待命**（勿開新 PR／勿推進功能）直到 YIN／總管家重開
 - **Project Mannger**：審／squash 日報 docs；07:30 日報照常；**勿指派／勿開**功能 PR
+
+### 已完成 (0.5.x - 1.0.1)
+
+#### 1.0.1 - 2.5D isometric camera lock（Game developer）
+- [x] `camera.ts`：`ISO_YAW`／`ISO_DIST`／`ISO_HEIGHT`＋`settleIsoCamera`；禁 free orbit
+- [x] `createGame.ts`：固定 quarter-view；鎖定改 look 取景；保留 hit kick／FOV
+- [x] `GAME_VERSION` → 1.0.1（base `a14c227`／1.0.0）
+- [x] 唔改 moves／AI／meshes／Save／Items
 
 ### 已完成 (0.5.x - 0.8.46)
 
