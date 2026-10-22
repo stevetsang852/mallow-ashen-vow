@@ -194,6 +194,13 @@ YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模�
 - 在完整 `npm install` 後執行：`node scripts/generate-lowpoly-knight.mjs`
 - 產出 `public/models/lowpoly-pixel-knight.glb`，可作為外部模型測試或參考。
 
+#### 6. 2.5D／AI Sprite 輔助（實驗性，非主力）
+- **AetherAI**（aetherforgeai.com）等工具可快速產出 2.5D 多方向 Sprite Sheet、像素概念圖與動畫。
+- **適用場景**：技能特效、遠距離召喚物、UI 頭像、快速概念驗證、載入畫面。
+- **不建議**：直接取代近距離戰鬥的 3D 程序化模型（鏡頭旋轉時角度斷層、與現有 rig 不相容）。
+- 若使用：必須與現有色盤（灰燼 + ember `#E85D04` + 粉結）對齊，並保留程序化 fallback。
+- 免費像素資產可商用（見官方授權），但僅作參考或 UI，不可當核心角色視覺。
+
 ### 相關檔案
 - 程序化敵人：`src/game/enemyMesh.ts`（`makeHollow`／`makeDuke`／`makeDemon`）
 - 程序化玩家底座：`src/game/knightMesh.ts`（`makeKnight`）
