@@ -22,7 +22,7 @@ export const PILLARS = [
   { x: 8.6, z: -13.2, r: 0.48 },
 ];
 
-export const LIGHT_COMBO_DMGS = [20, 25, 35] as const;
+export const LIGHT_COMBO_DMGS = [22, 28, 40] as const;
 export const LIGHT_COMBO_MAX = LIGHT_COMBO_DMGS.length;
 
 export const MOVE = {
@@ -35,7 +35,7 @@ export const MOVE = {
   lightOpen: 0.12,
   lightShut: 0.3,
   /** Light attack total lock (0.8.29: 0.50→0.46; post-shut recover shorter; open/shut unchanged). */
-  lightEnd: 0.46,
+  lightEnd: 0.42,
   heavyOpen: 0.32,
   heavyShut: 0.5,
   heavyEnd: 0.84,

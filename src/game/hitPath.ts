@@ -16,7 +16,7 @@ export const SWING_REACH_BASE = { light: 1.8, heavy: 2.15 } as const;
 export const SWING_DOT_MIN = { light: 0.16, heavy: 0.28 } as const;
 
 /** HP multiplier when the same swing breaks poise. */
-export const STANCE_BREAK_DMG_MUL = 1.5;
+export const STANCE_BREAK_DMG_MUL = 1.65;
 
 /** Extra HP chip applied by the standalone breakPoise() path (block / deflect). */
 export const BREAK_POISE_HP_CHIP = 16;
@@ -27,27 +27,27 @@ export const BREAK_POISE_DEFAULT_HIT = 22;
 /** First connecting swing → camera / hitstop feel (locked). */
 export const CONNECT_FEEDBACK = {
   light: {
-    shake: 0.28,
-    hitstop: 0.07,
-    hitFlash: 0.45,
-    camKick: 0.4,
-    fovKick: 1.7,
-    camRoll: 0.022,
+    shake: 0.32,
+    hitstop: 0.09,
+    hitFlash: 0.5,
+    camKick: 0.45,
+    fovKick: 1.9,
+    camRoll: 0.024,
   },
   heavy: {
-    shake: 0.56,
-    hitstop: 0.15,
-    hitFlash: 0.95,
-    camKick: 0.86,
-    fovKick: 3.4,
-    camRoll: 0.04,
+    shake: 0.62,
+    hitstop: 0.2,
+    hitFlash: 1.05,
+    camKick: 0.95,
+    fovKick: 3.8,
+    camRoll: 0.045,
   },
 } as const;
 
 /** Stance-break VFX impulse from breakPoise() (locked). */
 export const STANCE_BREAK_FEEDBACK = {
-  hitstop: 0.18,
-  shake: 0.62,
+  hitstop: 0.24,
+  shake: 0.7,
 } as const;
 
 export function swingReach(heavy: boolean, foeRadius: number): number {
