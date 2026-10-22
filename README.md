@@ -91,13 +91,31 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 - **E** 食水回血。**G** 在火芯歇息。**F** 在火芯花 200 灰鍛誓。道具系統已關閉並隱藏（`ITEMS_ENABLED = false`）。
 - **Esc** 選單。手機用左搖桿和右側按鈕。
 
-## Art Direction: Low-poly pixel 3D（必須遵守）
+## Art Direction: 2.5D Dark Souls-like（必須遵守，v1.0.0 起）
 
-敵人與角色模型目標是 **low-poly pixel 3D**（PS1／PSX-lite＋現代低面數像素感）：極低面數、平面著色、塊狀輪廓、有限色盤，同時保持 cute（大頭／粉結）+ 暗黑灰燼風反差。完整資產清單與技術預算見 **[`ART.md`](ART.md)**。
+自 **1.0.0** 起，視覺風格正式轉向 **Dark Souls-like but 2.5D**。  
+不再以程序化 3D 模型為主力，改以 Sprite / HD-2D / isometric 混合呈現。
 
-YIN（2026-10-20）已將風格收斂為 low-poly pixel 3D；後續美術／模型 PR 必須對齊本節與 `ART.md`。
+### 目標
+- 固定或有限鏡頭角度（isometric / quarter-view / 側捲優先）。
+- 角色與敵人使用多方向 Sprite Sheet（4–8 方向）。
+- 保留灰燼暗黑氛圍、ember 發光、沉重感與戰鬥可讀性（前搖、收刀、翻滾、格擋提示）。
+- 識別元素（粉紅蝴蝶結、過大劍）以 Sprite 形式保留。
 
-### 速查子彈（Research 2026-10-20；必須遵守）
+### 技術方向
+- Three.js 中以 `Sprite` 或固定朝向 `Mesh` 為主。
+- 優先使用 AetherAI 或其他工具產出 2.5D Sprite。
+- 環境可保留簡單深度或改為 2.5D 場景。
+- 舊有程序化 3D 程式碼視為過渡，逐步替換。
+
+### 參考
+- GamingScan Best 2.5D Games
+- GameRant ranked 2.5D games
+- itch.io 2.5D collection
+
+後續美術與視覺 PR 必須對齊本節。
+
+### 速查子彈（舊 3D 內容已歸檔）
 - 目標風格：**low-poly pixel 3D**（PS1／PSX 感＋現代低面）：flat shading、塊狀比例、有限色盤、cute 大頭 × 灰燼暗黑。
 - 三角形預算：Mallow **800–2500**；灰殼 **400–1200**；公爵 **1000–2500**；紅契 **800–2000**；小 prop **50–300**。
 - 外部 GLB（若用）：每角色 **≤250–400 KB**（優先 **Meshopt**＋無大貼圖）；禁止未壓縮多 MB 寫實模上線。
