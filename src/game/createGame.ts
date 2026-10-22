@@ -1457,6 +1457,7 @@ export function createGame(
   }
 
   function wishDir() {
+    // Camera-relative movement for fixed isometric (ISO_YAW)
     const fx = -Math.sin(camYaw);
     const fz = -Math.cos(camYaw);
     const rx = Math.cos(camYaw);
@@ -1482,7 +1483,11 @@ export function createGame(
     ix += rx * stickX + fx * stickY;
     iz += rz * stickX + fz * stickY;
     const mag = Math.hypot(ix, iz);
-    return { ix, iz, mag };
+    if (mag > 1) {
+      ix /= mag;
+      iz /= mag;
+    }
+    return { ix, iz, mag: Math.min(1, mag) };
   }
 
   function startDukeMove(f: Foe, dist: number, p2: boolean) {
