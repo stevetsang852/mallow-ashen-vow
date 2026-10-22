@@ -131,9 +131,9 @@ export function makeKnight(opts: KnightOpts): KnightRig {
   bob.add(belt, buckle, strap);
 
   const head = new THREE.Group();
-  head.position.y = 1.24;
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.29, 28, 20), furMat);
-  skull.scale.set(1.06, 0.96, 0.98);
+  head.position.y = 1.28;
+  // Blocky oversized chibi head
+  const skull = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.46, 0.48), furMat);
   head.add(skull);
 
   if (!opts.foe) {
@@ -185,16 +185,24 @@ export function makeKnight(opts: KnightOpts): KnightRig {
 
   if (opts.helm) {
     const helm = new THREE.Mesh(
-      new THREE.SphereGeometry(0.31, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      new THREE.BoxGeometry(0.56, 0.5, 0.52),
       darkArmor,
     );
-    helm.position.y = 0.02;
+    helm.position.y = 0.04;
     head.add(helm);
-    for (const sx of [-1, 1]) {
-      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.22, 5), darkArmor);
-      horn.position.set(sx * 0.16, 0.28, 0);
-      horn.rotation.z = sx * -0.45;
-      head.add(horn);
+    // Ember cracks on helm for contrast
+    for (let i = 0; i < 2; i++) {
+      const crack = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.18, 0.012),
+        new THREE.MeshStandardMaterial({
+          color: 0xe85d04,
+          emissive: 0xe85d04,
+          emissiveIntensity: 1.2,
+          flatShading: true,
+        }),
+      );
+      crack.position.set((i - 0.5) * 0.22, 0.06, 0.27);
+      head.add(crack);
     }
   }
   bob.add(head);
