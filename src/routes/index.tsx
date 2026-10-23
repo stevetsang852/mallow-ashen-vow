@@ -3,6 +3,7 @@ import { Flame, Shield, Swords, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   createGame2D,
+  INITIAL_PLANE_HUD,
   type HudSnap,
 } from "@/game/createGame2D";
 import { GAME_VERSION } from "@/game/version";
@@ -154,14 +155,7 @@ function fmt(ms: number) {
 function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const api = useRef<any>(null);
-  const [hud, setHud] = useState<HudSnap>({
-    phase: "play",
-    hp: 120,
-    hpMax: 120,
-    sta: 100,
-    flasks: 4,
-    version: GAME_VERSION,
-  });
+  const [hud, setHud] = useState<HudSnap>(INITIAL_PLANE_HUD);
   const [cardOn, setCardOn] = useState(false);
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));

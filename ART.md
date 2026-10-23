@@ -2,7 +2,7 @@
 
 Living art note for **Mallow: Ashen Vow**. Style mandate: **純 2D Dark Souls-like**（Canvas 2D sprite sheets；**唔再以 2.5D／Three.js billboard 做主線**）. Runtime: `createGame2D`（2.0.0+）. See README 近況＋Next Steps.
 
-Last updated: **2026-10-23** · Graphics **2.0.3** 灰殼 idle/dirs `drawImage` 達標（canvas yaw → `{n,e,s,w}.png`；未載入仍 silhouette＋ember crack）. **2.0.2** 改格 brief 仍有效.
+Last updated: **2026-10-23** · GD **2.0.4** 純 2D 畫面跟隨（玩家置中、指數平滑）＋平面戰鬥可讀（前搖橙條／命中白弧／收刀粉環／受擊紅閃／低體力金邊）. 命中窗仍係平面既有 `0.1–0.28`，收招結束仍係 `actionEnd`. **2.0.3** 灰殼 dirs `drawImage` 仍有效. **2.0.2** 改格 brief 仍有效.
 
 Stack: **Canvas 2D**（網頁）；舊 Three.js／GLB／billboard＝過渡／封存參考.
 
@@ -49,7 +49,7 @@ Stack: **Canvas 2D**（網頁）；舊 Three.js／GLB／billboard＝過渡／封
 
 1. **2.0.2** Research：ART.md 改格 brief（純 2D）＋`GAME_VERSION` → **2.0.2**（已合）.
 2. **2.0.3** Graphics：**達標** — 灰殼 `public/sprites/hollow/{n,e,s,w}.png` 依 yaw `drawImage`；未載入 silhouette＋ember crack. 玩家 facing 切 mallow dirs. 唔改 moves／AI.
-3. **其後** GD：鏡頭／畫面跟隨＋戰鬥可讀.
+3. **2.0.4** GD：**達標** — `screenFollow.ts` 純 2D 跟隨（唔用 iso cam）；`createGame2D` 前搖／命中／收刀／受擊／低體力提示. 唔改 moves／AI.
 4. **再後** UI 皮層（Graphics／Research CSS）.
 5. Fullstack 待命；付費仍要 YIN.
 
@@ -103,11 +103,11 @@ AetherAI（或 equiv；付費要 YIN）多向 sheets
 
 1. 正式替換灰殼 sheet，以及 duke／demon 像素檔（Graphics）.
 2. Paid Aether sheets（**要 YIN**）.
-3. 鏡頭／戰鬥 code、UI CSS 實作、刪舊 3D 入口（另推一令）.
+3. UI CSS 實作、刪舊 3D 入口（另推一令）. 鏡頭／平面戰鬥提示已在 **2.0.4**.
 
 ## Historical note
 
-≤0.8.x low-poly／Meshopt 封存；**1.0.4–1.1.7** 曾以 2.5D／billboard 為主；**2.0.0** 純 2D 重啓（`createGame2D`）；**2.0.1** visual overhaul；**2.0.2** 改格 brief（美術＋UI 皮層對齊純 2D；鏡頭／戰鬥對照交棒）；**2.0.3** 灰殼 dirs `drawImage` 落地.
+≤0.8.x low-poly／Meshopt 封存；**1.0.4–1.1.7** 曾以 2.5D／billboard 為主；**2.0.0** 純 2D 重啓（`createGame2D`）；**2.0.1** visual overhaul；**2.0.2** 改格 brief（美術＋UI 皮層對齊純 2D；鏡頭／戰鬥對照交棒）；**2.0.3** 灰殼 dirs `drawImage` 落地；**2.0.4** 純 2D 畫面跟隨＋戰鬥可讀.
 
 ## License
 
