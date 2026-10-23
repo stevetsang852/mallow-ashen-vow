@@ -1,6 +1,6 @@
 /**
- * Sprite sheet loader stub (1.0.2) for 2.5D / HD-2D era.
- * Graphics consumes this for Sir Mallow billboards; do not touch moves / AI / meshes here.
+ * Sprite sheet loader stub (1.0.2) + hollow/灰殼 sheet key (1.1.5) for 2.5D / HD-2D era.
+ * Graphics consumes this for Sir Mallow / enemy billboards; do not touch moves / AI / meshes here.
  */
 import * as THREE from "three";
 
@@ -37,6 +37,48 @@ export const MALLOW_PLACEHOLDER_4DIR: SpriteSheetDesc = {
   frameHeight: 32,
   directions: SPRITE_DIRS_4,
 };
+
+/**
+ * 灰殼 Hollow 4-dir placeholder under `public/sprites/hollow/` (1.1.5).
+ * Ash/soot bands until Graphics replaces; ART.md path: hollow/ or hollow-4dir.
+ */
+export const HOLLOW_PLACEHOLDER_4DIR: SpriteSheetDesc = {
+  id: "hollow-placeholder-4dir",
+  url: `${SPRITE_PUBLIC_ROOT}/hollow/hollow-placeholder-4dir.png`,
+  columns: 4,
+  rows: 1,
+  frameWidth: 8,
+  frameHeight: 32,
+  directions: SPRITE_DIRS_4,
+};
+
+/** Dir-frame base for hollow (mirrors `/sprites/mallow`). */
+export const HOLLOW_SPRITE_BASE = `${SPRITE_PUBLIC_ROOT}/hollow`;
+
+/**
+ * Canonical sheet keys for harness / Graphics lookup.
+ * Aliases: `灰殼` → hollow. Do not invent duke/demon keys here (later waves).
+ */
+export type SpriteSheetKey = "mallow" | "hollow" | "灰殼";
+
+const SHEET_BY_KEY: Record<SpriteSheetKey, SpriteSheetDesc> = {
+  mallow: MALLOW_PLACEHOLDER_4DIR,
+  hollow: HOLLOW_PLACEHOLDER_4DIR,
+  灰殼: HOLLOW_PLACEHOLDER_4DIR,
+};
+
+/** Resolve a sheet key (incl. 灰殼 alias) to its placeholder desc. */
+export function getSpriteSheetDesc(key: string): SpriteSheetDesc {
+  const desc = SHEET_BY_KEY[key as SpriteSheetKey];
+  if (!desc) {
+    throw new Error(`getSpriteSheetDesc: unknown sheet key "${key}"`);
+  }
+  return desc;
+}
+
+export function isSpriteSheetKey(key: string): key is SpriteSheetKey {
+  return key in SHEET_BY_KEY;
+}
 
 /** Resolve a filename under `public/sprites/` to a public URL. */
 export function spritePublicPath(filename: string): string {
@@ -117,10 +159,26 @@ export async function loadSpriteSheet(
   return { texture, desc };
 }
 
+/** Load by sheet key (`mallow` | `hollow` | `灰殼`). */
+export async function loadSpriteSheetByKey(
+  key: string,
+  opts?: { loadTexture?: LoadTextureFn },
+): Promise<SpriteSheetLoadResult> {
+  return loadSpriteSheet(getSpriteSheetDesc(key), opts);
+}
+
+export type SpriteSheetSmokeResult = {
+  ok: true;
+  url: string;
+  uvS: ReturnType<typeof frameUv>;
+  /** Present when hollow/灰殼 key was also smoked (1.1.5). */
+  hollow?: { url: string; key: string; uvS: ReturnType<typeof frameUv> };
+};
+
 /** Harness / CI smoke: path + UV + injectable load without DOM Image. */
 export async function smokeSpriteSheetLoader(
   loadTexture: LoadTextureFn = async () => applySpriteNearest(new THREE.Texture()),
-): Promise<{ ok: true; url: string; uvS: ReturnType<typeof frameUv> }> {
+): Promise<SpriteSheetSmokeResult> {
   const url = spritePublicPath("mallow-placeholder-4dir.png");
   if (url !== MALLOW_PLACEHOLDER_4DIR.url) {
     throw new Error(`smoke: path mismatch ${url}`);
@@ -130,5 +188,26 @@ export async function smokeSpriteSheetLoader(
   if (texture.magFilter !== THREE.NearestFilter) throw new Error("smoke: magFilter");
   const col = directionColumn(desc, "S");
   const uvS = frameUv(col, 0, desc.columns, desc.rows);
-  return { ok: true, url, uvS };
+
+  // 1.1.5: hollow / 灰殼 sheet key + public/sprites/hollow/ placeholder
+  const hollowDesc = getSpriteSheetDesc("灰殼");
+  if (hollowDesc !== HOLLOW_PLACEHOLDER_4DIR) {
+    throw new Error("smoke: 灰殼 alias must resolve to HOLLOW_PLACEHOLDER_4DIR");
+  }
+  const hollowUrl = spritePublicPath("hollow/hollow-placeholder-4dir.png");
+  if (hollowUrl !== HOLLOW_PLACEHOLDER_4DIR.url) {
+    throw new Error(`smoke: hollow path mismatch ${hollowUrl}`);
+  }
+  const hollowLoad = await loadSpriteSheetByKey("hollow", { loadTexture });
+  if (hollowLoad.desc.id !== "hollow-placeholder-4dir") throw new Error("smoke: bad hollow id");
+  if (hollowLoad.texture.magFilter !== THREE.NearestFilter) throw new Error("smoke: hollow magFilter");
+  const hollowCol = directionColumn(hollowLoad.desc, "S");
+  const hollowUv = frameUv(hollowCol, 0, hollowLoad.desc.columns, hollowLoad.desc.rows);
+
+  return {
+    ok: true,
+    url,
+    uvS,
+    hollow: { url: hollowUrl, key: "hollow", uvS: hollowUv },
+  };
 }

@@ -2,13 +2,18 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import * as THREE from "three";
 import {
+  HOLLOW_PLACEHOLDER_4DIR,
+  HOLLOW_SPRITE_BASE,
   MALLOW_PLACEHOLDER_4DIR,
   SPRITE_DIRS_4,
   SPRITE_PUBLIC_ROOT,
   applySpriteNearest,
   directionColumn,
   frameUv,
+  getSpriteSheetDesc,
+  isSpriteSheetKey,
   loadSpriteSheet,
+  loadSpriteSheetByKey,
   smokeSpriteSheetLoader,
   spritePublicPath,
 } from "./spriteSheet.ts";
@@ -26,6 +31,10 @@ describe("spritePublicPath", () => {
     assert.equal(spritePublicPath("mallow-placeholder-4dir.png"), `${SPRITE_PUBLIC_ROOT}/mallow-placeholder-4dir.png`);
     assert.equal(spritePublicPath("/sprites/foo.png"), `${SPRITE_PUBLIC_ROOT}/foo.png`);
     assert.equal(spritePublicPath("sprites/bar.png"), `${SPRITE_PUBLIC_ROOT}/bar.png`);
+    assert.equal(
+      spritePublicPath("hollow/hollow-placeholder-4dir.png"),
+      `${SPRITE_PUBLIC_ROOT}/hollow/hollow-placeholder-4dir.png`,
+    );
   });
 });
 
@@ -35,6 +44,37 @@ describe("MALLOW_PLACEHOLDER_4DIR", () => {
     assert.equal(MALLOW_PLACEHOLDER_4DIR.rows, 1);
     assert.deepEqual([...MALLOW_PLACEHOLDER_4DIR.directions!], [...SPRITE_DIRS_4]);
     assert.equal(MALLOW_PLACEHOLDER_4DIR.url, "/sprites/mallow-placeholder-4dir.png");
+  });
+});
+
+describe("HOLLOW_PLACEHOLDER_4DIR / sheet keys (1.1.5)", () => {
+  it("is a 4-dir sheet under public/sprites/hollow/", () => {
+    assert.equal(HOLLOW_PLACEHOLDER_4DIR.columns, 4);
+    assert.equal(HOLLOW_PLACEHOLDER_4DIR.rows, 1);
+    assert.deepEqual([...HOLLOW_PLACEHOLDER_4DIR.directions!], [...SPRITE_DIRS_4]);
+    assert.equal(HOLLOW_PLACEHOLDER_4DIR.url, "/sprites/hollow/hollow-placeholder-4dir.png");
+    assert.equal(HOLLOW_SPRITE_BASE, "/sprites/hollow");
+  });
+
+  it("resolves hollow and 灰殼 to the same desc", () => {
+    assert.equal(getSpriteSheetDesc("hollow"), HOLLOW_PLACEHOLDER_4DIR);
+    assert.equal(getSpriteSheetDesc("灰殼"), HOLLOW_PLACEHOLDER_4DIR);
+    assert.equal(getSpriteSheetDesc("mallow"), MALLOW_PLACEHOLDER_4DIR);
+    assert.equal(isSpriteSheetKey("hollow"), true);
+    assert.equal(isSpriteSheetKey("灰殼"), true);
+    assert.equal(isSpriteSheetKey("duke"), false);
+    assert.throws(() => getSpriteSheetDesc("duke"));
+  });
+
+  it("loadSpriteSheetByKey loads hollow via injectable loader", async () => {
+    const { texture, desc } = await loadSpriteSheetByKey("灰殼", {
+      loadTexture: async (url) => {
+        assert.equal(url, HOLLOW_PLACEHOLDER_4DIR.url);
+        return new THREE.Texture();
+      },
+    });
+    assert.equal(desc.id, "hollow-placeholder-4dir");
+    assert.equal(texture.magFilter, THREE.NearestFilter);
   });
 });
 
@@ -86,11 +126,15 @@ describe("loadSpriteSheet / applySpriteNearest", () => {
 });
 
 describe("smokeSpriteSheetLoader", () => {
-  it("passes harness smoke without DOM Image", async () => {
+  it("passes harness smoke without DOM Image (mallow + hollow)", async () => {
     const r = await smokeSpriteSheetLoader();
     assert.equal(r.ok, true);
     assert.equal(r.url, "/sprites/mallow-placeholder-4dir.png");
     assert.equal(r.uvS.repeat.x, 0.25);
+    assert.ok(r.hollow);
+    assert.equal(r.hollow.url, "/sprites/hollow/hollow-placeholder-4dir.png");
+    assert.equal(r.hollow.key, "hollow");
+    assert.equal(r.hollow.uvS.repeat.x, 0.25);
   });
 });
 
