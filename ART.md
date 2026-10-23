@@ -2,7 +2,7 @@
 
 Living art note for **Mallow: Ashen Vow**. Style mandate: **純 2D Dark Souls-like**（Canvas 2D sprite sheets；**唔再以 2.5D／Three.js billboard 做主線**）. Runtime: `createGame2D`（2.0.0+）. See README 近況＋Next Steps.
 
-Last updated: **2026-10-23** · Research knife **2.0.2**（改格 brief：美術格＋UI 皮層；鏡頭／戰鬥只對照；唔實作／唔動 `public/sprites` 實檔）.
+Last updated: **2026-10-23** · Graphics **2.0.3** 灰殼 idle/dirs `drawImage` 達標（canvas yaw → `{n,e,s,w}.png`；未載入仍 silhouette＋ember crack）. **2.0.2** 改格 brief 仍有效.
 
 Stack: **Canvas 2D**（網頁）；舊 Three.js／GLB／billboard＝過渡／封存參考.
 
@@ -47,8 +47,8 @@ Stack: **Canvas 2D**（網頁）；舊 Three.js／GLB／billboard＝過渡／封
 
 ### Handoff（達標即停）
 
-1. **本刀** Research：ART.md 改格 brief（純 2D）＋`GAME_VERSION` → **2.0.2**（PR gate）.
-2. **下一波** Graphics：美術格落地（sheet／`drawImage`；唔改 moves／AI）.
+1. **2.0.2** Research：ART.md 改格 brief（純 2D）＋`GAME_VERSION` → **2.0.2**（已合）.
+2. **2.0.3** Graphics：**達標** — 灰殼 `public/sprites/hollow/{n,e,s,w}.png` 依 yaw `drawImage`；未載入 silhouette＋ember crack. 玩家 facing 切 mallow dirs. 唔改 moves／AI.
 3. **其後** GD：鏡頭／畫面跟隨＋戰鬥可讀.
 4. **再後** UI 皮層（Graphics／Research CSS）.
 5. Fullstack 待命；付費仍要 YIN.
@@ -59,7 +59,7 @@ Stack: **Canvas 2D**（網頁）；舊 Three.js／GLB／billboard＝過渡／封
 優先序: 灰殼 Hollow → 煤灰公爵 Duke → 紅契 Demon
   1) Placeholder（CC0／original／灰塊 stub）→ public/sprites/hollow/
   2) Fullstack／createGame2D 認 path／key（hollow）
-  3) Graphics drawImage 落地（可先 idle；walk／attack／hurt／death 後補）
+  3) Graphics drawImage 落地（2.0.3 灰殼 idle/dirs 達標；walk／attack／hurt／death 後補）
   4) 正式 sheet 同 path／同 key 覆蓋（唔改 moves／AI／Save）
   on miss: canvas silhouette／arc fallback（2.0.1 現況）
 ```
@@ -72,7 +72,7 @@ Sheet 建議: `public/sprites/<kind>/{n,e,s,w}.png` 或單檔橫列／2×2. Fram
 AetherAI（或 equiv；付費要 YIN）多向 sheets
   → public/sprites/<kind>/…
   → Fullstack path／key＋smoke
-  → Graphics createGame2D drawImage（Mallow → enemies）
+  → Graphics createGame2D drawImage（2.0.3：Mallow dirs ＋ 灰殼；duke／demon 仍 fallback）
   → on miss: canvas vector／silhouette fallback
 ```
 
@@ -80,10 +80,10 @@ AetherAI（或 equiv；付費要 YIN）多向 sheets
 
 | Asset | Path（約定） | Dirs | Status |
 | --- | --- | --- | --- |
-| Sir Mallow | `public/sprites/mallow/` | 4–8 | 2.0.1 用 `s.png`＋粉結 fallback；擴 dir／動作後補 |
-| **灰殼 Hollow** | `public/sprites/hollow/` | **4** | **P0** — placeholder OK → 替換 |
-| 煤灰公爵 Duke | `public/sprites/duke/` | 4–8 | 等灰殼可讀後 |
-| 紅契 Demon | `public/sprites/demon/` | 4–8 | 等灰殼可讀後 |
+| Sir Mallow | `public/sprites/mallow/` | 4 | 2.0.3 依 canvas yaw 切 `{n,e,s,w}.png`；未載入粉結 arc fallback |
+| **灰殼 Hollow** | `public/sprites/hollow/` | **4** | **2.0.3 達標** — idle/dirs `drawImage`（yaw→n/e/s/w，nearest）；未載入 silhouette＋ember crack |
+| 煤灰公爵 Duke | `public/sprites/duke/` | 4–8 | 下一波；本刀仍 canvas arc |
+| 紅契 Demon | `public/sprites/demon/` | 4–8 | 等公爵（本刀未開） |
 | Skill／FX | `public/sprites/fx/` | — | 實驗；唔取代近戰提示 |
 
 ## Transitional debt（舊 3D／2.5D — 非主力）
@@ -101,13 +101,13 @@ AetherAI（或 equiv；付費要 YIN）多向 sheets
 
 ## Deferred（唔屬本刀）
 
-1. 產出／提交 hollow／duke／demon 像素檔（Graphics）.
+1. 正式替換灰殼 sheet，以及 duke／demon 像素檔（Graphics）.
 2. Paid Aether sheets（**要 YIN**）.
 3. 鏡頭／戰鬥 code、UI CSS 實作、刪舊 3D 入口（另推一令）.
 
 ## Historical note
 
-≤0.8.x low-poly／Meshopt 封存；**1.0.4–1.1.7** 曾以 2.5D／billboard 為主；**2.0.0** 純 2D 重啓（`createGame2D`）；**2.0.1** visual overhaul；**2.0.2** 改格 brief（美術＋UI 皮層對齊純 2D；鏡頭／戰鬥對照交棒）.
+≤0.8.x low-poly／Meshopt 封存；**1.0.4–1.1.7** 曾以 2.5D／billboard 為主；**2.0.0** 純 2D 重啓（`createGame2D`）；**2.0.1** visual overhaul；**2.0.2** 改格 brief（美術＋UI 皮層對齊純 2D；鏡頭／戰鬥對照交棒）；**2.0.3** 灰殼 dirs `drawImage` 落地.
 
 ## License
 

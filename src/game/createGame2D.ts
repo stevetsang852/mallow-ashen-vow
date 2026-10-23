@@ -7,6 +7,40 @@ import { MOVE, WALK, RUN, STA_MAX, FLASK_MAX, LIGHT_COMBO_DMGS } from "@/game/mo
 import { PLAYER, inIFrame, actionEnd } from "@/game/player";
 import { GAME_VERSION } from "@/game/version";
 
+/** Cardinal frames: `public/sprites/<kind>/{n,e,s,w}.png` (sheet.json `dirs`). */
+export const CANVAS_DIRS = ["n", "e", "s", "w"] as const;
+export type CanvasDir = (typeof CANVAS_DIRS)[number];
+
+const HOLLOW_DIR_BASE = "/sprites/hollow";
+const MALLOW_DIR_BASE = "/sprites/mallow";
+const PLAYER_SPRITE = 64;
+const HOLLOW_SPRITE = 64;
+
+/**
+ * Screen yaw from `Math.atan2(dy, dx)`: 0 = east (+x), +π/2 = south (+y).
+ * Do not reuse `mallowSprite.yawToDir` — that map is the old iso / Three facing.
+ */
+export function canvasYawToDir(yaw: number): CanvasDir {
+  if (!Number.isFinite(yaw)) return "s";
+  const tau = Math.PI * 2;
+  const a = ((yaw % tau) + tau) % tau;
+  const sector = Math.round(a / (Math.PI / 2)) % 4;
+  return (["e", "s", "w", "n"] as const)[sector]!;
+}
+
+/** Facing hollow frame, or null so the caller keeps the silhouette + ember crack. */
+export function hollowDirForYaw(ready: ReadonlySet<CanvasDir>, yaw: number): CanvasDir | null {
+  const dir = canvasYawToDir(yaw);
+  return ready.has(dir) ? dir : null;
+}
+
+/** Facing mallow frame, else south if that PNG loaded, else null (pink-bow arc). */
+export function mallowDirForYaw(ready: ReadonlySet<CanvasDir>, yaw: number): CanvasDir | null {
+  const facing = canvasYawToDir(yaw);
+  if (ready.has(facing)) return facing;
+  return ready.has("s") ? "s" : null;
+}
+
 export type HudSnap = {
   phase: string;
   hp: number;
@@ -200,11 +234,63 @@ export function createGame2D(
     }
   }
 
-  // Style: Dark Ashen + Cute Contrast (full visual overhaul)
-  const mallowImg = new Image();
-  mallowImg.src = "/sprites/mallow/s.png";
-  let spriteReady = false;
-  mallowImg.onload = () => { spriteReady = true; };
+  // 2.0.3: dir PNGs via drawImage. Three.js sheet loader stays off this path.
+  // Miss / not loaded → hollow silhouette + ember crack, player pink-bow arc.
+  function loadDirSprites(base: string): {
+    images: Record<CanvasDir, HTMLImageElement>;
+    ready: Set<CanvasDir>;
+  } {
+    const ready = new Set<CanvasDir>();
+    const images = {} as Record<CanvasDir, HTMLImageElement>;
+    for (const dir of CANVAS_DIRS) {
+      const image = new Image();
+      const mark = () => {
+        if (image.naturalWidth > 0) ready.add(dir);
+      };
+      image.onload = mark;
+      image.onerror = () => {
+        ready.delete(dir);
+      };
+      image.src = `${base}/${dir}.png`;
+      if (image.complete) mark();
+      images[dir] = image;
+    }
+    return { images, ready };
+  }
+
+  const hollowSprites = loadDirSprites(HOLLOW_DIR_BASE);
+  const mallowSprites = loadDirSprites(MALLOW_DIR_BASE);
+
+  function drawDirFrame(
+    set: { images: Record<CanvasDir, HTMLImageElement>; ready: Set<CanvasDir> },
+    dir: CanvasDir | null,
+    x: number,
+    y: number,
+    size: number,
+    nearest: boolean,
+  ): boolean {
+    if (!dir || !set.ready.has(dir)) return false;
+    const image = set.images[dir];
+    if (!image.complete || image.naturalWidth <= 0) return false;
+    const prevSmooth = ctx.imageSmoothingEnabled;
+    if (nearest) ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+    if (nearest) ctx.imageSmoothingEnabled = prevSmooth;
+    return true;
+  }
+
+  function drawFoeFallback(f: Actor) {
+    ctx.fillStyle = f.kind === "duke" ? "#3a2220" : "#2a2a2a";
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#e85d04";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(f.x - f.r * 0.4, f.y - f.r * 0.2);
+    ctx.lineTo(f.x + f.r * 0.3, f.y + f.r * 0.4);
+    ctx.stroke();
+  }
 
   function draw() {
     // Deep ashen background
@@ -221,30 +307,30 @@ export function createGame2D(
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, w, h);
 
-    // Foes — darker silhouettes with ember cracks
+    // Foes — hollow dir PNG when loaded; else silhouette + ember crack. Duke stays arc.
     for (const f of foes) {
       if (f.hp <= 0) continue;
-      ctx.fillStyle = f.kind === "duke" ? "#3a2220" : "#2a2a2a";
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-      ctx.fill();
-      // Ember crack
-      ctx.strokeStyle = "#e85d04";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(f.x - f.r * 0.4, f.y - f.r * 0.2);
-      ctx.lineTo(f.x + f.r * 0.3, f.y + f.r * 0.4);
-      ctx.stroke();
-      // HP bar
+      let drewSprite = false;
+      if (f.kind === "hollow") {
+        const face = Math.atan2(player.y - f.y, player.x - f.x);
+        drewSprite = drawDirFrame(
+          hollowSprites,
+          hollowDirForYaw(hollowSprites.ready, face),
+          f.x,
+          f.y,
+          HOLLOW_SPRITE,
+          true,
+        );
+      }
+      if (!drewSprite) drawFoeFallback(f);
+      const barTop = drewSprite ? HOLLOW_SPRITE / 2 + 8 : f.r + 10;
       ctx.fillStyle = "#e85d04";
-      ctx.fillRect(f.x - f.r, f.y - f.r - 10, (f.hp / f.hpMax) * f.r * 2, 3);
+      ctx.fillRect(f.x - f.r, f.y - barTop, (f.hp / f.hpMax) * f.r * 2, 3);
     }
 
-    // Player — sprite or fallback with strong pink bow
-    if (spriteReady) {
-      const size = 64;
-      ctx.drawImage(mallowImg, player.x - size / 2, player.y - size / 2, size, size);
-    } else {
+    // Player — facing dir PNG, else s.png, else pink-bow arc
+    const mallowDir = mallowDirForYaw(mallowSprites.ready, player.yaw);
+    if (!drawDirFrame(mallowSprites, mallowDir, player.x, player.y, PLAYER_SPRITE, false)) {
       ctx.fillStyle = "#8a9298";
       ctx.beginPath();
       ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
