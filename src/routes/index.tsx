@@ -2,11 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Flame, Shield, Swords, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  createGame,
-  INITIAL_HUD,
-  type GameApi,
+  createGame2D,
   type HudSnap,
-} from "@/game/createGame";
+} from "@/game/createGame2D";
 import { GAME_VERSION } from "@/game/version";
 
 const THEME_VIDEO = "7qEa2Wp14L4";
@@ -155,8 +153,15 @@ function fmt(ms: number) {
 
 function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const api = useRef<GameApi | null>(null);
-  const [hud, setHud] = useState<HudSnap>(INITIAL_HUD);
+  const api = useRef<any>(null);
+  const [hud, setHud] = useState<HudSnap>({
+    phase: "play",
+    hp: 120,
+    hpMax: 120,
+    sta: 100,
+    flasks: 4,
+    version: GAME_VERSION,
+  });
   const [cardOn, setCardOn] = useState(false);
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.hpMax)) * 100));
   const staPct = Math.max(0, Math.min(100, (hud.sta / Math.max(1, hud.staMax)) * 100));
@@ -177,7 +182,7 @@ function Home() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const game = createGame(canvas, { onHud: setHud });
+    const game = createGame2D(canvas, { onHud: setHud });
     api.current = game;
     return () => {
       game.dispose();
