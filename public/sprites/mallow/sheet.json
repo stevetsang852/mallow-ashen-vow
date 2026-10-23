@@ -1,7 +1,7 @@
 {
   "frameSize": [
-    64,
-    64
+    512,
+    512
   ],
   "dirs": {
     "s": "s.png",
@@ -9,6 +9,7 @@
     "n": "n.png",
     "w": "w.png"
   },
+  "key": "idle-v3-key.png",
   "filter": "nearest",
-  "notes": "placeholder Sir Mallow 4-dir; pink bow #e8a0b8 + oversized sword"
+  "notes": "1.1.6 idle-v3 land: s/n/w = idle-v3-key (shoulder sword); e = horizontal flip; n reuse. No paid Aether. walk/attack/hurt/death deferred (YIN credits)."
 }

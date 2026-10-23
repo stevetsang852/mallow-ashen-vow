@@ -132,7 +132,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 2. **戰鬥提示轉換**：前搖／收刀／翻滾／格擋環改為 Sprite 或 Plane，確保固定鏡頭下可讀。
 3. **朝向與手感**：微調主角 Sprite 朝向平滑，確認世界相對移動在固定鏡頭下仍然直覺。
 4. **敵人 AI 配合**：根據新打擊節奏微調敵人反擊窗口。
-5. **資產管線**：用 AetherAI 產出更高品質的 4/8 方向 Sprite，替換 placeholder。
+5. **資產管線**：**1.1.6** 已落地本地 idle-v3 key（肩扛劍）進 `public/sprites/mallow/`；walk／attack／hurt／death 仍等 YIN Aether 額度（禁付費）。
 
 後續 PR 請對齊本節。舊 low-poly pixel 3D 規則已歸檔，僅作過渡參考。
 
@@ -341,11 +341,11 @@ npm run dev
 
 ### 當前版本
 
-- **版本**：**1.1.3**（本 docs 刀；base tip `875516f`／**1.1.2**）
+- **版本**：**1.1.6**（Graphics idle-v3；base tip `bb48ba9`／**1.1.5**）
 - **主分支**：`main`
 - **Demo**：https://mallow-ashen-vow.grok.me/
 - **狀態**：**STANDBY** — 波次 1.0.1–1.0.4（PR 閘）已合；其後 Game developer 直推 main 1.0.5–1.1.2。**推一令-mallow-261023**＝無新功能波，等 YIN／直屬總管家轉達下一令。PR 閘仍必須；付費資源仍要 YIN
-- **合併序（近況）**：GD **1.0.1**（#52）→ FS **1.0.2**（#51）→ Graphics **1.0.3**（#53）→ Research **1.0.4**（#54）→ GD 直推 **1.0.5–1.1.2** → docs **1.1.3**（本刀；standby）
+- **合併序（近況）**：GD **1.0.1**（#52）→ FS **1.0.2**（#51）→ Graphics **1.0.3**（#53）→ Research **1.0.4**（#54）→ GD 直推 **1.0.5–1.1.2** → docs **1.1.3**（#55）→ GD **1.1.4**（#56）→ FS **1.1.5**（#58）→ Graphics **1.1.6**（本刀）
 
 ### 今日下一刀（全員待命；推一令-mallow-261023）
 
@@ -637,6 +637,25 @@ npm run dev
 - [x] `mallowSprite.ts`：Three.js billboard `Sprite`；失敗 → GLB `loadMallowRig` → `makeKnight`
 - [x] **唔改** moves／AI／Save／combat feel／enemy meshes
 - [x] `GAME_VERSION` → 1.0.3（rebase onto tip `63baecb`／1.0.2）
+
+#### 1.1.4 - smooth player sprite facing（Game developer；#56）
+
+- [x] Presentation-only：lerp facing yaw＋sticky 4-dir sector（唔 pop／jitter at boundaries）
+- [x] `mallowSprite.ts` helpers；**唔改** moves／AI／Save／world-relative movement
+- [x] `GAME_VERSION` → 1.1.4（tip `f850e0a`）
+
+#### 1.1.5 - hollow／灰殼 sprite sheet key（Fullstack；#58）
+
+- [x] `spriteSheet` hollow sheet keys＋`public/sprites/hollow/` placeholder；harness smoke
+- [x] **唔改** moves／AI／Save／HUD／mesh
+- [x] `GAME_VERSION` → 1.1.5（tip `bb48ba9`）
+
+#### 1.1.6 - idle-v3 land（Graphics）
+
+- [x] 本地 idle-v3 key（肩扛劍、無 clipping）→ `public/sprites/mallow/idle-v3-key.png`（512² transparent；s/n/w 复用、e 水平翻）
+- [x] Wire HD-2D billboard（`createGame` playerSprite＋`mallowSprite.ts`）；**禁付費 Aether**；walk／attack／hurt／death 暫緩
+- [x] **唔改** moves／AI／Save／hollow enemy
+- [x] `GAME_VERSION` → 1.1.6（base tip `bb48ba9`／1.1.5）
 
 #### 0.8.46 - Daily progress docs（Project Mannger；FREEZE）
 
