@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Fixed-seed harness regression (0.8.7) + ε schedule / snapshot smoke (0.8.10) + learner view (0.8.31)
- * + sprite sheet loader smoke (1.0.2).
+ * + sprite sheet loader smoke (1.0.2) + hollow/灰殼 key (1.1.5).
  * Usage: node --import tsx scripts/harness-regression.mjs
  * Does not touch moves damage tables.
  */
@@ -80,13 +80,26 @@ if (view.epsilon !== learner.epsilon || view.episodes !== 1) {
   process.exit(1);
 }
 console.log(JSON.stringify({ harnessLearnerView: { epsilon: view.epsilon, episodes: view.episodes } }));
-// 1.0.2: sprite sheet loader stub smoke (injectable; no DOM Image)
+// 1.0.2 + 1.1.5: sprite sheet loader smoke (mallow + hollow/灰殼; injectable; no DOM Image)
 const spriteSmoke = await smokeSpriteSheetLoader();
 if (!spriteSmoke.ok || spriteSmoke.url !== "/sprites/mallow-placeholder-4dir.png") {
   console.error("spriteSheet smoke failed", spriteSmoke);
   process.exit(1);
 }
-console.log(JSON.stringify({ spriteSheetSmoke: { url: spriteSmoke.url, uvS: spriteSmoke.uvS } }));
+if (
+  !spriteSmoke.hollow ||
+  spriteSmoke.hollow.url !== "/sprites/hollow/hollow-placeholder-4dir.png" ||
+  spriteSmoke.hollow.key !== "hollow"
+) {
+  console.error("hollow spriteSheet smoke failed", spriteSmoke.hollow);
+  process.exit(1);
+}
+console.log(
+  JSON.stringify({
+    spriteSheetSmoke: { url: spriteSmoke.url, uvS: spriteSmoke.uvS },
+    hollowSpriteSheetSmoke: spriteSmoke.hollow,
+  }),
+);
 
 console.log("ok");
 
