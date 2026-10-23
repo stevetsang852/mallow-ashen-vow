@@ -7,7 +7,10 @@ import {
 
 export const MALLOW_SPRITE_BASE = "/sprites/mallow";
 
-/** Lowercase 4-dir keys matching `public/sprites/mallow/{s,e,n,w}.png`. */
+/** Primary idle-v3 key (Graphics 1.1.6). Dir PNGs reuse / flip this until walk sheets. */
+export const MALLOW_IDLE_V3_KEY = `${MALLOW_SPRITE_BASE}/idle-v3-key.png`;
+
+/** Lowercase 4-dir keys matching `public/sprites/mallow/{s,e,n,w}.png` (idle-v3 interim). */
 export type DirKey = "s" | "e" | "n" | "w";
 
 export const DIR_KEYS: readonly DirKey[] = ["s", "e", "n", "w"] as const;
@@ -46,6 +49,7 @@ function defaultLoadTexture(url: string): Promise<THREE.Texture> {
 
 /**
  * Load four directional frames from `{baseUrl}/{dir}.png` via FS nearest filter.
+ * 1.1.6: frames are idle-v3 key (s/n/w) + horizontal flip (e); see sheet.json notes.
  * Rejects if any frame fails (caller falls back to GLB / makeKnight).
  */
 export async function loadMallowDirTextures(
@@ -135,10 +139,11 @@ export function yawToPlayerSpriteSectorSticky(
 }
 
 /**
- * Billboard Sir Mallow from placeholder 4-dir sprites.
+ * Billboard Sir Mallow from idle-v3 4-dir sprites (Graphics 1.1.6).
  * Returns a KnightRig-compatible shell so poseKnight / createGame keep working;
  * limb groups are empty — pose mutates are no-ops visually.
  * Uses Fullstack **1.0.2** `applySpriteNearest` / injectable `LoadTextureFn`.
+ * Keep `setFacingYaw`; do not break nearest / loadTexture injection.
  */
 export async function loadMallowSpriteRig(
   baseUrl: string = MALLOW_SPRITE_BASE,
@@ -171,7 +176,7 @@ export async function loadMallowSpriteRig(
   const sprite = new THREE.Sprite(mat);
   sprite.name = "mallowBillboard";
   // ~makeKnight height (~1.4–1.6); Sprite scale is world units.
-  sprite.scale.set(1.55, 1.55, 1);
+  sprite.scale.set(1.7, 1.7, 1);
   sprite.center.set(0.5, 0);
   sprite.position.y = 0;
   bob.add(sprite);

@@ -572,7 +572,7 @@ export function createGame(
   playerRig.root.rotation.order = "YXZ";
   scene.add(playerRig.root);
 
-  // HD-2D style: 4-dir Sprite billboard for Sir Mallow (Octopath-inspired)
+  // HD-2D: 4-dir Sprite billboard (1.1.6 idle-v3 key; interim flip for E)
   const loader = new THREE.TextureLoader();
   const mallowDirs = {
     s: loader.load("/sprites/mallow/s.png"),
@@ -585,14 +585,17 @@ export function createGame(
     t.minFilter = THREE.NearestFilter;
     t.colorSpace = THREE.SRGBColorSpace;
   }
+  // 1.1.6: idle-v3 key is square; bottom-center so feet sit on ground.
   const playerSpriteMat = new THREE.SpriteMaterial({
     map: mallowDirs.s,
     transparent: true,
-    depthWrite: false,
+    depthWrite: true,
+    alphaTest: 0.15,
   });
   const playerSprite = new THREE.Sprite(playerSpriteMat);
-  playerSprite.scale.set(1.6, 2.2, 1);
-  playerSprite.position.y = 1.1;
+  playerSprite.scale.set(1.7, 1.7, 1);
+  playerSprite.center.set(0.5, 0);
+  playerSprite.position.y = 0;
   scene.add(playerSprite);
   // 1.1.4: presentation facing (lerp + sticky 4-dir) — gameplay yaw untouched
   let spriteFacingYaw = 0;
@@ -2278,7 +2281,8 @@ export function createGame(
     const blink = player.invuln > 0 && Math.sin(time * 28) > 0;
     playerRig.root.visible = false; // HD-2D: use sprite
     playerSprite.visible = !blink;
-    playerSprite.position.set(player.x, 1.1, player.z);
+    // idle-v3: sprite.center y=0 → feet on ground (was 1.1 for placeholder)
+    playerSprite.position.set(player.x, 0, player.z);
     // 1.1.4: smooth presentation facing under fixed iso cam — no frame pop at sector edges
     spriteFacingYaw = lerpFacingYaw(spriteFacingYaw, player.yaw, 10, dt);
     spriteDirSector = yawToPlayerSpriteSectorSticky(spriteFacingYaw, spriteDirSector);
