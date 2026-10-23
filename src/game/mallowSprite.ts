@@ -63,6 +63,26 @@ export async function loadMallowDirTextures(
   return Object.fromEntries(entries) as SpriteDirMaps;
 }
 
+/** Shortest signed delta from `from` to `to` (radians). */
+export function shortestAngleDelta(from: number, to: number): number {
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
+}
+
+/**
+ * Presentation facing lerp — rate-limited turn toward intent/yaw.
+ * Does not change gameplay yaw; sprite frame selection only.
+ */
+export function lerpFacingYaw(
+  current: number,
+  target: number,
+  speed: number,
+  dt: number,
+): number {
+  const diff = shortestAngleDelta(current, target);
+  const max = speed * dt;
+  return current + Math.max(-max, Math.min(max, diff));
+}
+
 /** Map world yaw (player facing) to a 4-dir key. */
 export function yawToDir(yaw: number): DirKey {
   const tau = Math.PI * 2;
@@ -70,6 +90,48 @@ export function yawToDir(yaw: number): DirKey {
   // 0 → N (-Z), π/2 → E (+X), π → S (+Z), 3π/2 → W (-X) after createGame's +π visual flip.
   const sector = Math.round(a / (Math.PI / 2)) % 4;
   return DIR_KEYS[sector]!;
+}
+
+/**
+ * Sticky 4-dir: keep `current` until yaw leaves that sector by more than
+ * π/4 + hysteresis. Stops frame pop/jitter at sector boundaries under fixed cam.
+ */
+export function yawToDirSticky(
+  yaw: number,
+  current: DirKey,
+  hysteresis: number = Math.PI / 8,
+): DirKey {
+  const tau = Math.PI * 2;
+  const a = ((yaw % tau) + tau) % tau;
+  const curIdx = DIR_KEYS.indexOf(current);
+  const curCenter = (Math.max(0, curIdx) * Math.PI) / 2;
+  const delta = shortestAngleDelta(curCenter, a);
+  if (Math.abs(delta) <= Math.PI / 4 + hysteresis) return current;
+  return yawToDir(yaw);
+}
+
+/**
+ * HD-2D createGame playerSprite maps sectors as [s, w, n, e] (not DIR_KEYS order).
+ * Keep that mapping; only add sticky selection for 1.1.4.
+ */
+export function yawToPlayerSpriteSector(yaw: number): number {
+  const tau = Math.PI * 2;
+  const a = ((yaw % tau) + tau) % tau;
+  return Math.round(a / (Math.PI / 2)) % 4;
+}
+
+export function yawToPlayerSpriteSectorSticky(
+  yaw: number,
+  current: number,
+  hysteresis: number = Math.PI / 8,
+): number {
+  const cur = ((current % 4) + 4) % 4;
+  const tau = Math.PI * 2;
+  const a = ((yaw % tau) + tau) % tau;
+  const curCenter = (cur * Math.PI) / 2;
+  const delta = shortestAngleDelta(curCenter, a);
+  if (Math.abs(delta) <= Math.PI / 4 + hysteresis) return cur;
+  return yawToPlayerSpriteSector(yaw);
 }
 
 /**
@@ -122,8 +184,9 @@ export async function loadMallowSpriteRig(
     mat.needsUpdate = true;
   };
 
+  /** Target yaw already presentation-smoothed by createGame; sticky dir only. */
   const setFacingYaw = (yaw: number) => {
-    applyDir(yawToDir(yaw));
+    applyDir(yawToDirSticky(yaw, facing));
   };
 
   const armorMat = dummyStd(0xb8c0c8);
