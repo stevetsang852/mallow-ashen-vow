@@ -3,7 +3,11 @@ import { makeKnight, poseKnight, type KnightRig } from "@/game/knightMesh";
 import { makeHollow, makeDuke, makeDemon } from "@/game/enemyMesh";
 import { loadEnemyRig } from "@/game/enemyRig";
 import { flashMallow, loadMallowRig } from "@/game/mallowRig";
-import { loadMallowSpriteRig } from "@/game/mallowSprite";
+import {
+  loadMallowSpriteRig,
+  lerpFacingYaw,
+  yawToPlayerSpriteSectorSticky,
+} from "@/game/mallowSprite";
 import { applyCamera, stepCamera, settleIsoCamera, ISO_YAW, ISO_DIST, ISO_HEIGHT, FREE_ORBIT } from "@/game/camera";
 import { ITEMS_ENABLED } from "@/game/items";
 import {
@@ -590,6 +594,9 @@ export function createGame(
   playerSprite.scale.set(1.6, 2.2, 1);
   playerSprite.position.y = 1.1;
   scene.add(playerSprite);
+  // 1.1.4: presentation facing (lerp + sticky 4-dir) — gameplay yaw untouched
+  let spriteFacingYaw = 0;
+  let spriteDirSector = 0;
   // Hide procedural mesh for pure HD-2D look (can re-enable for fallback)
   playerRig.root.visible = false;
   let loaded = 0;
@@ -1081,6 +1088,8 @@ export function createGame(
     player.x = FIRE.x + 1.15;
     player.z = FIRE.z + 0.35;
     player.yaw = 0;
+    spriteFacingYaw = 0;
+    spriteDirSector = 0;
     player.vx = 0;
     player.vz = 0;
     player.act = "free";
@@ -2270,12 +2279,16 @@ export function createGame(
     playerRig.root.visible = false; // HD-2D: use sprite
     playerSprite.visible = !blink;
     playerSprite.position.set(player.x, 1.1, player.z);
-    // 4-dir facing for Octopath-style sprite
-    const yaw = player.yaw;
-    const dir = Math.round(((yaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI / 2)) % 4;
+    // 1.1.4: smooth presentation facing under fixed iso cam — no frame pop at sector edges
+    spriteFacingYaw = lerpFacingYaw(spriteFacingYaw, player.yaw, 10, dt);
+    spriteDirSector = yawToPlayerSpriteSectorSticky(spriteFacingYaw, spriteDirSector);
     const maps = [mallowDirs.s, mallowDirs.w, mallowDirs.n, mallowDirs.e];
-    playerSprite.material.map = maps[dir] ?? mallowDirs.s;
-    if (setMallowFacing) setMallowFacing(player.yaw + Math.PI);
+    const nextMap = maps[spriteDirSector] ?? mallowDirs.s;
+    if (playerSprite.material.map !== nextMap) {
+      playerSprite.material.map = nextMap;
+      playerSprite.material.needsUpdate = true;
+    }
+    if (setMallowFacing) setMallowFacing(spriteFacingYaw + Math.PI);
     const rolling = inIFrame(player.act, player.actT);
     iframeRing.visible = rolling && phase === "play";
     if (iframeRing.visible) {
@@ -3002,6 +3015,8 @@ export function createGame(
     camDist = ISO_DIST;
     camHeight = ISO_HEIGHT;
     player.yaw = 0;
+    spriteFacingYaw = 0;
+    spriteDirSector = 0;
     player.x = SPAWN.x;
     player.z = SPAWN.z;
     player.vx = 0;

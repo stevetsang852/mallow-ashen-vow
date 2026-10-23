@@ -14,8 +14,11 @@ import {
 } from "./spriteSheet.ts";
 import {
   DIR_KEYS,
+  lerpFacingYaw,
   loadMallowDirTextures,
   yawToDir,
+  yawToDirSticky,
+  yawToPlayerSpriteSectorSticky,
 } from "./mallowSprite.ts";
 
 describe("spritePublicPath", () => {
@@ -114,5 +117,27 @@ describe("Graphics 1.0.3 mallow dir consumer (via FS nearest)", () => {
       assert.equal(maps[d].magFilter, THREE.NearestFilter);
       assert.equal(maps[d].generateMipmaps, false);
     }
+  });
+});
+
+describe("1.1.4 sprite facing smooth", () => {
+  it("lerpFacingYaw rate-limits toward target", () => {
+    const mid = lerpFacingYaw(0, Math.PI / 2, 1, 0.2);
+    assert.ok(mid > 0 && mid < Math.PI / 2);
+    const done = lerpFacingYaw(0, Math.PI / 2, 100, 1);
+    assert.ok(Math.abs(done - Math.PI / 2) < 1e-9);
+  });
+
+  it("yawToDirSticky holds near sector edge then flips", () => {
+    const edge = Math.PI / 4; // s|e boundary for yawToDir
+    assert.equal(yawToDirSticky(edge - 0.01, "s"), "s");
+    assert.equal(yawToDirSticky(edge + 0.01, "s"), "s"); // still inside π/4+hyst
+    assert.equal(yawToDirSticky(edge + Math.PI / 8 + 0.05, "s"), "e");
+  });
+
+  it("yawToPlayerSpriteSectorSticky preserves [s,w,n,e] sectors", () => {
+    // sector 0 center = 0; stay until past π/4 + hyst
+    assert.equal(yawToPlayerSpriteSectorSticky(0.1, 0), 0);
+    assert.equal(yawToPlayerSpriteSectorSticky(Math.PI / 4 + Math.PI / 8 + 0.05, 0), 1);
   });
 });
