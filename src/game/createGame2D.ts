@@ -200,55 +200,69 @@ export function createGame2D(
     }
   }
 
+  // Style: Dark Ashen + Cute Contrast (full visual overhaul)
+  const mallowImg = new Image();
+  mallowImg.src = "/sprites/mallow/s.png";
+  let spriteReady = false;
+  mallowImg.onload = () => { spriteReady = true; };
+
   function draw() {
-    ctx.fillStyle = "#1a1512";
+    // Deep ashen background
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#0f0c0a");
+    bg.addColorStop(1, "#1c1612");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    // Ground grid (2D only)
-    ctx.strokeStyle = "#2a221c";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < w; x += 40) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
-    }
-    for (let y = 0; y < h; y += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
+    // Ember vignette
+    const vig = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, Math.max(w, h) * 0.7);
+    vig.addColorStop(0, "rgba(232,93,4,0.06)");
+    vig.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
 
-    // Foes
+    // Foes — darker silhouettes with ember cracks
     for (const f of foes) {
       if (f.hp <= 0) continue;
-      ctx.fillStyle = f.kind === "duke" ? "#6a3a3a" : "#4a4a4a";
+      ctx.fillStyle = f.kind === "duke" ? "#3a2220" : "#2a2a2a";
       ctx.beginPath();
       ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#e85d04";
-      ctx.fillRect(f.x - f.r, f.y - f.r - 8, (f.hp / f.hpMax) * f.r * 2, 4);
-    }
-
-    // Player (pink bow accent)
-    ctx.fillStyle = "#b8c0c8";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#e7a0b0";
-    ctx.fillRect(player.x + 6, player.y - 10, 6, 6);
-    if (player.invuln > 0) {
-      ctx.strokeStyle = "rgba(255,255,255,0.6)";
+      // Ember crack
+      ctx.strokeStyle = "#e85d04";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(player.x, player.y, player.r + 6, 0, Math.PI * 2);
+      ctx.moveTo(f.x - f.r * 0.4, f.y - f.r * 0.2);
+      ctx.lineTo(f.x + f.r * 0.3, f.y + f.r * 0.4);
+      ctx.stroke();
+      // HP bar
+      ctx.fillStyle = "#e85d04";
+      ctx.fillRect(f.x - f.r, f.y - f.r - 10, (f.hp / f.hpMax) * f.r * 2, 3);
+    }
+
+    // Player — sprite or fallback with strong pink bow
+    if (spriteReady) {
+      const size = 64;
+      ctx.drawImage(mallowImg, player.x - size / 2, player.y - size / 2, size, size);
+    } else {
+      ctx.fillStyle = "#8a9298";
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e7a0b0";
+      ctx.fillRect(player.x + 8, player.y - 12, 8, 8);
+    }
+    if (player.invuln > 0) {
+      ctx.strokeStyle = "rgba(255,220,180,0.7)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.r + 8, 0, Math.PI * 2);
       ctx.stroke();
     }
 
     // HUD
     ctx.fillStyle = "#f0e6d8";
-    ctx.font = "14px sans-serif";
+    ctx.font = "13px sans-serif";
     ctx.fillText(`HP ${player.hp}/${player.hpMax}   STA ${Math.round(player.sta)}   Flask ${flasks}   v${GAME_VERSION}`, 16, 24);
     ctx.fillText("WASD move  J/Z light  K/X heavy  Space dodge  E flask", 16, h - 16);
   }
