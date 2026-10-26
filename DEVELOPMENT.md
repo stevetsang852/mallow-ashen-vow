@@ -1,5 +1,15 @@
 # Development Plan - Mallow: Ashen Vow
 
+## 現況（2.0.5 · 2026-10-26）
+
+公開首頁是 Three.js 灰盒預演（`src/previs/`，路由 `src/routes/index.tsx`）。`GAME_VERSION` 是 **2.0.5**。玩法收在 `src/_hidden/gameHome.tsx`，只有 `/play` 會載入；`/?game=1` 或 `VITE_MALLOW_GAME=1` 會從 `/` 轉過去。正式環境不要設那個變數。
+
+這一刀是 YIN／直屬秘書長的推一令例外。不要合併 HOLD 中的 PR #62（2.0.4 鏡頭／戰鬥留在那裡）。不要把 Seedance、`@theatre/studio` 或 CozyClay 加進倉庫。
+
+調預演只改 `src/previs/shot.ts`（`CAMERA_KEYS`、`POSE_KEYS`），不必重寫路由。灰盒是結構；外觀概念以後再上。
+
+下面 0.5.x／0.6 計畫是舊稿，不是這一刀的範圍。
+
 **Based on README.md Planning**  
 **Updated: 2026-10-14**
 

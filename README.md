@@ -1,5 +1,7 @@
 # Mallow: Ashen Vow 粉誓
 
+**公開模式 2.0.5（2026-10-26）**：首頁是 Three.js 灰盒預演，不是類魂戰鬥。玩法預設不載入。見下方「公開入口」。
+
 試玩：[https://mallow-ashen-vow.grok.me/](https://mallow-ashen-vow.grok.me/)
 
 ![粉誓封面](public/og.jpg)
@@ -9,6 +11,16 @@
 | 灰殼 | 煤灰公爵 | 紅契 |
 | --- | --- | --- |
 | ![灰殼](public/concepts/hollow-ash-shell.jpg) | ![煤灰公爵](public/concepts/coal-ash-duke.jpg) | ![紅契](public/concepts/red-contract-demon.jpg) |
+
+## 公開入口（2.0.5 · 推一令例外）
+
+**2026-10-26**：YIN 經直屬秘書長推一令，只開這一刀。`main` 的公開模式是 **Three.js 灰盒預演**，不是類魂戰鬥。一般 FREEZE 仍在；這一刀是例外，不要順手重開其他功能。
+
+- 打開 `/`：自動循環約 6.5 秒的灰盒鏡頭（火芯 → Mallow 走向並舉劍 → 遠處公爵方塊剪影 → 退回）。純 `three` 方塊，加上既有程序化 Mallow（`makeKnight`）。沒有戰鬥 HUD。
+- 玩法（`createGame2D`、戰鬥、HUD、learner、harness）**預設不載入**。開發用：`/?game=1`（轉到 `/play`）或直接開 `/play`。環境變數 `VITE_MALLOW_GAME=1` 也會從 `/` 轉去玩法。正式環境不要設。
+- 調鏡頭與動作只改 `src/previs/shot.ts`（`CAMERA_KEYS`／`POSE_KEYS`）。這是結構灰盒；外觀概念以後再上。倉庫裡沒有 Seedance 執行路徑，沒有 `@theatre/studio`，沒有 CozyClay。
+- **2.0.4** 留給 HOLD 中的 PR #62（鏡頭／戰鬥），本刀跳號 **2.0.5**。不要合併 #62。
+- 下面的 FREEZE 與戰鬥筆記描述的是隱藏玩法，不是現在的公開首頁。
 
 ## 現在給同事（2026-10-22）
 
@@ -50,7 +62,7 @@
 - 敵人 rig（骨骼綁定）：`src/game/enemyRig.ts`
 - 模擬：`src/game/createGame.ts`
 - CombatFeel／harness／learner／hit-path：`combatFeel.ts`、`autoHarness.ts`、`playerLearner.ts`、`hitPath.ts`
-- 畫面：`src/routes/index.tsx`
+- 公開畫面：`src/routes/index.tsx`（灰盒預演；鏡頭在 `src/previs/shot.ts`）
 
 電腦按 E 食水回血，R 已取消。出刀前搖有橘色環，重擊環較大。翻滾無敵有淡白環，收刀期間有粉紅環。普通玩家介面不顯示血量數字、撿灰 +數字、倒下次數和本局時間。撿灰有餘燼、擴環和短音。看不懂公爵哪招，只改 `MOVE.duke`。
 
@@ -285,7 +297,7 @@ PayMe 贊助文案在標題、Esc 選單和通關畫面。
 
 ## 同事接手
 
-戰鬥模擬還在 `src/game/createGame.ts`。招式數字在 `src/game/moves.ts`。鏡頭在 `src/game/camera.ts`。公爵選招和收招長度在 `src/game/foes.ts`。玩家動作結束和翻滾無敵在 `src/game/player.ts`。HUD 型別在 `src/game/hud.ts`。畫面和 PayMe 在 `src/routes/index.tsx`。角色網格在 `src/game/knightMesh.ts`、`src/game/mallowRig.ts` 和敵人專屬 `src/game/enemyMesh.ts`。
+戰鬥模擬還在 `src/game/createGame.ts`（隱藏，預設不進公開包）。招式數字在 `src/game/moves.ts`。戰鬥鏡頭在 `src/game/camera.ts`。公爵選招和收招長度在 `src/game/foes.ts`。玩家動作結束和翻滾無敵在 `src/game/player.ts`。HUD 型別在 `src/game/hud.ts`。玩法畫面和 PayMe 在 `src/_hidden/gameHome.tsx`，只經 `/play` 或 `/?game=1` 載入。公開預演在 `src/routes/index.tsx` 與 `src/previs/`。角色網格在 `src/game/knightMesh.ts`、`src/game/mallowRig.ts` 和敵人專屬 `src/game/enemyMesh.ts`。
 
 先不要加地圖或第二個主角。粉紅蝴蝶結和太大的劍就是識別。
 

@@ -70,10 +70,18 @@ type Actor = {
   kind: string;
 };
 
+export type Game2DApi = {
+  dispose: () => void;
+  toggleMute: () => void;
+  interact: () => void;
+  rest: () => void;
+  temper: () => void;
+};
+
 export function createGame2D(
   canvas: HTMLCanvasElement,
   hooks: { onHud: (hud: HudSnap) => void },
-): { dispose: () => void } {
+): Game2DApi {
   const ctx = canvas.getContext("2d")!;
   let w = canvas.clientWidth || 800;
   let h = canvas.clientHeight || 600;

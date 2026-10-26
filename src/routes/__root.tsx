@@ -11,7 +11,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: APP_NAME },
-      { name: "description", content: "A small browser souls-like starring a kitten knight." },
+      { name: "description", content: "Mallow greybox previs — a looping Three.js blocking pass." },
       { name: "theme-color", content: "#0c0a09" },
     ],
     links: [
