@@ -57,7 +57,7 @@ export function PrevisStage() {
       <canvas
         ref={canvasRef}
         className="absolute inset-0 h-full w-full"
-        aria-label="粉誓灰盒預演，火芯走向剪影"
+        aria-label="粉誓灰盒預演，分鏡 A 到 G"
       />
       <div className="pointer-events-none absolute top-3 left-3 max-w-[16rem] bg-white/85 px-3 py-2 shadow-sm">
         <p className="font-display text-[10px] tracking-[0.22em] text-[#78716c]">
@@ -71,7 +71,7 @@ export function PrevisStage() {
           {`0.0 / ${SHOT.seconds.toFixed(1)}s`}
         </p>
         <p className="mt-2 text-[11px] leading-relaxed text-[#57534e]">
-          結構灰盒，外觀以後再上。循環鏡頭，不是戰鬥。
+          分鏡 A–G 灰盒。橙圈前搖、粉圈收招、白圈無敵。循環播放，不是玩法。
         </p>
       </div>
       <button

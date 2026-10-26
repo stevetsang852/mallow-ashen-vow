@@ -1,12 +1,12 @@
 # Development Plan - Mallow: Ashen Vow
 
-## 現況（2.0.5 · 2026-10-26）
+## 現況（2.0.6 · 2026-10-26）
 
-公開首頁是 Three.js 灰盒預演（`src/previs/`，路由 `src/routes/index.tsx`）。`GAME_VERSION` 是 **2.0.5**。玩法收在 `src/_hidden/gameHome.tsx`，只有 `/play` 會載入；`/?game=1` 或 `VITE_MALLOW_GAME=1` 會從 `/` 轉過去。正式環境不要設那個變數。
+公開首頁是 Three.js 灰盒預演（`src/previs/`，路由 `src/routes/index.tsx`）。`GAME_VERSION` 是 **2.0.6**。`/` 循環播放 Animation Designer 分鏡 **Shot A–G**（火芯醒來、鎖敵、輕重懲戒、灰燼、拱門、衝鋒懲戒、靜勝）。橙圈／粉圈／白圈是可讀提示。玩法收在 `src/_hidden/gameHome.tsx`，只有 `/play` 會載入；`/?game=1` 或 `VITE_MALLOW_GAME=1` 會從 `/` 轉過去。正式環境不要設那個變數。
 
-這一刀是 YIN／直屬秘書長的推一令例外。不要合併 HOLD 中的 PR #62（2.0.4 鏡頭／戰鬥留在那裡）。不要把 Seedance、`@theatre/studio` 或 CozyClay 加進倉庫。
+這一刀是動畫 carve-out。不要合併 HOLD 中的 PR #62（2.0.4 鏡頭／戰鬥留在那裡）。不要把 Seedance、`@theatre/studio` 或 CozyClay 加進倉庫。不要為這支預演改 `moves.ts`、`ai.ts` 或戰鬥手感數字。
 
-調預演只改 `src/previs/shot.ts`（`CAMERA_KEYS`、`POSE_KEYS`），不必重寫路由。灰盒是結構；外觀概念以後再上。
+調鏡頭與走位改 `src/previs/shot.ts`。Clip id 與 `AnimationMixer` 在 `src/previs/clips.ts`。粒子留給 Game Graphics（`src/previs/vfxHooks.ts` 只有名字）。灰盒是結構；外觀概念以後再上。
 
 下面 0.5.x／0.6 計畫是舊稿，不是這一刀的範圍。
 

@@ -21,6 +21,20 @@ describe("public entry", () => {
     assert.match(index, /\?game=1|search\.game/);
   });
 
+  it("keeps combat modules out of the previs player", () => {
+    const previs = ["src/previs/createPrevis.ts", "src/previs/shot.ts", "src/previs/clips.ts"]
+      .map((path) => source(path))
+      .join("\n");
+    const imports = previs
+      .split("\n")
+      .filter((line) => /^\s*import\b/.test(line))
+      .join("\n");
+    assert.doesNotMatch(imports, /combatFeel|createGame2D|createGame\b|\/ai["']|\/moves["']/);
+    assert.doesNotMatch(imports, /theatre|seedance|cozyclay/i);
+    assert.match(previs, /mallow_atk_light/);
+    assert.match(previs, /orange-telegraph/);
+  });
+
   it("loads the hidden shell only from the gated route", () => {
     const play = source("src/routes/play.tsx");
     assert.match(play, /import\("@\/_hidden\/gameHome"\)/);

@@ -3,10 +3,10 @@ import { useEffect } from "react";
 import { PrevisStage } from "@/previs/PrevisStage";
 
 /**
- * Public entry: looping Three.js greybox previs.
+ * Public entry: looping Three.js greybox previs of storyboard shots A–G.
  * Gameplay is not imported here. `/?game=1` or `VITE_MALLOW_GAME=1` redirects
  * to `/play`, which loads `src/_hidden/gameHome.tsx`.
- * Refine motion and camera in `src/previs/shot.ts`.
+ * Refine motion and camera in `src/previs/shot.ts`. Clip ids live in `clips.ts`.
  */
 type HomeSearch = { game?: "1" };
 
